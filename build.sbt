@@ -6,9 +6,9 @@ scalaVersion := "2.11.2"
 
 crossScalaVersions := Seq("2.11.2", "2.10.4")
 
-organizationName := "Infowise, Inc"
+organizationName := "form-binder"
 
-organization := "com.infowise"
+organization := "com.github.tminglei"
 
 libraryDependencies ++= Seq(
   "org.scalatra" %% "scalatra"        % "2.3.0" % "provided",
