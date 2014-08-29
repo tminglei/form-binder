@@ -6,8 +6,9 @@ trait Binding[T] {
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)]
 
-  def verifying(validate: (T, Messages) => Seq[(String, String)]): Binding[T] =
-    new MoreCheckBinding(this, validate)
+  def verifying(validates: Constraint1[T]*): Binding[T] =
+    new MoreCheckBinding(this, validates)
+
 }
 
 trait Constraint {
@@ -20,18 +21,34 @@ trait Constraint {
 
 private
 class MoreCheckBinding[T](baseBinding: Binding[T],
-                          validate: (T, Messages) => Seq[(String, String)]) extends Binding[T] {
+                          validates: Seq[Constraint1[T]]) extends Binding[T] {
 
   def convert(name: String, params: Map[String, String]): T = baseBinding.convert(name, params)
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] = {
     val result = baseBinding.validate(name, params, messages)
     if (result.isEmpty) {
-      validate(convert(name, params), messages)
+      validaterec(name, convert(name, params), validates, messages)
     } else {
       result
     }
-  }  
+  }
+
+  @scala.annotation.tailrec
+  private def validaterec(name: String, value: T, validates: Seq[Constraint1[T]],
+                          messages: Messages): Seq[(String, String)] = {
+    validates match {
+      case (validate :: rest) => validate(value, messages) match {
+        case Nil    => validaterec(name, value, rest, messages)
+        case errors => errors.map { case (fieldName, message) => {
+            val fullName = if (name.nonEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
+            (fullName, message)
+          }
+        }
+      }
+      case _ => Nil
+    }
+  }
 }
 
 abstract class FieldBinding[T](constraints: Constraint*) extends Binding[T] {
@@ -63,8 +80,8 @@ abstract class CompoundBinding[T] extends Binding[T] {
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] = {
     fields.map { case (fieldName, binding) =>
-      val fullname = if (name.isEmpty) fieldName else name + "." + fieldName
-      binding.validate(fullname, params, messages)
+      val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
+      binding.validate(fullName, params, messages)
     }.flatten
   }
 }
