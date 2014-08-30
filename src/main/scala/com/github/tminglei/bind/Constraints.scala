@@ -5,44 +5,44 @@ import scala.util.matching.Regex
 trait Constraints {
 
   def required(message: String = ""): Constraint = new Constraint() {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value == null || value.isEmpty) {
-        Some( (if (message.isEmpty) messages("error.required") else message).format(name))
+        Some( (if (message.isEmpty) messages("error.required") else message).format(label))
       } else None
   }
 
   def maxlength(length: Int, message: String = ""): Constraint = new Constraint() {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value != null && value.length > length) {
-        Some( (if (message.isEmpty) messages("error.maxlength") else message).format(name, length))
+        Some( (if (message.isEmpty) messages("error.maxlength") else message).format(label, length))
       } else None
   }
 
   def minlength(length: Int, message: String = ""): Constraint = new Constraint() {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value != null && value.length < length) {
-        Some( (if (message.isEmpty) messages("error.minlength") else message).format(name, length))
+        Some( (if (message.isEmpty) messages("error.minlength") else message).format(label, length))
       } else None
   }
 
   def length(length: Int, message: String = ""): Constraint = new Constraint() {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value != null && value.length != length) {
-        Some( (if (message.isEmpty) messages("error.length") else message).format(name, length))
+        Some( (if (message.isEmpty) messages("error.length") else message).format(label, length))
       } else None
   }
 
   def oneOf(values: Seq[String], message: String = ""): Constraint = new Constraint() {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value != null && !values.contains(value)) {
-        Some( (if (message.isEmpty) messages("error.oneOf") else message).format(name, values.map("'" + _ + "'").mkString(", ")))
+        Some( (if (message.isEmpty) messages("error.oneOf") else message).format(label, values.map("'" + _ + "'").mkString(", ")))
       } else None
   }
 
   def pattern(pattern: Regex, message: String = ""): Constraint = new Constraint {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+    override def validate(label: String, value: String, messages: Messages): Option[String] =
       if (value != null && pattern.findFirstIn(value).isEmpty) {
-        Some( (if (message.isEmpty) messages("error.pattern") else message).format(name, pattern.regex))
+        Some( (if (message.isEmpty) messages("error.pattern") else message).format(label, pattern.regex))
       } else None
   }
 

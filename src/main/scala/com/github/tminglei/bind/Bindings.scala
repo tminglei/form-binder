@@ -96,13 +96,15 @@ trait Bindings {
   def default[T](base: Binding[T], value: T): Binding[T] = optional(base).mapTo(_.getOrElse(value))
 
   def optional[T](base: Binding[T]): Binding[Option[T]] = new Binding[Option[T]]() {
-    override def convert(name: String, params: Map[String, String]): Option[T] = {
-      val dummyMessages: Messages = (key) => "dummy"
-      base.validate(name, params, dummyMessages) match {
-        case Nil => Option(base.convert(name, params))
-        case _   => None
+    override def convert(name: String, params: Map[String, String]): Option[T] =
+      if (params.contains(name) && params.get(name).filterNot(_.isEmpty).isEmpty) None
+      else {
+        val dummyMessages: Messages = (key) => "dummy"
+        base.validate(name, params, dummyMessages) match {
+          case Nil => Option(base.convert(name, params))
+          case _   => None
+        }
       }
-    }
     override def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] = Nil
   }
 
