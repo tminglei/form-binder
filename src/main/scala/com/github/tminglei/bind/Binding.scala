@@ -6,8 +6,9 @@ trait Binding[T] {
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)]
 
-  def verifying(validates: Constraint1[T]*): Binding[T] =
-    new MoreCheckBinding(this, validates)
+  def verifying(validates: ExtraConstraint[T]*): Binding[T] = new MoreCheckBinding(this, validates)
+
+  def mapTo[R](transform: T => R): Binding[R] = new TransformBinding(this, transform)
 
 }
 
@@ -20,13 +21,21 @@ trait Constraint {
 /////////////////////////////////////////////////////////////////////////////////
 
 private
-class MoreCheckBinding[T](baseBinding: Binding[T],
-                          validates: Seq[Constraint1[T]]) extends Binding[T] {
+class TransformBinding[T, R](base: Binding[T], transform: T => R) extends Binding[R] {
+  
+  def convert(name: String, params: Map[String, String]): R = transform(base.convert(name, params))
+  
+  def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] =
+    base.validate(name, params, messages)
+}
 
-  def convert(name: String, params: Map[String, String]): T = baseBinding.convert(name, params)
+private
+class MoreCheckBinding[T](base: Binding[T], validates: Seq[ExtraConstraint[T]]) extends Binding[T] {
+
+  def convert(name: String, params: Map[String, String]): T = base.convert(name, params)
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] = {
-    val result = baseBinding.validate(name, params, messages)
+    val result = base.validate(name, params, messages)
     if (result.isEmpty) {
       validaterec(name, convert(name, params), validates, messages)
     } else {
@@ -35,7 +44,7 @@ class MoreCheckBinding[T](baseBinding: Binding[T],
   }
 
   @scala.annotation.tailrec
-  private def validaterec(name: String, value: T, validates: Seq[Constraint1[T]],
+  private def validaterec(name: String, value: T, validates: Seq[ExtraConstraint[T]],
                           messages: Messages): Seq[(String, String)] = {
     validates match {
       case (validate :: rest) => validate(value, messages) match {
@@ -51,15 +60,20 @@ class MoreCheckBinding[T](baseBinding: Binding[T],
   }
 }
 
-abstract class FieldBinding[T](constraints: Constraint*) extends Binding[T] {
+abstract class FieldBinding[T](constraints: Seq[Constraint], var processors: Seq[PreProcessor] = Nil) extends Binding[T] {
+
+  def >>:(newProcessors: PreProcessor*): FieldBinding[T] = { processors = newProcessors ++ processors; this }
 
   def convert(name: String, params: Map[String, String]): T =
-    convert(params.get(name).orNull)
+    convert(processrec(params.get(name).orNull, processors))
 
   def convert(value: String): T
 
   def validate(name: String, params: Map[String, String], messages: Messages): Seq[(String, String)] =
-    validaterec(name, params.get(name).orNull, Seq(constraints: _*), messages)
+    validaterec(name, processrec(params.get(name).orNull, processors), constraints, messages)
+
+  def validate(name: String, value: String, messages: Messages): Seq[(String, String)] =
+    validaterec(name, value, constraints, messages)
 
   @scala.annotation.tailrec
   private def validaterec(name: String, value: String, constraints: Seq[Constraint],
@@ -72,9 +86,17 @@ abstract class FieldBinding[T](constraints: Constraint*) extends Binding[T] {
       case _ => Nil
     }
   }
+
+  @scala.annotation.tailrec
+  private def processrec(value: String, processors: Seq[PreProcessor]): String = {
+    processors match {
+      case (process :: rest) => processrec(process(value), rest)
+      case _ => value
+    }
+  }
 }
 
-abstract class CompoundBinding[T] extends Binding[T] {
+abstract class GroupBinding[T] extends Binding[T] {
 
   def fields: Seq[(String, Binding[_])]
 
