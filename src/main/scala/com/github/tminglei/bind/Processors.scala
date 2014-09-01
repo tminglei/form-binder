@@ -1,5 +1,8 @@
 package com.github.tminglei.bind
 
+import java.util.regex.Pattern
+import scala.util.matching.Regex
+
 trait Processors {
 
   //////////////////////////////////////  pre-defined pre-processor implementations  ///////////////////////////
@@ -17,23 +20,20 @@ trait Processors {
   }
 
   def cleanPrefix(prefix: String): PreProcessor = (input: String) => {
-    if (input == null) null else input.replaceAll("^"+patternStr(prefix), "")
+    if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
   }
 
   def cleanPostfix(postfix: String): PreProcessor = (input: String) => {
-    if (input == null) null else input.replaceAll(patternStr(postfix)+"$", "")
+    if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
   val cleanRedundantSpaces: PreProcessor = (input: String) => {
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
-  protected def patternStr(str: String): String = str.map {
-    ch => ch match {
-      case '^'|'$'|'.'|'['|']'|'('|')' => "\\"+ch
-      case _ => ""+ch
-    }
-  }.mkString("")
+  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = (input: String) => {
+    if (input == null) null else regex.replaceAllIn(input, replacement)
+  }
 }
 
 object Processors extends Processors

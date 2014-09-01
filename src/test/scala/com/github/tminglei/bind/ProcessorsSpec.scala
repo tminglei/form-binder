@@ -35,9 +35,9 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
     }
 
     it("clean-postfix") {
-      val cleanPostfix = Processors.cleanPostfix("-\\d\\d\\d")
+      val cleanPostfix = Processors.cleanPostfix("-tat")
       cleanPostfix(null) should be (null)
-      cleanPostfix("2456890-103") should be ("2456890")
+      cleanPostfix("tewwwtt-tat") should be ("tewwwtt")
     }
 
     it("clean-redundant-spaces") {
@@ -45,6 +45,20 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       cleanRedundantSpaces(null) should be (null)
       cleanRedundantSpaces(" a  teee  86y") should be (" a teee 86y")
       cleanRedundantSpaces("te yu ") should be ("te yu ")
+    }
+
+    it("clean-matched") {
+      val cleanMatched = Processors.cleanMatched("-\\d\\d$".r)
+      cleanMatched(null) should be (null)
+      cleanMatched("2342-334-12") should be ("2342-334")
+      cleanMatched("2342-334") should be ("2342-334")
+    }
+
+    it("clean-matched-with-replacement") {
+      val cleanMatched = Processors.cleanMatched("-\\d\\d$".r, "-1")
+      cleanMatched(null) should be (null)
+      cleanMatched("2342-334-12") should be ("2342-334-1")
+      cleanMatched("2342-334") should be ("2342-334")
     }
   }
 }

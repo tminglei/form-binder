@@ -1,5 +1,7 @@
 package com.github.tminglei.bind
 
+import java.util.regex.Pattern
+
 trait Mappings {
 
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
@@ -98,7 +100,8 @@ trait Mappings {
 
   def optional[T](base: Mapping[T]): Mapping[Option[T]] = new Mapping[Option[T]]() {
     override def convert(name: String, data: Map[String, String]): Option[T] =
-      if (!data.contains(name) || (data.contains(name) && data.get(name).filterNot(_.isEmpty).isEmpty)) None
+      if (data.keys.find(_.startsWith(name)).isEmpty ||
+        (data.contains(name) && data.get(name).filterNot{v => (v == null || v.isEmpty)}.isEmpty)) None
       else {
         val dummyMessages: Messages = (key) => "dummy"
         base.validate(name, data, dummyMessages) match {
@@ -124,7 +127,7 @@ trait Mappings {
 
     /** Computes the available indexes for the given key in this set of data. */
     private def indexes(key: String, data: Map[String, String]): Seq[Int] = {
-      val KeyPattern = ("^" + java.util.regex.Pattern.quote(key) + """\[(\d+)\].*$""").r
+      val KeyPattern = ("^" + Pattern.quote(key) + """\[(\d+)\].*$""").r
       data.toSeq.collect { case (KeyPattern(index), _) => index.toInt }.sorted.distinct
     }
   }
@@ -147,7 +150,7 @@ trait Mappings {
 
     /** Computes the available keys for the given prefix in this set of data. */
     private def keys(prefix: String, data: Map[String, String]): Seq[String] = {
-      val KeyPattern = ("^" + java.util.regex.Pattern.quote(prefix) + """\.("?[^."]+"?).*$""").r
+      val KeyPattern = ("^" + Pattern.quote(prefix) + """\.("?[^."]+"?).*$""").r
       data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
     }
   }
@@ -155,7 +158,7 @@ trait Mappings {
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////
 
   // tuple version
-  def mapping[P1](f1: (String, Mapping[P1])) = mapping[(P1), P1](f1)(identity)
+  def tmapping[P1](f1: (String, Mapping[P1])) = mapping[(P1), P1](f1)(identity)
   // normal version
   def mapping[T, P1](f1: (String, Mapping[P1]))(factory: (P1) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1)
@@ -163,7 +166,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2](f1: (String, Mapping[P1]), f2: (String, Mapping[P2])) = mapping[(P1, P2), P1, P2](f1, f2)(Tuple2[P1,P2])
+  def tmapping[P1, P2](f1: (String, Mapping[P1]), f2: (String, Mapping[P2])) = mapping[(P1, P2), P1, P2](f1, f2)(Tuple2[P1,P2])
   // normal version
   def mapping[T, P1, P2](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]))(factory: (P1, P2) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2)
@@ -171,7 +174,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3])) = mapping[(P1, P2, P3), P1, P2, P3](f1, f2, f3)(Tuple3[P1,P2,P3])
+  def tmapping[P1, P2, P3](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3])) = mapping[(P1, P2, P3), P1, P2, P3](f1, f2, f3)(Tuple3[P1,P2,P3])
   // normal version
   def mapping[T, P1, P2, P3](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]))(factory: (P1, P2, P3) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3)
@@ -179,7 +182,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4])) = mapping[(P1, P2, P3, P4), P1, P2, P3, P4](f1, f2, f3, f4)(Tuple4[P1,P2,P3,P4])
+  def tmapping[P1, P2, P3, P4](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4])) = mapping[(P1, P2, P3, P4), P1, P2, P3, P4](f1, f2, f3, f4)(Tuple4[P1,P2,P3,P4])
   // normal version
   def mapping[T, P1, P2, P3, P4](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]))(factory: (P1, P2, P3, P4) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4)
@@ -187,7 +190,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5])) = mapping[(P1, P2, P3, P4, P5), P1, P2, P3, P4, P5](f1, f2, f3, f4, f5)(Tuple5[P1,P2,P3,P4,P5])
+  def tmapping[P1, P2, P3, P4, P5](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5])) = mapping[(P1, P2, P3, P4, P5), P1, P2, P3, P4, P5](f1, f2, f3, f4, f5)(Tuple5[P1,P2,P3,P4,P5])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]))(factory: (P1, P2, P3, P4, P5) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5)
@@ -195,7 +198,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6])) = mapping[(P1, P2, P3, P4, P5, P6), P1, P2, P3, P4, P5, P6](f1, f2, f3, f4, f5, f6)(Tuple6[P1, P2, P3, P4, P5, P6])
+  def tmapping[P1, P2, P3, P4, P5, P6](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6])) = mapping[(P1, P2, P3, P4, P5, P6), P1, P2, P3, P4, P5, P6](f1, f2, f3, f4, f5, f6)(Tuple6[P1, P2, P3, P4, P5, P6])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]))(factory: (P1, P2, P3, P4, P5, P6) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6)
@@ -203,7 +206,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7])) = mapping[(P1, P2, P3, P4, P5, P6, P7), P1, P2, P3, P4, P5, P6, P7](f1, f2, f3, f4, f5, f6, f7)(Tuple7[P1, P2, P3, P4, P5, P6, P7])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7])) = mapping[(P1, P2, P3, P4, P5, P6, P7), P1, P2, P3, P4, P5, P6, P7](f1, f2, f3, f4, f5, f6, f7)(Tuple7[P1, P2, P3, P4, P5, P6, P7])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]))(factory: (P1, P2, P3, P4, P5, P6, P7) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7)
@@ -211,7 +214,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8), P1, P2, P3, P4, P5, P6, P7, P8](f1, f2, f3, f4, f5, f6, f7, f8)(Tuple8[P1, P2, P3, P4, P5, P6, P7, P8])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8), P1, P2, P3, P4, P5, P6, P7, P8](f1, f2, f3, f4, f5, f6, f7, f8)(Tuple8[P1, P2, P3, P4, P5, P6, P7, P8])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8)
@@ -219,7 +222,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9), P1, P2, P3, P4, P5, P6, P7, P8, P9](f1, f2, f3, f4, f5, f6, f7, f8, f9)(Tuple9[P1, P2, P3, P4, P5, P6, P7, P8, P9])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9), P1, P2, P3, P4, P5, P6, P7, P8, P9](f1, f2, f3, f4, f5, f6, f7, f8, f9)(Tuple9[P1, P2, P3, P4, P5, P6, P7, P8, P9])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9)
@@ -227,7 +230,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10)(Tuple10[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10)(Tuple10[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10)
@@ -235,7 +238,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11)(Tuple11[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11)(Tuple11[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11)
@@ -243,7 +246,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12)(Tuple12[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12)(Tuple12[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12)
@@ -251,7 +254,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13)(Tuple13[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13)(Tuple13[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13)
@@ -259,7 +262,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14)(Tuple14[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14)(Tuple14[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14)
@@ -267,7 +270,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15)(Tuple15[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15)(Tuple15[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15)
@@ -275,7 +278,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16)(Tuple16[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16)(Tuple16[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16)
@@ -283,7 +286,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17)(Tuple17[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17)(Tuple17[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17)
@@ -291,7 +294,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18)(Tuple18[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18)(Tuple18[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18)
@@ -299,7 +302,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19)(Tuple19[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19)(Tuple19[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19)
@@ -307,7 +310,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20)(Tuple20[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20)(Tuple20[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20)
@@ -315,7 +318,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21)(Tuple21[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21)(Tuple21[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21)
@@ -323,7 +326,7 @@ trait Mappings {
   }
 
   // tuple version
-  def mapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21]), f22: (String, Mapping[P22])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22)(Tuple22[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22])
+  def tmapping[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21]), f22: (String, Mapping[P22])) = mapping[(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22), P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22](f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22)(Tuple22[P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22])
   // normal version
   def mapping[T, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22](f1: (String, Mapping[P1]), f2: (String, Mapping[P2]), f3: (String, Mapping[P3]), f4: (String, Mapping[P4]), f5: (String, Mapping[P5]), f6: (String, Mapping[P6]), f7: (String, Mapping[P7]), f8: (String, Mapping[P8]), f9: (String, Mapping[P9]), f10: (String, Mapping[P10]), f11: (String, Mapping[P11]), f12: (String, Mapping[P12]), f13: (String, Mapping[P13]), f14: (String, Mapping[P14]), f15: (String, Mapping[P15]), f16: (String, Mapping[P16]), f17: (String, Mapping[P17]), f18: (String, Mapping[P18]), f19: (String, Mapping[P19]), f20: (String, Mapping[P20]), f21: (String, Mapping[P21]), f22: (String, Mapping[P22]))(factory: (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, P16, P17, P18, P19, P20, P21, P22) => T): GroupMapping[T] = new GroupMapping[T] {
     def fields = Seq(f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22)

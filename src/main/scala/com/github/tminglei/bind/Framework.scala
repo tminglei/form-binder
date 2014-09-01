@@ -1,8 +1,8 @@
 package com.github.tminglei.bind
 
-case class Binder[T, R](mapping: Mapping[T], messages: Messages,
-              preprocessors: Seq[BulkPreProcessor] = Nil,
-              errprocessor: Option[PostErrProcessor[R]] = None) {
+case class FormBinder[T, R](mapping: Mapping[T], messages: Messages,
+               preprocessors: Seq[BulkPreProcessor] = Nil,
+               errprocessor: Option[PostErrProcessor[R]] = None) {
 
   def pipe_:(newprocessors: BulkPreProcessor*) = this.copy(preprocessors = newprocessors ++ preprocessors)
   def withErr[R1](errprocessor: PostErrProcessor[R1]) = this.copy(errprocessor = Some(errprocessor))
@@ -77,8 +77,7 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
         case errors => errors.map { case (fieldName, message) => {
           val fullName = if (name.isEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
           (fullName, message)
-        }
-        }
+        }}
       }
       case _ => Nil
     }
@@ -133,8 +132,8 @@ abstract class GroupMapping[T](var _label: Option[String] = None) extends Mappin
   def fields: Seq[(String, Mapping[_])]
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
-    if (!data.contains(name) || (data.contains(name) && data.get(name).isEmpty)) {
-      Seq(name -> messages("error.required").format(_label.getOrElse(name)))
+    if (data.keys.find(_.startsWith(name)).isEmpty || data.contains(name)) {
+      Seq(name -> messages("error.object").format(_label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
