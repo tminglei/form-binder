@@ -17,7 +17,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       val cleanComma = Processors.cleanComma
       cleanComma(null) should be (null)
       cleanComma("123,334") should be ("123334")
-      cleanComma("2.345+e5") should be ("2.345+e5")
+      cleanComma("2.345e+5") should be ("2.345e+5")
     }
 
     it("clean-hyphen") {

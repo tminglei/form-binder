@@ -133,7 +133,7 @@ abstract class GroupMapping[T](var _label: Option[String] = None) extends Mappin
   def fields: Seq[(String, Mapping[_])]
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
-    if (data.contains(name) && data.get(name).isEmpty) {
+    if (!data.contains(name) || (data.contains(name) && data.get(name).isEmpty)) {
       Seq(name -> messages("error.required").format(_label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>

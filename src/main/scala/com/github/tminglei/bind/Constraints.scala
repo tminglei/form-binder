@@ -36,7 +36,7 @@ trait Constraints {
 
   def oneOf(values: Seq[String], message: String = ""): Constraint = new Constraint() {
     override def validate(label: String, value: String, messages: Messages): Option[String] =
-      if (value != null && !values.contains(value)) {
+      if (!values.contains(value)) {
         Some( (if (message.isEmpty) messages("error.oneOf") else message).format(value, values.map("'" + _ + "'").mkString(", ")))
       } else None
   }

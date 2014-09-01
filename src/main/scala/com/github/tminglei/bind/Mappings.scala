@@ -98,7 +98,7 @@ trait Mappings {
 
   def optional[T](base: Mapping[T]): Mapping[Option[T]] = new Mapping[Option[T]]() {
     override def convert(name: String, data: Map[String, String]): Option[T] =
-      if (data.contains(name) && data.get(name).filterNot(_.isEmpty).isEmpty) None
+      if (!data.contains(name) || (data.contains(name) && data.get(name).filterNot(_.isEmpty).isEmpty)) None
       else {
         val dummyMessages: Messages = (key) => "dummy"
         base.validate(name, data, dummyMessages) match {
@@ -109,11 +109,13 @@ trait Mappings {
     override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = Nil
   }
 
-  def list[T](base: Mapping[T]): Mapping[List[T]] = new Mapping[List[T]] {
-    override def convert(name: String, data: Map[String, String]): List[T] =
+  def list[T](base: Mapping[T]): Mapping[List[T]] = seq(base).mapTo(_.toList)
+
+  def seq[T](base: Mapping[T]): Mapping[Seq[T]] = new Mapping[Seq[T]] {
+    override def convert(name: String, data: Map[String, String]): Seq[T] =
       indexes(name, data).map { i =>
         base.convert(name + "[" + i + "]", data)
-      }.toList
+      }
 
     override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
       indexes(name, data).map { i =>

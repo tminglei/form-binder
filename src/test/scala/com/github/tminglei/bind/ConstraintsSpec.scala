@@ -68,6 +68,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
         val oneof = Constraints.oneOf(Seq("a","b","c"))
         oneof.validate("", "a", dummyMessages) should be (None)
         oneof.validate("", "t", dummyMessages) should be (Some("dummy"))
+        oneof.validate("", null, dummyMessages) should be (Some("dummy"))
       }
 
       it("w/ custom message") {
