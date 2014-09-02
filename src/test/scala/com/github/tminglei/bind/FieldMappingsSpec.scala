@@ -91,7 +91,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
       }
 
-      it("valid data w/ comma") {
+      it("valid data with comma") {
         val validData = Map("number" -> "3,549")
         number.validate("number", validData, dummyMessages) match {
           case Nil => number.convert("number", validData) should be (3549)

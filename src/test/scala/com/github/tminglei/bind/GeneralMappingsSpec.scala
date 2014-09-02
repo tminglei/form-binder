@@ -456,5 +456,170 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers {
         }
       }
     }
+
+    describe("list-compound") {
+      val dummyMessages1: Messages = (key: String) => {
+        if (key == "error.object") "%s missing or not valid"
+        else "dummy"
+      }
+
+      val base = Mappings.mapping(
+        "id" -> Mappings.long(),
+        "name" -> Mappings.text(),
+        "desc" -> Mappings.optional(Mappings.text())
+      )(TestBean.apply)
+
+      val list = Mappings.list(base)
+
+      it("invalid data") {
+        val invalidData = Map(
+          "test[0].id" -> "t135",
+          "test[0].name" -> "test",
+          "test[0].desc" -> "",
+          "test[1].id" -> "t137",
+          "test[1].name" -> "test",
+          "test[1].desc" -> "tt"
+        )
+        list.validate("test", invalidData, dummyMessages1) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("test[0].id" -> "dummy", "test[1].id" -> "dummy"))
+        }
+      }
+
+      it("valid data") {
+        val validData = Map(
+          "test[0].id" -> "135",
+          "test[0].name" -> "test",
+          "test[0].desc" -> "",
+          "test[1].id" -> "137",
+          "test[1].name" -> "test1",
+          "test[1].desc" -> "tt"
+        )
+        list.validate("test", validData, dummyMessages1) match {
+          case Nil => {
+            base.validate("test[0]", validData, dummyMessages1) should be (Nil)
+            base.validate("test[1]", validData, dummyMessages1) should be (Nil)
+            list.convert("test", validData) should be (List(TestBean(135, "test"), TestBean(137, "test1", Some("tt"))))
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val nullData = Map[String, String]()
+        list.validate("test", nullData, dummyMessages1) match {
+          case Nil => {
+            base.validate("test[0]", nullData, dummyMessages1) should be (Seq("test[0]" -> "test[0] missing or not valid"))
+            list.convert("test", nullData) should be (Nil)
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data (wrong way)") {
+        val emptyData = Map("test" -> "")
+        list.validate("test", emptyData, dummyMessages1) match {
+          case Nil => {
+            base.validate("test[0]", emptyData, dummyMessages1) should be (Seq("test[0]" -> "test[0] missing or not valid"))
+            list.convert("test", emptyData) should be (Nil)
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data") {
+        val emptyData = Map("test" -> null)
+        list.validate("test", emptyData, dummyMessages1) match {
+          case Nil => {
+            base.validate("test[0]", emptyData, dummyMessages1) should be (Seq("test[0]" -> "test[0] missing or not valid"))
+            list.convert("test", emptyData) should be (Nil)
+          }
+          case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("map-compound") {
+      val dummyMessages1: Messages = (key: String) => {
+        if (key == "error.object") "%s missing or not valid"
+        else "dummy"
+      }
+
+      val key = Mappings.number()
+      val value = Mappings.mapping(
+        "id" -> Mappings.long(),
+        "name" -> Mappings.text(),
+        "desc" -> Mappings.optional(Mappings.text())
+      )(TestBean.apply)
+
+      val map = Mappings.map(key, value)
+
+      it("invalid data") {
+        val invalidData = Map(
+          "test.101.id" -> "t135",
+          "test.101.name" -> "test",
+          "test.101.desc" -> "",
+          "test.103.id" -> "t137",
+          "test.103.name" -> "test",
+          "test.103.desc" -> "tt"
+        )
+        map.validate("test", invalidData, dummyMessages1) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err.toList should be (List("test.103.id" -> "dummy", "test.101.id" -> "dummy"))
+        }
+      }
+
+      it("valid data") {
+        val validData = Map(
+          "test.101.id" -> "135",
+          "test.101.name" -> "test",
+          "test.101.desc" -> "",
+          "test.103.id" -> "137",
+          "test.103.name" -> "test1",
+          "test.103.desc" -> "tt"
+        )
+        map.validate("test", validData, dummyMessages1) match {
+          case Nil => {
+            value.validate("test.101", validData, dummyMessages1) should be (Nil)
+            value.validate("test.101", validData, dummyMessages1) should be (Nil)
+            map.convert("test", validData) should be (Map(101 -> TestBean(135, "test"), 103 -> TestBean(137, "test1", Some("tt"))))
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val nullData = Map[String, String]()
+        map.validate("test", nullData, dummyMessages1) match {
+          case Nil => {
+            value.validate("test.101", nullData, dummyMessages1) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            map.convert("test", nullData) should be (Map())
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data (wrong way)") {
+        val emptyData = Map("test" -> "")
+        map.validate("test", emptyData, dummyMessages1) match {
+          case Nil => {
+            value.validate("test.101", emptyData, dummyMessages1) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            map.convert("test", emptyData) should be (Map())
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data") {
+        val emptyData = Map("test" -> null)
+        map.validate("test", emptyData, dummyMessages1) match {
+          case Nil => {
+            value.validate("test.101", emptyData, dummyMessages1) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            map.convert("test", emptyData) should be (Map())
+          }
+          case err => err should be (Nil)
+        }
+      }
+    }
   }
 }
