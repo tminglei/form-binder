@@ -1,13 +1,23 @@
 package com.github.tminglei.bind
 
-case class FormBinder[T, R](mapping: Mapping[T], messages: Messages,
+/**
+ * add {{{import com.github.tminglei.bind.simple._}}} to use
+ * form binder's built-in mappings/constraints/processors directly
+ */
+object simple extends Mappings with Constraints with Processors {
+  type FormBinder[R] = com.github.tminglei.bind.FormBinder[R]
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+
+case class FormBinder[R](messages: Messages,
                preprocessors: Seq[BulkPreProcessor] = Nil,
                errprocessor: Option[PostErrProcessor[R]] = None) {
 
   def pipe_:(newprocessors: BulkPreProcessor*) = this.copy(preprocessors = newprocessors ++ preprocessors)
   def withErr[R1](errprocessor: PostErrProcessor[R1]) = this.copy(errprocessor = Some(errprocessor))
 
-  def bind[R2](data: Map[String, String])(consume: T => R2) = {
+  def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
     val data1 = processrec(data, preprocessors.toList)
     mapping.validate("", data1, messages) match {
       case Nil  => consume(mapping.convert("", data1))

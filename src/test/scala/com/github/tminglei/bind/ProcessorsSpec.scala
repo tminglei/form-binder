@@ -61,4 +61,58 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       cleanMatched("2342-334") should be ("2342-334")
     }
   }
+
+  describe("test pre-defined bulk pre-processors") {
+
+    describe("expandJsonData") {
+
+      it("simple") {
+        val expandJsonData = Processors.expandJsonData("json")
+        val data = Map(
+          "aa" -> "wett",
+          "json" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
+        )
+        val expected = Map(
+          "aa" -> "wett",
+          "json.id" -> "123",
+          "json.name" -> "tewd",
+          "json.dr-1[0]" -> "33",
+          "json.dr-1[1]" -> "45"
+        )
+
+        expandJsonData(data) should be (expected)
+      }
+
+      it("null or empty") {
+        val expandJsonData = Processors.expandJsonData("json")
+
+        val nullData = Map("aa" -> "wett")
+        expandJsonData(nullData) should be (nullData)
+
+        val nullData1 = Map("aa" -> "wett", "json" -> null)
+        expandJsonData(nullData1) should be (nullData1)
+
+        val emptyData1 = Map("aa" -> "wett", "json" -> "")
+        expandJsonData(emptyData1) should be (emptyData1)
+      }
+
+      it("with dest prefix") {
+        val expandJsonData = Processors.expandJsonData("body", Some("json"))
+        val data = Map(
+          "aa" -> "wett",
+          "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
+        )
+        val expected = Map(
+          "aa" -> "wett",
+          "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}""",
+          "json.id" -> "123",
+          "json.name" -> "tewd",
+          "json.dr-1[0]" -> "33",
+          "json.dr-1[1]" -> "45"
+        )
+
+        expandJsonData(data) should be (expected)
+      }
+    }
+  }
 }

@@ -63,7 +63,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         "count" -> number().verifying(min(3), max(10))
       ) verifying { case ((price, count), messages) =>
         if (price * count > 1000) {
-          Seq("" -> s"$price * $count = ${price * count}: too large")
+          Seq("" -> s"$price * $count = ${price * count}: too much")
         } else Nil
       }
 
@@ -87,7 +87,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("price" -> "123.5f", "count" -> "9")
         mapping2.validate("", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("" -> "123.5 * 9 = 1111.5: too large"))
+          case err => err should be (Seq("" -> "123.5 * 9 = 1111.5: too much"))
         }
       }
 

@@ -7,7 +7,7 @@ import org.json4s.jackson.JsonMethods
 
 trait Processors {
 
-  //////////////////////////////////////  pre-defined pre-processor implementations  ///////////////////////////
+  ////////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
   val trim: PreProcessor = (input: String) => {
     if (input == null) null else input.trim
@@ -37,13 +37,16 @@ trait Processors {
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
-  ////////////////////////////////////  pre-defined bulk pre-processor implementations  /////////////////////////
+  //////////////////////////////////////  pre-defined bulk pre-processors  ////////////////////////////
 
-  def mergeJsonData(sourceKey: String, destPrefix: Option[String] = None): BulkPreProcessor =
+  def expandJsonData(sourceKey: String, destPrefix: Option[String] = None): BulkPreProcessor =
     (data: Map[String, String]) => {
-      val prefix = destPrefix.getOrElse(sourceKey)
-      val json = JsonMethods.parse(data(sourceKey))
-      data ++ mappedJsonData(prefix, json)
+      if (data.get(sourceKey).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
+        val prefix = destPrefix.getOrElse(sourceKey)
+        val json = JsonMethods.parse(data(sourceKey))
+        if (prefix == sourceKey) (data - sourceKey) ++ mappedJsonData(prefix, json)
+        else data ++ mappedJsonData(prefix, json)
+      } else data
     }
 
   private def mappedJsonData(prefix: String, json: JValue): Map[String, String] = json match {
@@ -61,6 +64,7 @@ trait Processors {
     case JNothing => Map.empty
     case JBool(value) => Map(prefix -> value.toString)
     case JDouble(value) => Map(prefix -> value.toString)
+    case JDecimal(value) => Map(prefix -> value.toString)
     case JInt(value) => Map(prefix -> value.toString)
     case JString(value) => Map(prefix -> value.toString)
   }
