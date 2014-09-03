@@ -144,8 +144,9 @@ trait Mappings {
     override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
       keys(name, data).map { key =>
         val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-        keyBinding.validate(name + "." + key + "_key", pureKey, messages) ++
-          valueBinding.validate(name + "." + key, data, messages)
+        keyBinding.validate(name + "." + key, pureKey, messages).map {
+          case (name, err) => (name, "key: " + err)
+        } ++ valueBinding.validate(name + "." + key, data, messages)
       }.flatten
 
     /** Computes the available keys for the given prefix in this set of data. */

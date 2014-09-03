@@ -1,5 +1,6 @@
 package com.github.tminglei.bind
 
+import org.json4s.jackson.JsonMethods
 import org.scalatest._
 
 class ProcessorsSpec extends FunSpec with ShouldMatchers {
@@ -112,6 +113,54 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
         )
 
         expandJsonData(data) should be (expected)
+      }
+    }
+
+    describe("errsToJson4s") {
+
+      it("") {
+        val errs = Seq(
+          "" -> "top error1",
+          "aa" -> "error aa",
+          "aa.ty" -> "error aa.ty",
+          "aa" -> "error aa 1",
+          "aa.tl[3]" -> "ewty",
+          "aa.tl[3]" -> "ewyu7",
+          "br-1[t0]" -> "key: eeor",
+          "br-1[1]" -> "tetty",
+          "" -> "top error2"
+        )
+
+        val expected = JsonMethods.parse(
+          """
+            {
+              "_errors": ["top error1", "top error2"],
+              "aa": {
+                "_errors": ["error aa", "error aa 1"],
+                "ty": {
+                  "_errors": ["error aa.ty"]
+                },
+                "tl": {
+                  "3": {
+                    "_errors": ["wety", "ewyu7"]
+                  }
+                }
+              },
+              "br-1": {
+                "1": {
+                  "_errors": ["tetty"]
+                },
+                "t0": {
+                  "_errors": ["key: eeor"]
+                }
+              }
+            }
+          """)
+
+        println("parsed: " + JsonMethods.pretty(Processors.errsToJson4s(errs)))
+        println("expected: " + JsonMethods.pretty(expected))
+
+        Processors.errsToJson4s(errs) should be (expected)
       }
     }
   }
