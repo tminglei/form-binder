@@ -115,6 +115,9 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
         expandJsonData(data) should be (expected)
       }
     }
+  }
+
+  describe("test pre-defined post err-processors") {
 
     describe("errsToJson4s") {
 
