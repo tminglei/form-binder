@@ -127,6 +127,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "aa.tl[3]" -> "ewty",
           "aa.tl[3]" -> "ewyu7",
           "br-1[t0]" -> "key: eeor",
+          "br-1[t0]" -> "tert",
           "br-1[1]" -> "tetty",
           "" -> "top error2"
         )
@@ -135,30 +136,27 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           """
             {
               "_errors": ["top error1", "top error2"],
+              "br-1": {
+                "t0": {
+                  "_errors": ["key: eeor", "tert"]
+                },
+                "1": {
+                  "_errors": ["tetty"]
+                }
+              },
               "aa": {
-                "_errors": ["error aa", "error aa 1"],
                 "ty": {
                   "_errors": ["error aa.ty"]
                 },
                 "tl": {
                   "3": {
-                    "_errors": ["wety", "ewyu7"]
+                    "_errors": ["ewty", "ewyu7"]
                   }
-                }
-              },
-              "br-1": {
-                "1": {
-                  "_errors": ["tetty"]
                 },
-                "t0": {
-                  "_errors": ["key: eeor"]
-                }
+                "_errors": ["error aa", "error aa 1"]
               }
             }
           """)
-
-        println("parsed: " + JsonMethods.pretty(Processors.errsToJson4s(errs)))
-        println("expected: " + JsonMethods.pretty(expected))
 
         Processors.errsToJson4s(errs) should be (expected)
       }

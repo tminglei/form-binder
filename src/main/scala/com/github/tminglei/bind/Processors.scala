@@ -89,9 +89,10 @@ trait Processors {
         case None => {
           val (parent, self) = splitNames(name)
           val parentObj = workObject(workList, parent)
-          parentObj += (self -> HashMap[String, Any]())
-          workList  += (name -> HashMap[String, Any]())
-          workList(name).asInstanceOf[HashMap[String, Any]]
+          val theObj = HashMap[String, Any]()
+          parentObj += (self -> theObj)
+          workList  += (name -> theObj)
+          theObj
         }
       }
 
@@ -108,8 +109,8 @@ trait Processors {
   private val OBJECT_ELEMENT = "^(.*)\\.([^\\.]*)$".r
   private val ARRAY_ELEMENT  = "^(.*)\\[([^\\.\\]]*)\\]$".r
   private def splitNames(name: String): (String, String) = name match {
-    case OBJECT_ELEMENT(parent, name) => (parent, name)
     case ARRAY_ELEMENT (name, index)  => (name, index)
+    case OBJECT_ELEMENT(parent, name) => (parent, name)
     case _                            => ("", name)
   }
 }
