@@ -118,7 +118,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
 
     describe("errsToJson4s") {
 
-      it("") {
+      it("simple") {
         val errs = Seq(
           "" -> "top error1",
           "aa" -> "error aa",

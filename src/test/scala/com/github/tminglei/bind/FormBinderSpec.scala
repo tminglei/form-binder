@@ -1,14 +1,18 @@
 package com.github.tminglei.bind
 
+import org.json4s.JsonAST.{JString, JArray, JObject}
+import org.json4s.jackson.JsonMethods
 import org.scalatest._
 
 class FormBinderSpec extends FunSpec with ShouldMatchers {
   import com.github.tminglei.bind.simple._
 
   describe("show and check form binder") {
+
     it("usage case") {
       val messages = (key: String) => "dummy"
       val binder = expandJsonData("body") pipe_: FormBinder(messages)
+      val binder1 = expandJsonData("body") pipe_: FormBinder(messages).withErr(errsToJson4s)
 
       val mappings = tmapping(
         "id" -> long(),
@@ -42,6 +46,17 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       binder.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
       } should be (Seq("body" -> "337.5 * 5 = 1687.5: too much"))
+
+      binder1.bind(mappings, data1) { case (id, (price, count)) =>
+        ("invalid - shouldn't occur!") should be ("")
+      } should be (JsonMethods.parse(
+        """
+          {
+            "body": {
+              "_errors": ["337.5 * 5 = 1687.5: too much"]
+            }
+          }
+        """))
     }
   }
 }
