@@ -39,13 +39,17 @@ trait Processors {
 
   //////////////////////////////////////  pre-defined bulk pre-processors  ////////////////////////////
 
+  def mergeJson4sData(json: JValue, destPrefix: String = "json"): BulkPreProcessor =
+    (data: Map[String, String]) => {
+      (data - destPrefix) ++ mappedJsonData(destPrefix, json)
+    }
+
   def expandJsonData(sourceKey: String, destPrefix: Option[String] = None): BulkPreProcessor =
     (data: Map[String, String]) => {
       if (data.get(sourceKey).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
         val prefix = destPrefix.getOrElse(sourceKey)
         val json = JsonMethods.parse(data(sourceKey))
-        if (prefix == sourceKey) (data - sourceKey) ++ mappedJsonData(prefix, json)
-        else data ++ mappedJsonData(prefix, json)
+        (data - prefix) ++ mappedJsonData(prefix, json)
       } else data
     }
 

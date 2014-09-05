@@ -11,12 +11,12 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
 
     it("usage case") {
       val messages = (key: String) => "dummy"
-      val binder = expandJsonData("body") pipe_: FormBinder(messages)
-      val binder1 = expandJsonData("body") pipe_: FormBinder(messages).withErr(errsToJson4s)
+      val binder = expandJsonData("body", Some("json")) pipe_: FormBinder(messages)
+      val binder1 = expandJsonData("body", Some("json")) pipe_: FormBinder(messages).withErr(errsToJson4s)
 
       val mappings = tmapping(
         "id" -> long(),
-        "body" -> tmapping(
+        "json" -> tmapping(
           "price" -> (cleanPrefix("$") pipe_: float()),
           "count" -> number().verifying(min(3), max(10))
         ).verifying { case ((price, count), messages) =>
@@ -45,14 +45,14 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       )
       binder.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
-      } should be (Seq("body" -> "337.5 * 5 = 1687.5: too much"))
+      } should be (Seq("json" -> "337.5 * 5 = 1687.5: too much"))
 
       binder1.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
       } should be (JsonMethods.parse(
         """
           {
-            "body": {
+            "json": {
               "_errors": ["337.5 * 5 = 1687.5: too much"]
             }
           }
