@@ -37,7 +37,7 @@ case class FormBinder[R](messages: Messages,
 ///
 trait Mapping[T] {
   
-  var _label: Option[String] = None
+  def label: Option[String] = None
 
   def convert(name: String, data: Map[String, String]): T
 
@@ -68,7 +68,7 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = {
     val result = base.validate(name, data, messages)
     if (result.isEmpty) {
-      validaterec(name, convert(name, data), validates.toList, messages, base._label)
+      validaterec(name, convert(name, data), validates.toList, messages, base.label)
     } else {
       result
     }
@@ -90,22 +90,21 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
   }
 }
 
-abstract class FieldMapping[T](constraints: Seq[Constraint], var _processors: Seq[PreProcessor] = Nil) extends Mapping[T] {
+case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, processors: Seq[PreProcessor] = Nil,
+              override val label: Option[String] = None) extends Mapping[T] {
 
-  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = { _processors = newProcessors ++ _processors; this }
+  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = this.copy(processors = newProcessors ++ processors)
 
-  def label(label: String): FieldMapping[T] = { _label = Option(label); this }
+  def label(label: String): FieldMapping[T] = this.copy(label = Option(label))
 
   def convert(name: String, data: Map[String, String]): T =
-    convert(processrec(data.get(name).orNull, _processors.toList))
-
-  def convert(value: String): T
+    convert(processrec(data.get(name).orNull, processors.toList))
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
-    validaterec(name, processrec(data.get(name).orNull, _processors.toList), constraints.toList, messages, _label)
+    validaterec(name, processrec(data.get(name).orNull, processors.toList), constraints.toList, messages, label)
 
   def validate(name: String, value: String, messages: Messages): Seq[(String, String)] =
-    validaterec(name, value, constraints.toList, messages, _label)
+    validaterec(name, value, constraints.toList, messages, label)
 
   @scala.annotation.tailrec
   private def validaterec(name: String, value: String, validates: List[Constraint],
@@ -122,23 +121,22 @@ abstract class FieldMapping[T](constraints: Seq[Constraint], var _processors: Se
   @scala.annotation.tailrec
   private def processrec(value: String, processors: List[PreProcessor]): String = {
     processors match {
-      case (process :: rest) => {
-        processrec(process(value), rest)
-      }
-      case _ => value
+      case (process :: rest) => processrec(process(value), rest)
+      case _                 => value
     }
   }
 }
 
-abstract class GroupMapping[T] extends Mapping[T] {
+case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
+              override val label: Option[String] = None) extends Mapping[T] {
 
-  def label(label: String): GroupMapping[T] = { _label = Option(label); this }
+  def label(label: String): GroupMapping[T] = this.copy(label = Option(label))
 
-  def fields: Seq[(String, Mapping[_])]
+  def convert(name: String, data: Map[String, String]): T = convert0(name, data)
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
     if (data.keys.find(_.startsWith(name)).isEmpty || data.contains(name)) {
-      Seq(name -> messages("error.object").format(_label.getOrElse(name)))
+      Seq(name -> messages("error.object").format(label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
