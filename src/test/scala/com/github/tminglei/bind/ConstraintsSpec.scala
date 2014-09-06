@@ -10,84 +10,84 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("required") {
       it("simple use") {
         val required = Constraints.required()
-        required.validate("", null, dummyMessages) should be (Some("dummy"))
-        required.validate("", "", dummyMessages) should be (Some("dummy"))
-        required.validate("", "test", dummyMessages) should be (None)
+        required("", null, dummyMessages) should be (Some("dummy"))
+        required("", "", dummyMessages) should be (Some("dummy"))
+        required("", "test", dummyMessages) should be (None)
       }
 
       it("with custom message") {
         val required1 = Constraints.required("%s is required")
-        required1.validate("haha", null, dummyMessages) should be (Some("haha is required"))
+        required1("haha", null, dummyMessages) should be (Some("haha is required"))
       }
     }
 
     describe("maxlength") {
       it("simple use") {
         val maxlength = Constraints.maxlength(10)
-        maxlength.validate("", "wetyyuu", dummyMessages) should be (None)
-        maxlength.validate("", "wetyettyiiie", dummyMessages) should be (Some("dummy"))
-        maxlength.validate("", "tuewerri97", dummyMessages) should be (None)
+        maxlength("", "wetyyuu", dummyMessages) should be (None)
+        maxlength("", "wetyettyiiie", dummyMessages) should be (Some("dummy"))
+        maxlength("", "tuewerri97", dummyMessages) should be (None)
       }
 
       it("with custom message") {
         val maxlength1 = Constraints.maxlength(10, "'%s': length cannot > %d")
-        maxlength1.validate("haha", "eewryuooerjhy", dummyMessages) should be (Some("'eewryuooerjhy': length cannot > 10"))
+        maxlength1("haha", "eewryuooerjhy", dummyMessages) should be (Some("'eewryuooerjhy': length cannot > 10"))
       }
     }
 
     describe("minlength") {
       it("simple use") {
         val minlength = Constraints.minlength(3)
-        minlength.validate("", "er", dummyMessages) should be (Some("dummy"))
-        minlength.validate("", "ert6", dummyMessages) should be (None)
-        minlength.validate("", "tee", dummyMessages) should be (None)
+        minlength("", "er", dummyMessages) should be (Some("dummy"))
+        minlength("", "ert6", dummyMessages) should be (None)
+        minlength("", "tee", dummyMessages) should be (None)
       }
 
       it("with custom message") {
         val minlength1 = Constraints.minlength(3, "'%s': length cannot < %d")
-        minlength1.validate("haha", "te", dummyMessages) should be (Some("'te': length cannot < 3"))
+        minlength1("haha", "te", dummyMessages) should be (Some("'te': length cannot < 3"))
       }
     }
 
     describe("length") {
       it("simple use") {
         val length = Constraints.length(9)
-        length.validate("", "123456789", dummyMessages) should be (None)
-        length.validate("", "123", dummyMessages) should be (Some("dummy"))
-        length.validate("", "1234567890", dummyMessages) should be (Some("dummy"))
+        length("", "123456789", dummyMessages) should be (None)
+        length("", "123", dummyMessages) should be (Some("dummy"))
+        length("", "1234567890", dummyMessages) should be (Some("dummy"))
       }
 
       it("with custom message") {
         val length1 = Constraints.length(9, "'%s': length not equal to %d")
-        length1.validate("haha", "123", dummyMessages) should be (Some("'123': length not equal to 9"))
+        length1("haha", "123", dummyMessages) should be (Some("'123': length not equal to 9"))
       }
     }
 
     describe("oneOf") {
       it("simple use") {
         val oneof = Constraints.oneOf(Seq("a","b","c"))
-        oneof.validate("", "a", dummyMessages) should be (None)
-        oneof.validate("", "t", dummyMessages) should be (Some("dummy"))
-        oneof.validate("", null, dummyMessages) should be (Some("dummy"))
+        oneof("", "a", dummyMessages) should be (None)
+        oneof("", "t", dummyMessages) should be (Some("dummy"))
+        oneof("", null, dummyMessages) should be (Some("dummy"))
       }
 
       it("with custom message") {
         val oneof1 = Constraints.oneOf(Seq("a","b","c"), "'%s': is not one of %s")
-        oneof1.validate("haha", "ts", dummyMessages) should be (Some("'ts': is not one of 'a', 'b', 'c'"))
+        oneof1("haha", "ts", dummyMessages) should be (Some("'ts': is not one of 'a', 'b', 'c'"))
       }
     }
 
     describe("pattern") {
       it("simple use") {
         val pattern = Constraints.pattern("^(\\d+)$".r)
-        pattern.validate("", "1234657", dummyMessages) should be (None)
-        pattern.validate("", "32566y", dummyMessages) should be (Some("dummy"))
-        pattern.validate("", "123,567", dummyMessages) should be (Some("dummy"))
+        pattern("", "1234657", dummyMessages) should be (None)
+        pattern("", "32566y", dummyMessages) should be (Some("dummy"))
+        pattern("", "123,567", dummyMessages) should be (Some("dummy"))
       }
 
       it("with custom message") {
         val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' not match '%s'")
-        pattern1.validate("haha", "t4366", dummyMessages) should be (Some("'t4366' not match '^(\\d+)$'"))
+        pattern1("haha", "t4366", dummyMessages) should be (Some("'t4366' not match '^(\\d+)$'"))
       }
     }
 
@@ -113,7 +113,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           //        "甲斐@黒川.日本",  //Japanese Characters
           //        "чебурашка@ящик-с-апельсинами.рф"  //Cyrillic Characters
         ).map { emailAddr =>
-          email.validate("", emailAddr, dummyMessages) should be (None)
+          email("", emailAddr, dummyMessages) should be (None)
         }
       }
 
@@ -128,7 +128,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           "john..doe@example.com", //(double dot before @)
           "john.doe@example..com" //(double dot after @)
         ).map { emailAddr =>
-          email.validate("", emailAddr, dummyMessages) should be (Some(s"'$emailAddr' not valid"))
+          email("", emailAddr, dummyMessages) should be (Some(s"'$emailAddr' not valid"))
         }
       }
     }
@@ -139,29 +139,29 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
 
     describe("min") {
       it("for int, with custom message") {
-        val min = Constraints.min(5, "%s: cannot < %s")
-        min(6, dummyMessages) should be (Nil)
-        min(3, dummyMessages) should be (Seq("" -> "3: cannot < 5"))
+        val min = Constraints.min(5, "%s cannot < %s")
+        min("xx", 6, dummyMessages) should be (Nil)
+        min("xx", 3, dummyMessages) should be (Seq("" -> "xx cannot < 5"))
       }
 
       it("for double, with custom message") {
-        val min1 = Constraints.min(5.5d, "%s: cannot < %s")
-        min1(6d, dummyMessages) should be (Nil)
-        min1(3d, dummyMessages) should be (Seq("" -> "3.0: cannot < 5.5"))
+        val min1 = Constraints.min(5.5d, "%s cannot < %s")
+        min1("xx", 6d, dummyMessages) should be (Nil)
+        min1("xx", 3d, dummyMessages) should be (Seq("" -> "xx cannot < 5.5"))
       }
     }
 
     describe("max") {
       it("for int, with custom message") {
-        val max = Constraints.max(15, "%s: cannot > %s")
-        max(6, dummyMessages) should be (Nil)
-        max(23, dummyMessages) should be (Seq("" -> "23: cannot > 15"))
+        val max = Constraints.max(15, "%s cannot > %s")
+        max("xx", 6, dummyMessages) should be (Nil)
+        max("xx", 23, dummyMessages) should be (Seq("" -> "xx cannot > 15"))
       }
 
       it("for double, with custom message") {
-        val max1 = Constraints.max(35.5d, "%s: cannot > %s")
-        max1(26d, dummyMessages) should be (Nil)
-        max1(37d, dummyMessages) should be (Seq("" -> "37.0: cannot > 35.5"))
+        val max1 = Constraints.max(35.5d, "%s cannot > %s")
+        max1("xx", 26d, dummyMessages) should be (Nil)
+        max1("xx", 37d, dummyMessages) should be (Seq("" -> "xx cannot > 35.5"))
       }
     }
   }

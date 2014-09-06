@@ -5,7 +5,7 @@ import org.scalatest._
 class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints with Processors {
 
   describe("test pre-defined field mappings") {
-    val dummyMessages: Messages = (key) => "dummy"
+    val dummyMessages: Messages = (key) => "%s dummy"
 
     describe("text") {
       val text = trim pipe_: Mappings.text()
@@ -34,7 +34,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val invalidData = Map("boolean" -> "teed")
         boolean.validate("boolean", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("boolean" -> "dummy"))
+          case err => err should be (Seq("boolean" -> "boolean dummy"))
         }
       }
 
@@ -67,10 +67,11 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
       val number = (cleanComma pipe_: Mappings.number()).verifying(min(1000), max(10000))
 
       it("invalid data") {
+        val number1 = Mappings.number().label("xx")
         val invalidData = Map("number" -> "t12345")
-        number.validate("number", invalidData, dummyMessages) match {
+        number1.validate("number", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "dummy"))
+          case err => err should be (Seq("number" -> "xx dummy"))
         }
       }
 
@@ -78,7 +79,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val outScopeData = Map("number" -> "345")
         number.validate("number", outScopeData, dummyMessages) match {
           case Nil => ("out of scope - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "dummy"))
+          case err => err should be (Seq("number" -> "number dummy"))
         }
       }
 
@@ -87,7 +88,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val longNumberData = Map("number" -> "146894532240")
         number1.validate("number", longNumberData, dummyMessages) match {
           case Nil => ("long number - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "dummy"))
+          case err => err should be (Seq("number" -> "number dummy"))
         }
       }
 
@@ -104,7 +105,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         number.convert("number", nullData) should be (0)
         number.validate("number", nullData, dummyMessages) match {
           case Nil => ("(null->) 0 - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "dummy"))
+          case err => err should be (Seq("number" -> "number dummy"))
         }
       }
 
@@ -113,7 +114,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         number.convert("number", emptyData) should be (0)
         number.validate("number", emptyData, dummyMessages) match {
           case Nil => ("(empty->) 0 - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "dummy"))
+          case err => err should be (Seq("number" -> "number dummy"))
         }
       }
     }
@@ -122,10 +123,11 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
       val double = Mappings.double()
 
       it("invalid datq") {
+        val double1 = double.label("xx")
         val invalidData = Map("double" -> "tesstt")
-        double.validate("double", invalidData, dummyMessages) match {
+        double1.validate("double", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("double" -> "dummy"))
+          case err => err should be (Seq("double" -> "xx dummy"))
         }
       }
 
@@ -157,11 +159,12 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     describe("float") {
       val float = Mappings.float()
 
-      it("invalid datq") {
+      it("invalid data") {
+        val float1 = float.label("xx")
         val invalidData = Map("float" -> "tesstt")
-        float.validate("float", invalidData, dummyMessages) match {
+        float1.validate("float", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("float" -> "dummy"))
+          case err => err should be (Seq("float" -> "xx dummy"))
         }
       }
 
@@ -193,11 +196,11 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     describe("long") {
       val long = Mappings.long()
 
-      it("invalid datq") {
+      it("invalid data") {
         val invalidData = Map("long" -> "tesstt")
         long.validate("long", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("long" -> "dummy"))
+          case err => err should be (Seq("long" -> "long dummy"))
         }
       }
 
@@ -229,11 +232,11 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     describe("bigDecimal") {
       val bigDecimal = Mappings.bigDecimal()
 
-      it("invalid datq") {
+      it("invalid data") {
         val invalidData = Map("bigDecimal" -> "tesstt")
         bigDecimal.validate("bigDecimal", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("bigDecimal" -> "dummy"))
+          case err => err should be (Seq("bigDecimal" -> "bigDecimal dummy"))
         }
       }
 
@@ -269,7 +272,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val invalidData = Map("bigInt" -> "tesstt")
         bigInt.validate("bigInt", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("bigInt" -> "dummy"))
+          case err => err should be (Seq("bigInt" -> "bigInt dummy"))
         }
       }
 
@@ -303,10 +306,11 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
       val date = Mappings.date("yyyy-MM-dd").verifying(min(formatter.parse("2000-1-1")), max(formatter.parse("2015-1-1")))
 
       it("invalid data") {
+        val date1 = Mappings.date("yyyy-MM-dd").label("xx")
         val invalidData = Map("date" -> "5/3/2003")
-        date.validate("date", invalidData, dummyMessages) match {
+        date1.validate("date", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("date" -> "dummy"))
+          case err => err should be (Seq("date" -> "xx dummy"))
         }
       }
 
@@ -314,7 +318,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val outScopeData = Map("date" -> "1998-7-1")
         date.validate("date", outScopeData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("date" -> "dummy"))
+          case err => err should be (Seq("date" -> "date dummy"))
         }
       }
 

@@ -19,9 +19,9 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         "json" -> tmapping(
           "price" -> (cleanPrefix("$") pipe_: float()),
           "count" -> number().verifying(min(3), max(10))
-        ).verifying { case ((price, count), messages) =>
+        ).label("xx").verifying { case (label, (price, count), messages) =>
           if (price * count > 1000) {
-            Seq("" -> s"$price * $count = ${price * count}: too much")
+            Seq("" -> s"$label: $price * $count = ${price * count}, too much")
           } else Nil
         }
       )
@@ -45,7 +45,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       )
       binder.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
-      } should be (Seq("json" -> "337.5 * 5 = 1687.5: too much"))
+      } should be (Seq("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
 
       binder1.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
@@ -53,7 +53,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         """
           {
             "json": {
-              "_errors": ["337.5 * 5 = 1687.5: too much"]
+              "_errors": ["xx: 337.5 * 5 = 1687.5, too much"]
             }
           }
         """))

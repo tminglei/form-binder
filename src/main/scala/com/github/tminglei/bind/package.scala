@@ -5,8 +5,11 @@ package object bind {
   // (messageKey) => message
   type Messages = (String) => String
 
-  // (vObject, messages) => errors
-  type ExtraConstraint[T] = (T, Messages) => Seq[(String, String)]
+  // (label, vString, messages) => [error]
+  type Constraint = (String, String, Messages) => Option[String]
+
+  // (label, vObject, messages) => errors
+  type ExtraConstraint[T] = (String, T, Messages) => Seq[(String, String)]
 
   // (input) => output
   type PreProcessor = (String) => String

@@ -10,9 +10,9 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
     describe("group-mapping1") {
       val mapping1 = tmapping(
         "count" -> number()
-      ) verifying { (v, messages) =>
+      ).label("xx") verifying { (label, v, messages) =>
         if (v < 3) Seq("count" -> s"$v: cannot less than 3")
-        else if (v > 10) Seq("count" -> s"$v: cannot greater than 10")
+        else if (v > 10) Seq("count" -> s"$label: cannot greater than 10")
         else Nil
       }
 
@@ -28,7 +28,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("count" -> "15")
         mapping1.validate("", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("count" -> "15: cannot greater than 10"))
+          case err => err should be (Seq("count" -> "xx: cannot greater than 10"))
         }
       }
 
@@ -61,9 +61,9 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
       val mapping2 = tmapping(
         "price" -> float(),
         "count" -> number().verifying(min(3), max(10))
-      ) verifying { case ((price, count), messages) =>
+      ).label("xx") verifying { case (label, (price, count), messages) =>
         if (price * count > 1000) {
-          Seq("" -> s"$price * $count = ${price * count}: too much")
+          Seq("" -> s"$label: $price * $count = ${price * count}, too much")
         } else Nil
       }
 
@@ -87,7 +87,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("price" -> "123.5f", "count" -> "9")
         mapping2.validate("", invalidData, dummyMessages) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("" -> "123.5 * 9 = 1111.5: too much"))
+          case err => err should be (Seq("" -> "xx: 123.5 * 9 = 1111.5, too much"))
         }
       }
 

@@ -36,6 +36,8 @@ case class FormBinder[R](messages: Messages,
 
 ///
 trait Mapping[T] {
+  
+  var _label: Option[String] = None
 
   def convert(name: String, data: Map[String, String]): T
 
@@ -44,12 +46,6 @@ trait Mapping[T] {
   def verifying(validates: ExtraConstraint[T]*): Mapping[T] = new MoreCheckMapping(this, validates)
 
   def mapTo[R](transform: T => R): Mapping[R] = new TransformMapping(this, transform)
-
-}
-
-trait Constraint {
-
-  def validate(label: String, value: String, messages: Messages): Option[String]
 
 }
 
@@ -72,7 +68,7 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = {
     val result = base.validate(name, data, messages)
     if (result.isEmpty) {
-      validaterec(name, convert(name, data), validates.toList, messages)
+      validaterec(name, convert(name, data), validates.toList, messages, base._label)
     } else {
       result
     }
@@ -80,10 +76,10 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
 
   @scala.annotation.tailrec
   private def validaterec(name: String, value: T, validates: List[ExtraConstraint[T]],
-                          messages: Messages): Seq[(String, String)] = {
+                          messages: Messages, label: Option[String]): Seq[(String, String)] = {
     validates match {
-      case (validate :: rest) => validate(value, messages) match {
-        case Nil    => validaterec(name, value, rest, messages)
+      case (validate :: rest) => validate(label.getOrElse(name), value, messages) match {
+        case Nil    => validaterec(name, value, rest, messages, label)
         case errors => errors.map { case (fieldName, message) => {
           val fullName = if (name.isEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
           (fullName, message)
@@ -94,10 +90,9 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
   }
 }
 
-abstract class FieldMapping[T](constraints: Seq[Constraint],
-           var _processors: Seq[PreProcessor] = Nil, var _label: Option[String] = None) extends Mapping[T] {
+abstract class FieldMapping[T](constraints: Seq[Constraint], var _processors: Seq[PreProcessor] = Nil) extends Mapping[T] {
 
-  def pipe_:(processors: PreProcessor*): FieldMapping[T] = { _processors = (processors ++ _processors).toList; this }
+  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = { _processors = newProcessors ++ _processors; this }
 
   def label(label: String): FieldMapping[T] = { _label = Option(label); this }
 
@@ -113,10 +108,10 @@ abstract class FieldMapping[T](constraints: Seq[Constraint],
     validaterec(name, value, constraints.toList, messages, _label)
 
   @scala.annotation.tailrec
-  private def validaterec(name: String, value: String, constraints: List[Constraint],
+  private def validaterec(name: String, value: String, validates: List[Constraint],
                           messages: Messages, label: Option[String]): Seq[(String, String)] = {
-    constraints match {
-      case (x :: rest) => x.validate(label.getOrElse(name), value, messages) match {
+    validates match {
+      case (validate :: rest) => validate(label.getOrElse(name), value, messages) match {
         case Some(message) => Seq(name -> message)
         case None          => validaterec(name, value, rest, messages, label)
       }
@@ -135,7 +130,7 @@ abstract class FieldMapping[T](constraints: Seq[Constraint],
   }
 }
 
-abstract class GroupMapping[T](var _label: Option[String] = None) extends Mapping[T] {
+abstract class GroupMapping[T] extends Mapping[T] {
 
   def label(label: String): GroupMapping[T] = { _label = Option(label); this }
 

@@ -77,17 +77,17 @@ trait Mappings {
   }
 
   /** make a Constraint which will try to parse and collect errors */
-  protected def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint = new Constraint {
-    override def validate(name: String, value: String, messages: Messages): Option[String] =
+  protected def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
+    (label, value, messages) => {
       if (value != null && !value.isEmpty) {
         try {
           parse(value)
           None
         } catch {
-          case e: Exception => Some(messages(messageKey).format(name, pattern))
+          case e: Exception => Some(messages(messageKey).format(label, pattern))
         }
       } else None
-  }
+    }
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
