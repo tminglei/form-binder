@@ -7,7 +7,7 @@ trait Mappings {
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
 
   def text(constraints: Constraint*): FieldMapping[String] =
-    new FieldMapping[String](constraints, convert = (value: String) => value)
+    new FieldMapping[String](constraints, convert = identity)
 
   def boolean(constraints: Constraint*): FieldMapping[Boolean] =
     new FieldMapping[Boolean](parsing(_.toBoolean, "error.boolean") +: constraints,
@@ -63,21 +63,20 @@ trait Mappings {
     new FieldMapping[java.util.Date](parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints,
       convert = (value: String) => value match {
         case null|"" => null
-        case value   => dateFormatter.parse(value)
+        case x => dateFormatter.parse(x)
       })
   }
 
   /** make a Constraint which will try to parse and collect errors */
   protected def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
-    (label, value, messages) => {
-      if (value != null && !value.isEmpty) {
-        try {
-          parse(value)
-          None
-        } catch {
+    (label, value, messages) => value match {
+      case null|"" => None
+      case x => {
+        try { parse(x); None }
+        catch {
           case e: Exception => Some(messages(messageKey).format(label, pattern))
         }
-      } else None
+      }
     }
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
@@ -92,7 +91,7 @@ trait Mappings {
   def optional[T](base: Mapping[T]): Mapping[Option[T]] = new Mapping[Option[T]]() {
     override def convert(name: String, data: Map[String, String]): Option[T] =
       if (data.keys.find(_.startsWith(name)).isEmpty ||
-        (data.contains(name) && data.get(name).filterNot{v => (v == null || v.isEmpty)}.isEmpty)) None
+        (data.contains(name) && data.get(name).filterNot {v => (v == null || v.isEmpty)}.isEmpty)) None
       else {
         val dummyMessages: Messages = (key) => "dummy"
         base.validate(name, data, dummyMessages) match {
