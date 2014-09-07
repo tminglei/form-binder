@@ -6,6 +6,7 @@ package com.github.tminglei.bind
  */
 object simple extends Mappings with Constraints with Processors {
   type FormBinder[R] = com.github.tminglei.bind.FormBinder[R]
+  val FormBinder = com.github.tminglei.bind.FormBinder
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

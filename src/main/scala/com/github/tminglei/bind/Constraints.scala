@@ -31,9 +31,9 @@ trait Constraints {
       Some( (if (message.isEmpty) messages("error.oneOf") else message).format(value, values.map("'" + _ + "'").mkString(", ")))
     } else None
 
-  def pattern(pattern: Regex, message: String = ""): Constraint = (label, value, messages) =>
-    if (value != null && pattern.findFirstIn(value).isEmpty) {
-      Some( (if (message.isEmpty) messages("error.pattern") else message).format(value, pattern.regex))
+  def pattern(regex: Regex, message: String = ""): Constraint = (label, value, messages) =>
+    if (value != null && regex.findFirstIn(value).isEmpty) {
+      Some( (if (message.isEmpty) messages("error.pattern") else message).format(value, regex.toString))
     } else None
 
   def email(message: String = ""): Constraint = pattern(Constraints.EMAIL_REGEX, message)
