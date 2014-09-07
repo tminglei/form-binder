@@ -4,8 +4,6 @@ logLevel := Level.Warn
 // The Typesafe repository 
 resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "1.0.0-M5")
-
 // Add sbt idea plugin
 addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")
 
