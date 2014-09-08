@@ -1,9 +1,9 @@
 form-binder
 ===========
 
-`Scalatra`'s built-in data binding and validating framework is a little verbose to use, not handy as `Play!`'s. So I created `form-binder`, a general form data binding and validating framework inspired by `play-data`.
+`form-binder` is a general form data binding and validating framework inspired by `play-data`.
 
-`form-binder` was initially created for my scalatra-based project, but that doesn't mean you can't use it in other scenarios, because it didn't depend on any scalatra specific codes, and very easy to integrate with other frameworks.
+`form-binder` was initially created for my scalatra-based project, but you can use it in other scenarios, since it didn't depend on any scalatra codes, and easy to integrate with other frameworks.
 
 
 Usage
@@ -38,7 +38,7 @@ binder.bind(mappings, data) { case (id, order) =>
 }
 ```
 
-`form-binder` hasn't built-in support for `scalatra`, though it was created for a scalatra-based project. But you can  do it easily like below:
+`form-binder` **hasn't built-in support for Scalatra**, though it was created for a scalatra-based project. But you can do it youself easily like below:
 ```scala
 // firstly, create your FormBindSupport.scala
 import com.github.tminglei.bind.simple._
@@ -82,24 +82,21 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
 ```
 
 
-Principle
-----------
-TODO
+Principle & Details
+-------------------
+The core of `form-binder` is a composite mapping
+- when fed a data map, top/parent mapping will direct child mappings to start their jobs
+- child or child of child mappings will get their string value from the data map, and do the validation or convertion
+- their parent mapping will continue: return/report found errors from children; or do more data checking if necessary, then return; or make a case class or tuple, then return to its parent
+- finnaly, we got an error sequence if validation errors found, or a full case class or tuple
+- if data is valid, our consume codes will be fed an expected object, then do our jobs
 
-Details
-----------
-TODO
+_**p.s. `form-binder` will validate data firstly; if errors found, stop and report; if no errors found, then convert to result object.**_
 
-Install
-----------
-TODO
+(... to be continued)
 
-Build
-----------
-TODO
-
-Change Log
-----------
+Install & Build
+-------------------
 TODO
 
 Acknowledgements
