@@ -95,33 +95,33 @@ _**p.s. `form-binder` will validate data firstly; if errors found, stop and repo
 
 Next, I'll explain its components and details based on above **raw** usage codes:
 
-#### _bind.simple_
+### _bind.simple_
 ```scala
 import com.github.tminglei.bind.simple._
 ```
 `bind.simple` is a helper object, let us use form binder's built-in mappings/constraints/processors directly 
 
-#### Messages, BulkPreProcessor and PostErrProcessor
+### Messages, BulkPreProcessor and PostErrProcessor
 ```scala
 val binder = expandJsonData("json") pipe_: FormBinder(messages).withErr(errsToJson4s)
 ```
 It defined a form binder with Messages, BulkPreProcessor and PostErrProcessor
 
-##### Messages
+#### Messages
 `Messages` is an alias of `(String) => String`, used to provide message template to validation errors. Dev user is required to provide `Messages` implementation.
 ```scala
 // (messageKey) => message
 type Messages = (String) => String
 ```
 
-##### BulkPreProcessor
+#### BulkPreProcessor
 `BulkPreProcessor` is an alias of `(Map[String, String]) => Map[String, String]`, used to bulk pre process data map. _What I thought about are expanding a json string to series of data items, or merging existing json data to data map._
 ```scala
 // (data) => data
 type BulkPreProcessor = (Map[String, String]) => Map[String, String]
 ```
 
-##### PostErrProcessor
+#### PostErrProcessor
 `PostErrProcessor` is an alias of `(Seq[(String, String)]) => R`, used to process error sequence, _e.g. transforming errors to json value_.
 ```scala
 // (errors) => R
@@ -129,9 +129,9 @@ type PostErrProcessor[R] = (Seq[(String, String)]) => R
 ```
 
 For built-in `BulkPreProcessor` and `PostErrProcessor` implementations/details, pls see [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala#L40).  
-**Please implement yours if necessary.**
+_**Please implement yours if necessary.**_
 
-#### Mapping, PreProcessor and Constraint/ExtraConstraint
+### Mapping, PreProcessor and Constraint/ExtraConstraint
 ```scala
 val mappings = tmapping(
   "id" -> long(),
@@ -148,7 +148,7 @@ val mappings = tmapping(
 ```
 It defined a composite mapping with pre-processors and constraints.
 
-##### Mapping
+#### Mapping
 A `mapping` is a binding to series of constraints and processors/conversion. There are majorly two types of mappings: FieldMapping and GroupMapping.
 
 A **FieldMapping** corresponds to a field, a simple value; is a leaf in the composite mapping tree
@@ -169,25 +169,25 @@ Currently, `form-binder` built-in general usage mappings include:
 - map
 
 For built-in `Mapping` implementations/details, pls see [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala).  
-**Please implement yours if necessary.**
+_**Please implement yours if necessary.**_
 
-##### PreProcessor
+#### PreProcessor
 A `FieldMapping` can associate one or more `PreProcessor`, to help clean/adjust string data, e.g. cleaning '$' from '$137.5', removing ',' from '24,567'.
 
 For built-in `PreProcessor` implementations/details, pls see [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala).  
-**Please implement yours if necessary.**
+_**Please implement yours if necessary.**_
 
-##### Constraint
+#### Constraint
 A `Constraint` checks a single raw string value, to find validation errors, which are always assocated to a `FieldMapping` through its construct method.
 
-##### ExtraConstraint
+#### ExtraConstraint
 A `ExtraConstraint` checks on a converted value, to find validation errors, which are always assocated to a Mapping through its `verifying` method.
 _(NOTE: `ExtraConstraint` can be associated to both `GroupMapping` and `FieldMapping`)._
 
 For built-in `Constraint`/`ExtraConstraint` implementations/details, pls see [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala).  
-**Please implement your if necessary.**
+_**Please implement your if necessary.**_
 
-#### FormBinder and bind
+### FormBinder and bind
 ```scala
 val data = Map(
   "id" -> "133",
@@ -226,8 +226,8 @@ Then were verified and converted by mapping:
 
 For more implementation details, pls check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala).
 
-#### Others
-##### label
+### Others
+#### label
 A mapping's label can replace its full path name to be used in error messages.
 
 Without `label`, an error message formated with path name may be like this: "json is required", "json.price can't be greater then 100".
@@ -235,7 +235,7 @@ But if you associated a label at proper place, you can get messages like this: "
 
 _You can associate a mapping with its `.label(..)` method, if it support that._
 
-##### mapTo
+#### mapTo
 `Mapping.mapTo` method can transform an original result object to another.
 
 A typical use case is: you used some numbers to represent a series status, which can be applied `&` and `|` operations, and then you wrapped them with a wrapper class, since it can bring up type safe benefits.
@@ -246,7 +246,7 @@ Then you can define its validation rules and conversion logic like this:
 ```
 
 _That's all. If not understand it yet, you can try to read the source codes. It's only 700 lines or so._
-**Any problem, pls file an issue. I'll process it asap.**
+_**Any problem, pls file an issue. I'll resolve it asap.**_
 
 
 Install & Build
