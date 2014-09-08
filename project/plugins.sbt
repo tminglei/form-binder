@@ -9,3 +9,6 @@ addSbtPlugin("com.github.mpeltonen" % "sbt-idea" % "1.6.0")
 
 // Add sbt eclipse plugin
 addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.4.0")
+
+// Add sbt PGP Plugin
+addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.1")
