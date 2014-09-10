@@ -1,5 +1,7 @@
 form-binder
 ===========
+[![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
+
 
 `form-binder` is a general form data binding and validating framework inspired by `play-data`, very easy to use and hack.
 
