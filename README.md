@@ -7,6 +7,16 @@ Form-binder is a micro, `play-data`-like data binding and validating framework, 
 
 Form-binder was initially created for my scalatra-based project, but you can use it in other scenarios, since it didn't depend on scalatra codes, and easy to integrate with other frameworks.
 
+
+Features
+-------------
+- very lightweight, only ~700 lines (framework + extensions)
+- easy use, no verbose codes, and what you see is what you got
+- high customizable, you can extend almost every executing point
+- easily extensible, every extension interface is an alias of `FunctionN`
+- immutable, you can share mapping definition object safely
+
+
 Example
 -------------
 A **raw** usage case (aka. not integrated with other framework) is as below:
@@ -248,8 +258,8 @@ Then you can define its validation rules and conversion logic like this:
 "xxx" -> number(oneOf(1,2,4)).mapTo(WrapClass _)
 ```
 
-_That's all. If not understand it yet, you can try to read the source codes. It's only 700 lines or so._
-_**Any problem, pls file an issue. I'll resolve it asap.**_
+_That's all. If not very clear yet, maybe you should try to read the source codes._  
+_**Any problem, pls file me an issue. I'll resolve it ASAP.**_
 
 
 Install & Build
