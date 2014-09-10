@@ -93,6 +93,7 @@ The core of `form-binder` is a **composite mapping**,
 
 _**p.s. `form-binder` will validate data firstly; if errors found, stop and report; if no errors found, then convert to result object and execute user logics.**_
 
+.
 Next, I'll explain its components and details based on above **raw** usage codes:
 
 ### _bind.simple_
@@ -200,14 +201,14 @@ binder.bind(mappings, data) { case (id, order) =>
 It defined a mock data map, and binder bind it to the mapping, with result object consuming codes.
 
 Here the json string in the data map will be expanded by BuldPreProcessor `expandJsonData("json")` to:
-```
+```scala
 "json.name"  -> "xxxx",
 "json.email" -> "123@example.com",
 "json.price" -> "$137.5",
 "json.count" -> "5"
 ```
 Then were verified and converted by mapping:
-```
+```scala
   "json" -> mapping(
     "name"  -> text(maxlength(100)),
     "email" -> text(email()),
@@ -217,7 +218,7 @@ Then were verified and converted by mapping:
 ```
 
 `binder.bind` accepts mapping and data map as its first part parameters, and `consume: T => R2` as its second part parameter; if no errors found, `consume` method as below will be executed:
-```
+```scala
 { case (id, order) =>
   //do something ...
 }
@@ -264,15 +265,15 @@ Or, in `maven` project, you add `form-binder` to your `pom.xml` like this:
 </dependency>
 ```
 
-To hack it or make your contribution, you can setup it like this:
-```shell
+To hack it and make your contribution, you can setup it like this:
+```bash
 tminglei@tt500 ~/repos $ git clone https://github.com/tminglei/form-binder.git
 tminglei@tt500 ~/repos $ cd form-binder
 tminglei@tt500 ~/repos/form-binder $ sbt
 ...
 ```
 To run the tests, pls execute:
-```
+```bash
 tminglei@tt500 ~/repos/form-binder $ sbt test
 ```
 
