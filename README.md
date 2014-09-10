@@ -3,13 +3,12 @@ form-binder
 [![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
 
 
-`form-binder` is a general form data binding and validating framework inspired by `play-data`, very easy to use and hack.
+Form-binder is a micro, `play-data`-like data binding and validating framework, very easy to use and hack.
 
-`form-binder` was initially created for my scalatra-based project, but you can use it in other scenarios, since it didn't depend on scalatra codes, and easy to integrate with other frameworks.
+Form-binder was initially created for my scalatra-based project, but you can use it in other scenarios, since it didn't depend on scalatra codes, and easy to integrate with other frameworks.
 
-
-Usage
-------
+Example
+-------------
 A **raw** usage case (aka. not integrated with other framework) is as below:
 ```scala
 import com.github.tminglei.bind.simple._
@@ -40,7 +39,8 @@ binder.bind(mappings, data) { case (id, order) =>
 }
 ```
 
-`form-binder` **hasn't built-in support for Scalatra**, though it was created for a scalatra-based project. But you can do it youself easily like below:
+#### Integrate with `scalatra`
+**Form-binder hasn't built-in support for Scalatra**, though it was created for a scalatra-based project. But you can do it youself easily like below:
 ```scala
 // firstly, create your FormBindSupport.scala
 import com.github.tminglei.bind.simple._
@@ -86,14 +86,14 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
 
 Principle & Details
 -------------------
-The core of `form-binder` is a **composite mapping**,
+The core of form-binder is a **composite mapping**,
 - when fed a data map, top/parent mapping will direct child mappings to start their jobs
 - child or child of child mappings will get their string value from the data map, and do the validation or convertion
 - their parent mapping will continue: return/report found errors from children; or do more data checking if necessary, then return; or make a case class or tuple, then return to its parent
 - finnaly, we got an error sequence if validation errors found, or a full case class or tuple
 - if data is valid, our consume codes will be fed an expected object, then do our jobs
 
-_**p.s. `form-binder` will validate data firstly; if errors found, stop and report; if no errors found, then convert to result object and execute user logics.**_
+_**p.s. form-binder will validate data firstly; if errors found, stop and report; if no errors found, then convert to result object and execute user logics.**_  
 
 .  
 Next, I'll explain its components and details based on above **raw** usage codes:
@@ -157,13 +157,13 @@ A `mapping` is a binding to series of constraints and processors/conversion. The
 A **FieldMapping** corresponds to a field, a simple value; is a leaf in the composite mapping tree
 A **GroupMapping** corresponds to a group, be made of series of name-mapping pairs; is a branch/trunk in the composite mapping tree
 
-`form-binder` built-in defined `text`, `boolean`, `number`, `long`, `double`, `date` and so on for `FieldMapping`; defined group mappings for 1~22 members, both case class and tuple can be used as result types.
+Form-binder built-in defined `text`, `boolean`, `number`, `long`, `double`, `date` and so on for `FieldMapping`; defined group mappings for 1~22 members, both case class and tuple can be used as result types.
 
 > Use `mapping` if result type is a case class, the codes will be like: `mapping(...)(Order.apply)`  
 > Use `tmapping` if result type is a tuple, the codes will be like: `tmapping(...)`
 
-In fact, there is third type of mappings: **general usage mappings**.
-Currently, `form-binder` built-in general usage mappings include:
+In fact, there is the third type of mappings: **general usage mappings**.  
+Currently, form-binder built-in general usage mappings include:
 - ignored
 - optional
 - default
@@ -254,29 +254,21 @@ _**Any problem, pls file an issue. I'll resolve it asap.**_
 
 Install & Build
 -------------------
-To use `form-bind` in `sbt` managed project, add the following to your project file:
+The latest version of form-binder is `0.3.0`, and is published to [Maven Central](http://search.maven.org/):
 ```scala
 libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.3.0"
-```
-Or, in `maven` project, you add `form-binder` to your `pom.xml` like this:
-```
-<dependency>
-    <groupId>com.github.tminglei</groupId>
-    <artifactId>form-binder_2.11</artifactId>
-    <version>0.3.0</version>
-</dependency>
 ```
 
 To hack it and make your contribution, you can setup it like this:
 ```bash
-tminglei@tt500 ~/repos $ git clone https://github.com/tminglei/form-binder.git
-tminglei@tt500 ~/repos $ cd form-binder
-tminglei@tt500 ~/repos/form-binder $ sbt
+ $ git clone https://github.com/tminglei/form-binder.git
+ $ cd form-binder
+ $ sbt
 ...
 ```
 To run the tests, pls execute:
 ```bash
-tminglei@tt500 ~/repos/form-binder $ sbt test
+ $ sbt test
 ```
 
 Acknowledgements
@@ -285,7 +277,7 @@ Firstly, I want to thank `Play!` development team. Except them, I also want to s
 - [Naoki Takezoe](https://github.com/takezoe) and his [scalatra-forms](https://github.com/takezoe/scalatra-forms), which provide a simplified/improved `play-data` implementation for scalatra, and many useful requirement points;
 - [Cody Allen](https://github.com/ceedubs) and his [scrutinator](https://github.com/ceedubs/scrutinator), which showed to me an elegant `shapeless` and `ScalaCheck` usage, and data binding definition and swagger param declaration merging.
 
-**I got much from your works. Thank you all very much!**
+**I got many from your works. Thank you all very much!**
 
 License
 ---------
