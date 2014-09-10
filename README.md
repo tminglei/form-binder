@@ -95,7 +95,7 @@ The core of `form-binder` is a **composite mapping**,
 
 _**p.s. `form-binder` will validate data firstly; if errors found, stop and report; if no errors found, then convert to result object and execute user logics.**_
 
-.
+.  
 Next, I'll explain its components and details based on above **raw** usage codes:
 
 ### _bind.simple_
