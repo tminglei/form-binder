@@ -36,24 +36,32 @@ case class FormBinder[R](messages: Messages,
 }
 
 ///
+case class Options(
+  label: Option[String] = None,
+  deepCheck: Option[Boolean] = None,
+  ignoreEmpty: Option[Boolean] = None
+ ) {
+  def label(label: String): Options = copy(label = Option(label))
+  def deepCheck(check: Boolean): Options = copy(deepCheck = Some(check))
+  def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
+}
+
 trait Mapping[T] {
-  
-  def label: Option[String] = None
+  def options: Options
+  def options(setting: Options => Options): Mapping[T]
 
   def convert(name: String, data: Map[String, String]): T
-
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)]
-
   def verifying(validates: ExtraConstraint[T]*): Mapping[T] = new MoreCheckMapping(this, validates)
-
   def mapTo[R](transform: T => R): Mapping[R] = new TransformMapping(this, transform)
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////
 
 private
 class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mapping[R] {
+  def options = base.options
+  def options(setting: Options => Options) = { base.options(setting); this }
 
   def convert(name: String, data: Map[String, String]): R = transform(base.convert(name, data))
 
@@ -63,13 +71,15 @@ class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mappin
 
 private
 class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) extends Mapping[T] {
+  def options = base.options
+  def options(setting: Options => Options) = { base.options(setting); this }
 
   def convert(name: String, data: Map[String, String]): T = base.convert(name, data)
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = {
     val result = base.validate(name, data, messages)
     if (result.isEmpty) {
-      validaterec(name, convert(name, data), validates.toList, messages, base.label)
+      validaterec(name, convert(name, data), validates.toList, messages, base.options.label)
     } else {
       result
     }
@@ -92,20 +102,21 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
 }
 
 case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, processors: Seq[PreProcessor] = Nil,
-              override val label: Option[String] = None) extends Mapping[T] {
+                           options: Options = Options.apply()) extends Mapping[T] {
 
-  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = this.copy(processors = newProcessors ++ processors)
+  def options(setting: Options => Options): FieldMapping[T] = copy(options = setting(options))
+  def label(label: String): FieldMapping[T] = options(_.label(label))
 
-  def label(label: String): FieldMapping[T] = this.copy(label = Option(label))
+  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = copy(processors = newProcessors ++ processors)
 
   def convert(name: String, data: Map[String, String]): T =
     convert(processrec(data.get(name).orNull, processors.toList))
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
-    validaterec(name, processrec(data.get(name).orNull, processors.toList), constraints.toList, messages, label)
+    validaterec(name, processrec(data.get(name).orNull, processors.toList), constraints.toList, messages, options.label)
 
   def validate(name: String, value: String, messages: Messages): Seq[(String, String)] =
-    validaterec(name, value, constraints.toList, messages, label)
+    validaterec(name, value, constraints.toList, messages, options.label)
 
   @scala.annotation.tailrec
   private def validaterec(name: String, value: String, validates: List[Constraint],
@@ -129,15 +140,16 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
 }
 
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
-              override val label: Option[String] = None) extends Mapping[T] {
+                           options: Options = Options.apply()) extends Mapping[T] {
 
-  def label(label: String): GroupMapping[T] = this.copy(label = Option(label))
+  def options(setting: Options => Options): GroupMapping[T] = copy(options = setting(options))
+  def label(label: String): GroupMapping[T] = options(_.label(label))
 
   def convert(name: String, data: Map[String, String]): T = convert0(name, data)
 
   def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
     if (data.keys.find(_.startsWith(name)).isEmpty || data.contains(name)) {
-      Seq(name -> messages("error.object").format(label.getOrElse(name)))
+      Seq(name -> messages("error.object").format(options.label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
