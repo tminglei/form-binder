@@ -45,7 +45,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       )
       binder.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
-      } should be (Seq("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
+      } should be (Map("json" -> List("xx: 337.5 * 5 = 1687.5, too much")))
 
       binder1.bind(mappings, data1) { case (id, (price, count)) =>
         ("invalid - shouldn't occur!") should be ("")
