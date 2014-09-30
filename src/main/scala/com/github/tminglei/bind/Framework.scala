@@ -51,14 +51,17 @@ case class FormBinder[R](messages: Messages,
 case class Options(
   label: Option[String] = None,
   eagerCheck: Option[Boolean] = None,
-  ignoreEmpty: Option[Boolean] = None
+  ignoreEmpty: Option[Boolean] = None,
+  touched: Seq[String] = Nil
  ) {
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
+  def touched(touched: Seq[String]): Options = copy(touched = touched)
 
   def merge(parent: Options): Options = copy(
     eagerCheck  = eagerCheck.orElse(parent.eagerCheck),
-    ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty))
+    ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
+    touched = parent.touched)
 }
 
 trait Mapping[T] {
@@ -93,7 +96,7 @@ class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) 
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = base.options.merge(parentOptions)
-    if (theOptions.ignoreEmpty.getOrElse(false)
+    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
       && (data.keys.find(_.startsWith(name)).isEmpty ||
         (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true)))) Nil
     else {
@@ -134,7 +137,7 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    if (theOptions.ignoreEmpty.getOrElse(false)
+    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
       && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true)) Nil
     else {
       val value = processrec(data.get(name).orNull, processors.toList)
@@ -144,7 +147,7 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
 
   def validate(name: String, value: String, messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    if (theOptions.ignoreEmpty.getOrElse(false)
+    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
       && (value == null || value.isEmpty)) Nil
     else validaterec(name, value, constraints.toList, messages, theOptions)
   }
@@ -179,7 +182,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
     if (data.keys.find(_.startsWith(name)).isEmpty || data.contains(name)) {
-      if (theOptions.ignoreEmpty.getOrElse(false)) Nil
+      if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty) Nil
       else Seq(name -> messages("error.object").format(theOptions.label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>
