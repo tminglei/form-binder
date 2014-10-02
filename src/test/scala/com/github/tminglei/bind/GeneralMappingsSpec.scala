@@ -2,7 +2,7 @@ package com.github.tminglei.bind
 
 import org.scalatest._
 
-class GeneralMappingsSpec extends FunSpec with ShouldMatchers {
+class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
   case class TestBean(id: Long, name: String, desc: Option[String] = None)
 
@@ -617,6 +617,46 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers {
             value.validate("test.101", emptyData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "test.101 missing or not valid"))
             map.convert("test", emptyData) should be (Map())
           }
+          case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("w/ options") {
+
+      it("not allow to set options") {
+        try {
+          Mappings.list(Mappings.long()).options(_.eagerCheck(true))
+          ("invalid - shouldn't occur!") should be ("")
+        } catch {
+          case e: Throwable => e.isInstanceOf[NotImplementedError] should be (true)
+        }
+      }
+
+      it("pass thru options") {
+        val base = Mappings.mapping(
+          "id" -> Mappings.long(required("%s is required")).label("id"),
+          "name" -> Mappings.text(),
+          "desc" -> Mappings.optional(Mappings.text())
+        )(TestBean.apply)
+        val list = Mappings.list(base)
+
+        val data = Map(
+          "test[0].id" -> "",
+          "test[0].name" -> "test",
+          "test[0].desc" -> "",
+          "test[1].id" -> "137",
+          "test[1].name" -> "test1",
+          "test[1].desc" -> "tt"
+        )
+
+        list.validate("test", data, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err.toList should be (List("test[0].id" -> "id is required"))
+        }
+        list.validate("test", data, dummyMessages, Options().ignoreEmpty(true)) match {
+          case Nil => list.convert("test", data) should be (
+            List(TestBean(0, "test"), TestBean(137, "test1", Some("tt"))))
           case err => err should be (Nil)
         }
       }

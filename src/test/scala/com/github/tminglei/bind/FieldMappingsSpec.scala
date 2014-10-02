@@ -25,6 +25,144 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
           case err => err should be (Nil)
         }
       }
+
+      it("w/ eager check") {
+        val text1 = Mappings.text(maxlength(20, "%s: length > %s"), email("%s: invalid email"))
+          .options(_.eagerCheck(true))
+        val data = Map("text" -> "etttt.att#example-1111111.com")
+        text1.validate("text", data, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq(
+            "text" -> "etttt.att#example-1111111.com: length > 20",
+            "text" -> "etttt.att#example-1111111.com: invalid email"))
+        }
+      }
+
+      it("w/ ignore empty") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required"))
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required"))
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => text.convert("text", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("w/ ignore empty and touched") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required"))
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required"))
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply(touched = List("text"))) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+      }
+
+      it("w/ eager check thru verifying") {
+        val text1 = Mappings.text(maxlength(20, "%s: length > %s"), email("%s: invalid email")).verifying()
+          .options(_.eagerCheck(true))
+        val data = Map("text" -> "etttt.att#example-1111111.com")
+        text1.validate("text", data, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq(
+            "text" -> "etttt.att#example-1111111.com: length > 20",
+            "text" -> "etttt.att#example-1111111.com: invalid email"))
+        }
+      }
+
+      it("w/ ignore empty thru verifying") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required")).verifying()
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required")).verifying()
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => text.convert("text", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("w/ ignore empty and touched thru verifying") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required")).verifying()
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required")).verifying()
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply(touched = List("text"))) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+      }
+
+      it("w/ eager check + transform (mapTo)") {
+        val text1 = Mappings.text(maxlength(20, "%s: length > %s"), email("invalid email")).mapTo(identity)
+          .options(_.eagerCheck(true))
+        val data = Map("text" -> "etttt.att#example-1111111.com")
+        text1.validate("text", data, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq(
+            "text" -> "etttt.att#example-1111111.com: length > 20",
+            "text" -> "invalid email"))
+        }
+      }
+
+      it("w/ ignore empty + transform (mapTo)") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required")).mapTo(identity)
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required")).mapTo(identity)
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => text.convert("text", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("w/ ignore empty and touched + transform (mapTo)") {
+        val nullData = Map[String, String]()
+
+        val text1 = Mappings.text(required("%s is required")).mapTo(identity)
+        text1.validate("text", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+
+        val text2 = Mappings.text(required("%s is required")).mapTo(identity)
+          .options(_.ignoreEmpty(true))
+        text2.validate("text", nullData, dummyMessages, Options.apply(touched = List("text"))) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("text" -> "text is required"))
+        }
+      }
     }
 
     describe("boolean") {

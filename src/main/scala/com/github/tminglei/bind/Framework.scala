@@ -20,7 +20,7 @@ case class FormBinder[R](messages: Messages,
 
   def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
     val data1 = processrec(data, preProcessors.toList)
-    mapping.validate("", data1, messages, Options.apply()) match {
+    mapping.validate("", data1, messages, mapping.options) match {
       case Nil  => consume(mapping.convert("", data1))
       case errs => errProcessor.getOrElse(defaultErrProcessor).apply(errs)
     }
@@ -59,6 +59,7 @@ case class Options(
   def touched(touched: Seq[String]): Options = copy(touched = touched)
 
   def merge(parent: Options): Options = copy(
+    label = label.orElse(parent.label),
     eagerCheck  = eagerCheck.orElse(parent.eagerCheck),
     ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
     touched = parent.touched)
@@ -77,9 +78,9 @@ trait Mapping[T] {
 /////////////////////////////////////////////////////////////////////////////////
 
 private
-class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mapping[R] {
+case class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mapping[R] {
   override def options = base.options
-  override def options(setting: Options => Options) = { base.options(setting); this }
+  override def options(setting: Options => Options) = copy(base = base.options(setting))
 
   def convert(name: String, data: Map[String, String]): R = transform(base.convert(name, data))
 
@@ -88,24 +89,21 @@ class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mappin
 }
 
 private
-class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) extends Mapping[T] {
+case class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) extends Mapping[T] {
   override def options = base.options
-  override def options(setting: Options => Options) = { base.options(setting); this }
+  override def options(setting: Options => Options) = copy(base = base.options(setting))
 
   def convert(name: String, data: Map[String, String]): T = base.convert(name, data)
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = base.options.merge(parentOptions)
-    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
-      && (data.keys.find(_.startsWith(name)).isEmpty ||
-        (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true)))) Nil
-    else {
-      val result = base.validate(name, data, messages, theOptions)
-      if (result.isEmpty) {
-        validaterec(name, convert(name, data), validates.toList, messages, theOptions)
-      } else {
-        result
-      }
+    val result = base.validate(name, data, messages, theOptions)
+    if (result.isEmpty) {
+      Option(convert(name, data)).map {
+        case value => validaterec(name, value, validates.toList, messages, theOptions)
+      }.getOrElse(Nil)
+    } else {
+      result
     }
   }
 
@@ -138,7 +136,7 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
-      && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true)) Nil
+      && data.get(name).map {v => (v == null || v.isEmpty)}.getOrElse(true)) Nil
     else {
       val value = processrec(data.get(name).orNull, processors.toList)
       validaterec(name, value, constraints.toList, messages, theOptions)
@@ -187,7 +185,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
-        binding.validate(fullName, data, messages, theOptions)
+        binding.validate(fullName, data, messages, theOptions.copy(label = Some(fieldName)))
       }.flatten
     }
   }
