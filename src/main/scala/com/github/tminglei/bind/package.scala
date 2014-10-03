@@ -17,6 +17,9 @@ package object bind {
   // (data) => data
   type BulkPreProcessor = (Map[String, String]) => Map[String, String]
 
+  // (data) => touched list
+  type TouchedExtractor = (Map[String, String]) => Seq[String]
+
   // (errors) => R
   type PostErrProcessor[R] = (Seq[(String, String)]) => R
 

@@ -99,6 +99,10 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         } should be (Map(
           "json.email" -> List("etttt.att#example-1111111.com: length > 20", "etttt.att#example-1111111.com: invalid email")
         ))
+        ///
+        binder.validate(mappings.options(_.eagerCheck(true)), invalidData) should be (Map(
+          "json.email" -> List("etttt.att#example-1111111.com: length > 20", "etttt.att#example-1111111.com: invalid email")
+        ))
       }
 
       it("w/ ignore empty") {
@@ -130,10 +134,13 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "json.email" -> List("email is required")
         ))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true).touched(List("json.email"))),
+        binder.bind(mappings.options(_.ignoreEmpty(true).copy(touched = List("json.email"))),
             invalidData) { case (id, (email, price, count)) =>
           ("invalid - shouldn't occur!") should be ("")
         } should be (Map("json.email" -> List("email is required")))
+        ///
+        binder.validate(mappings.options(_.ignoreEmpty(true)), invalidData,
+          touched = Some(List("json.email"))) should be (Map("json.email" -> List("email is required")))
       }
     }
   }

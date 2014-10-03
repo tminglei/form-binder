@@ -13,10 +13,12 @@ object simple extends Mappings with Constraints with Processors {
 
 case class FormBinder[R](messages: Messages,
                    preProcessors: Seq[BulkPreProcessor] = Nil,
+                   touchExtractor: Option[TouchedExtractor] = None,
                    errProcessor: Option[PostErrProcessor[R]] = None) {
 
-  def pipe_:(newProcessors: BulkPreProcessor*) = this.copy(preProcessors = newProcessors ++ preProcessors)
-  def withErr[R1](errProcessor: PostErrProcessor[R1]) = this.copy(errProcessor = Some(errProcessor))
+  def pipe_:(newProcessors: BulkPreProcessor*) = copy(preProcessors = newProcessors ++ preProcessors)
+  def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
+  def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
   def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
     val data1 = processrec(data, preProcessors.toList)
@@ -26,9 +28,10 @@ case class FormBinder[R](messages: Messages,
     }
   }
 
-  def validate[T](mapping: Mapping[T], data: Map[String, String]) = {
+  def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None) = {
     val data1 = processrec(data, preProcessors.toList)
-    val errs  = mapping.validate("", data1, messages, Options.apply())
+    val touched1 = touched.orElse(touchExtractor.map(_.apply(data))).getOrElse(Nil)
+    val errs  = mapping.validate("", data1, messages, mapping.options.copy(touched = touched1))
     errProcessor.getOrElse(defaultErrProcessor).apply(errs)
   }
 
@@ -56,7 +59,6 @@ case class Options(
  ) {
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
-  def touched(touched: Seq[String]): Options = copy(touched = touched)
 
   def merge(parent: Options): Options = copy(
     label = label.orElse(parent.label),
