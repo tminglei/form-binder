@@ -83,7 +83,7 @@ trait Mappings {
 
   def ignored[T](instead: T): Mapping[T] = new Mapping[T]() {
     override def convert(name: String, data: Map[String, String]): T = instead
-    override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = Nil
+    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = Nil
   }
 
   def default[T](base: Mapping[T], value: T): Mapping[T] = optional(base).mapTo(_.getOrElse(value))
@@ -91,15 +91,15 @@ trait Mappings {
   def optional[T](base: Mapping[T]): Mapping[Option[T]] = new Mapping[Option[T]]() {
     override def convert(name: String, data: Map[String, String]): Option[T] =
       if (data.keys.find(_.startsWith(name)).isEmpty ||
-        (data.contains(name) && data.get(name).filterNot {v => (v == null || v.isEmpty)}.isEmpty)) None
+        (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
       else {
         val dummyMessages: Messages = (key) => "dummy"
-        base.validate(name, data, dummyMessages) match {
+        base.validate(name, data, dummyMessages, Options.apply()) match {
           case Nil => Option(base.convert(name, data))
           case _   => None
         }
       }
-    override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] = Nil
+    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = Nil
   }
 
   def list[T](base: Mapping[T]): Mapping[List[T]] = seq(base).mapTo(_.toList)
@@ -110,9 +110,9 @@ trait Mappings {
         base.convert(name + "[" + i + "]", data)
       }
 
-    override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
+    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
       indexes(name, data).map { i =>
-        base.validate(name + "[" + i + "]", data, messages)
+        base.validate(name + "[" + i + "]", data, messages, parentOptions)
       }.flatten
 
     /** Computes the available indexes for the given key in this set of data. */
@@ -131,12 +131,12 @@ trait Mappings {
         (keyBinding.convert(pureKey), valueBinding.convert(name + "." + key, data))
       }
 
-    override def validate(name: String, data: Map[String, String], messages: Messages): Seq[(String, String)] =
+    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
       keys(name, data).map { key =>
         val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-        keyBinding.validate(name + "." + key, pureKey, messages).map {
+        keyBinding.validate(name + "." + key, pureKey, messages, parentOptions).map {
           case (name, err) => (name, "key: " + err)
-        } ++ valueBinding.validate(name + "." + key, data, messages)
+        } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
       }.flatten
 
     /** Computes the available keys for the given prefix in this set of data. */
