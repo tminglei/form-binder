@@ -37,7 +37,12 @@ trait Processors {
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
-  //////////////////////////////////////  pre-defined bulk pre-processors  ////////////////////////////
+  ////////////////////////////////////// pre-defined bulk pre-processors ////////////////////////////
+
+  def changePrefix(srcPrefix: String, destPrefix: String): BulkPreProcessor =
+    (data: Map[String, String]) => data.map {
+        case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+      }
 
   def mergeJson4sData(json: JValue, destPrefix: String = "json"): BulkPreProcessor =
     (data: Map[String, String]) => {
@@ -72,6 +77,36 @@ trait Processors {
     case JInt(value) => Map(prefix -> value.toString)
     case JString(value) => Map(prefix -> value.toString)
   }
+
+  ////////////////////////////////////// pre-defined touch list extractor //////////////////////////
+
+  def mergeJson4sTouched(json: JValue, destPrefix: String = "json"): TouchedExtractor =
+    (data: Map[String, String]) => {
+      touchedMapToSeq(mappedJsonData(destPrefix, json))
+    }
+
+  def expandJsonTouched(sourceKey: String, destPrefix: String): TouchedExtractor =
+    (data: Map[String, String]) => {
+      if (data.get(sourceKey).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
+        val json = JsonMethods.parse(data(sourceKey))
+        touchedMapToSeq(mappedJsonData(destPrefix, json))
+      } else Nil
+    }
+
+  def extractTouched(srcPrefix: String, destPrefix: String): TouchedExtractor =
+    (data: Map[String, String]) => {
+      val touched = data.filter {
+          case (key, value) => key.startsWith(srcPrefix)
+        }.map {
+          case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+        }
+      touchedMapToSeq(touched)
+    }
+
+  private def touchedMapToSeq(touched: Map[String, String]): Seq[String] =
+    touched.filter {
+      case (key, value) => java.lang.Boolean.valueOf(value)
+    }.keys.toSeq
 
   ////////////////////////////////////// pre-defined post err-processors ////////////////////////////
   import scala.collection.mutable.HashMap

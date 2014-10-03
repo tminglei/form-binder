@@ -138,7 +138,7 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
-      && data.get(name).map {v => (v == null || v.isEmpty)}.getOrElse(true)) Nil
+      && data.get(name).filterNot {v => (v == null || v.isEmpty)}.isEmpty) Nil
     else {
       val value = processrec(data.get(name).orNull, processors.toList)
       validaterec(name, value, constraints.toList, messages, theOptions)

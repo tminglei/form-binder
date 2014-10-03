@@ -65,6 +65,29 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
 
   describe("test pre-defined bulk pre-processors") {
 
+    describe("changePrefix") {
+
+      it("simple") {
+        val changePrefix = Processors.changePrefix("json", "data")
+        val data = Map(
+          "aa" -> "wett",
+          "json.id" -> "123",
+          "json.name" -> "tewd",
+          "json.dr-1[0]" -> "33",
+          "json.dr-1[1]" -> "45"
+        )
+        val expected = Map(
+          "aa" -> "wett",
+          "data.id" -> "123",
+          "data.name" -> "tewd",
+          "data.dr-1[0]" -> "33",
+          "data.dr-1[1]" -> "45"
+        )
+
+        changePrefix(data) should be (expected)
+      }
+    }
+
     describe("expandJsonData") {
 
       it("simple") {
@@ -114,6 +137,33 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
 
         expandJsonData(data) should be (expected)
       }
+    }
+  }
+
+  describe("test pre-defined touched list extractors") {
+
+    describe("expandJsonTouched") {
+
+      it("simple") {
+        val expandJsonTouched = Processors.expandJsonTouched("touched", "data")
+        val touched = Map("touched" -> """{"email":true, "price":false}""")
+        val expected = List("data.email")
+
+        expandJsonTouched(touched).toList should be (expected)
+      }
+    }
+
+    describe("extractTouched") {
+      val extractTouched = Processors.extractTouched("json.touched", "data")
+      val data = Map(
+        "aa" -> "wett",
+        "json.touched.id" -> "true",
+        "json.touched.name" -> "true",
+        "json.touched.email" -> "false"
+      )
+      val expected = List("data.id", "data.name")
+
+      extractTouched(data).toList should be (expected)
     }
   }
 

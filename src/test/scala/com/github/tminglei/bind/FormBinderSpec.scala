@@ -142,6 +142,31 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         binder.validate(mappings.options(_.ignoreEmpty(true)), invalidData,
           touched = Some(List("json.email"))) should be (Map("json.email" -> List("email is required")))
       }
+
+      it("w/ ignore empty and touched (+)") {
+        val binder1 = expandJsonData("body", Some("json")) pipe_: FormBinder(messages).withTouched(expandJsonTouched("touched", "json"))
+        val invalidData = Map(
+          "id" -> "133",
+          "body" -> """{"email":null, "price":337.5, "count":5}""",
+          "touched" -> """{"email":true, "price":false}"""
+        )
+
+        binder1.validate(mappings.options(_.ignoreEmpty(true)),
+          invalidData) should be (Map("json.email" -> List("email is required")))
+      }
+
+      it("w/ ignore empty and touched (combined)") {
+        val expand = expandJsonData("body", Some("json"))
+        val binder1 = expand pipe_: changePrefix("json.data", "json") pipe_: FormBinder(messages)
+          .withTouched((data) => extractTouched("json.touched", "json").apply(expand(data)))
+        val invalidData = Map(
+          "id" -> "133",
+          "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": {"email":true, "price":false}}"""
+        )
+
+        binder1.validate(mappings.options(_.ignoreEmpty(true)),
+          invalidData) should be (Map("json.email" -> List("email is required")))
+      }
     }
   }
 }
