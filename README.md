@@ -17,11 +17,11 @@ Features
 - immutable, you can share mapping definition object safely
 
 
-Usage & desc
+Usage & Desc
 -------------
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
-#### Major components:  
+#### Major Components:  
 [1] **binder**: facade, two major methods: `bind`, `validate`  
 [2] **messages**: `(String) => String`, *(messageKey) => message*  
 [3] **mapping**: used to validate/convert data  
@@ -40,7 +40,7 @@ binder **validate**, _validate only_ and not consume converted data, method sign
 def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None)
 ```
 
-#### Extention points:  
+#### Extension Points:  
 (1) **BulkPreProcessor**: `(Map[String, String]) => Map[String, String]`, *data => data*  
 (2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
 (3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
@@ -48,7 +48,7 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 (5) **Constraint**: `(String, String, Messages) => Option[String]`, *(label, vString, messages) => [error]*  
 (6) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
 
-#### Options and others:  
+#### Options & Others:  
 1) **label**: `feature`, readable name for current group/field  
 2) **mapTo**: `feature`, map converted value to another type  
 3) **eagerCheck**: `option`, check errors as more as possiable  
@@ -58,7 +58,7 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 _* By default, form-binder would return when encountered a validation error._  
 _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values_
 
-For more `form-binder` details, pls check the [codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [tests](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind).  
+For `form-binder` more details, pls check the [codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [tests](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind).  
 For `form-binder`/`Scalatra` integration, pls see [here](https://github.com/tminglei/form-binder/tree/master/integrations/scalatra).  
 
 
