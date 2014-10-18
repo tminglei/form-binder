@@ -22,7 +22,7 @@ Usage & Description
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
 > **Principle**  
-> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate and convert/construct the result object._
+> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate/convert and construct the result object._
 
 #### Major Components:  
 [1] **binder**: facade, two major methods: `bind`, `validate`  
