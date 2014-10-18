@@ -23,7 +23,7 @@ Usage & Desc
 
 #### Major Components:  
 [1] **binder**: facade, two major methods: `bind`, `validate`  
-[2] **messages**: `(String) => String`, *(messageKey) => message*  
+[2] **messages**: `(String) => Option[String]`, *(messageKey) => [message]*  
 [3] **mapping**: used to validate/convert data  
 [4] **data**: `Map[String, String]`  
 
@@ -51,9 +51,10 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 #### Options & Others:  
 1) **label**: `feature`, readable name for current group/field  
 2) **mapTo**: `feature`, map converted value to another type  
-3) **eagerCheck**: `option`, check errors as more as possiable  
-4) **ignoreEmpty**: `option`, not check empty field/values  
-5) **touched**: `parameter`, a name list, which were touched by user  
+3) **i18n**: `option`, for label, if i18n on, the label value can be used as a key to fetch a i18n value from `messages`   
+4) **eagerCheck**: `option`, check errors as more as possible  
+5) **ignoreEmpty**: `option`, not check empty field/values  
+6) **touched**: `parameter`, a name list, which were touched by user  
 
 _* By default, form-binder would return when encountered a validation error._  
 _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values_

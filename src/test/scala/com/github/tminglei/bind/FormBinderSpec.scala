@@ -167,6 +167,20 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         binder1.validate(mappings.options(_.ignoreEmpty(true)),
           invalidData) should be (Map("json.email" -> List("email is required")))
       }
+
+      it("w/ i18n and label") {
+        val messages1 = (key: String) => if (key == "xx") Some("haha") else Some("dummy")
+        val binder1 = expandJsonData("body", Some("json")) pipe_: FormBinder(messages1)
+
+        val invalidData = Map(
+          "id" -> "133",
+          "body" -> """{"email":"example@123.com", "price":337.5, "count":5}"""
+        )
+
+        binder1.bind(mappings.options(_.i18n(true)), invalidData) { case (id, (email, price, count)) =>
+          ("invalid - shouldn't occur!") should be ("")
+        } should be (Map("json" -> List("haha: 337.5 * 5 = 1687.5, too much")))
+      }
     }
   }
 }
