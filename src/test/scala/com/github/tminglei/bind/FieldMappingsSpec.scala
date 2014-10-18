@@ -1,5 +1,7 @@
 package com.github.tminglei.bind
 
+import java.util.UUID
+
 import org.scalatest._
 
 class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints with Processors {
@@ -406,7 +408,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     describe("bigInt") {
       val bigInt = Mappings.bigInt()
 
-      it("invalid datq") {
+      it("invalid data") {
         val invalidData = Map("bigInt" -> "tesstt")
         bigInt.validate("bigInt", invalidData, dummyMessages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
@@ -434,6 +436,43 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val emptyData = Map("bigInt" -> "")
         bigInt.validate("bigInt", emptyData, dummyMessages, Options.apply()) match {
           case Nil => bigInt.convert("bigInt", emptyData) should be (BigInt("0"))
+          case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("uuid") {
+      val uuid = Mappings.uuid()
+
+      it("invalid data") {
+        val invalidData = Map("uuid" -> "tesstt")
+        uuid.validate("uuid", invalidData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("uuid" -> "uuid dummy"))
+        }
+      }
+
+      it("valid data") {
+        val uuidObj = UUID.randomUUID()
+        val validData = Map("uuid" -> uuidObj.toString)
+        uuid.validate("uuid", validData, dummyMessages, Options.apply()) match {
+          case Nil => uuid.convert("uuid", validData) should be (uuidObj)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val nullData = Map[String, String]()
+        uuid.validate("uuid", nullData, dummyMessages, Options.apply()) match {
+          case Nil => uuid.convert("uuid", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data") {
+        val emptyData = Map("uuid" -> "")
+        uuid.validate("uuid", emptyData, dummyMessages, Options.apply()) match {
+          case Nil => uuid.convert("uuid", emptyData) should be (null)
           case err => err should be (Nil)
         }
       }

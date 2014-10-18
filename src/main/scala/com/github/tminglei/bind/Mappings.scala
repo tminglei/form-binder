@@ -1,5 +1,6 @@
 package com.github.tminglei.bind
 
+import java.util.UUID
 import java.util.regex.Pattern
 
 trait Mappings {
@@ -56,6 +57,13 @@ trait Mappings {
       convert = (value: String) => value match {
         case null|"" => 0l
         case x => BigInt(x)
+      })
+
+  def uuid(constraints: Constraint*): FieldMapping[UUID] =
+    new FieldMapping[UUID](parsing(UUID.fromString, "error.uuid") +: constraints,
+      convert = (value: String) => value match {
+        case null|"" => null
+        case x => UUID.fromString(x)
       })
 
   def date(pattern: String, constraints: Constraint*): FieldMapping[java.util.Date] = {
