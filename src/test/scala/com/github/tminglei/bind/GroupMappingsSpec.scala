@@ -5,7 +5,7 @@ import org.scalatest._
 class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with Constraints {
 
   describe("test pre-defined group mappings") {
-    val dummyMessages: Messages = (key) => "dummy"
+    val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("group-mapping1") {
       val mapping1 = tmapping(

@@ -74,7 +74,7 @@ trait Mappings {
       case x => {
         try { parse(x); None }
         catch {
-          case e: Exception => Some(messages(messageKey).format(label, pattern))
+          case e: Exception => Some(messages(messageKey).get.format(label, pattern))
         }
       }
     }
@@ -93,7 +93,7 @@ trait Mappings {
       if (data.keys.find(_.startsWith(name)).isEmpty ||
         (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
       else {
-        val dummyMessages: Messages = (key) => "dummy"
+        val dummyMessages: Messages = (key) => Some("dummy")
         base.validate(name, data, dummyMessages, Options.apply()) match {
           case Nil => Option(base.convert(name, data))
           case _   => None

@@ -5,7 +5,7 @@ import org.scalatest._
 class ConstraintsSpec extends FunSpec with ShouldMatchers {
 
   describe("test pre-defined constraints") {
-    val dummyMessages: Messages = (key) => "dummy"
+    val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("required") {
       it("simple use") {
@@ -135,7 +135,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
   }
 
   describe("test pre-defined extra constraints") {
-    val dummyMessages: Messages = (key) => "dummy"
+    val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("min") {
       it("for int, with custom message") {

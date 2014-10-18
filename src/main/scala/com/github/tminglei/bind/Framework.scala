@@ -183,7 +183,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
     val theOptions = options.merge(parentOptions)
     if (data.keys.find(_.startsWith(name)).isEmpty || data.contains(name)) {
       if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty) Nil
-      else Seq(name -> messages("error.object").format(theOptions.label.getOrElse(name)))
+      else Seq(name -> messages("error.object").get.format(theOptions.label.getOrElse(name)))
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName

@@ -7,7 +7,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
   import com.github.tminglei.bind.simple._
 
   describe("show and check form binder") {
-    val messages = (key: String) => "dummy"
+    val messages = (key: String) => Some("dummy")
 
     describe("usage cases") {
       val binder = expandJsonData("body", Some("json")) pipe_: FormBinder(messages)

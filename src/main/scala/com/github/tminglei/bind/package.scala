@@ -2,8 +2,8 @@ package com.github.tminglei
 
 package object bind {
 
-  // (messageKey) => message
-  type Messages = (String) => String
+  // (messageKey) => [message]
+  type Messages = (String) => Option[String]
 
   // (label, vString, messages) => [error]
   type Constraint = (String, String, Messages) => Option[String]

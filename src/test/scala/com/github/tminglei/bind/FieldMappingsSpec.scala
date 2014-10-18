@@ -5,7 +5,7 @@ import org.scalatest._
 class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints with Processors {
 
   describe("test pre-defined field mappings") {
-    val dummyMessages: Messages = (key) => "%s dummy"
+    val dummyMessages: Messages = (key) => Some("%s dummy")
 
     describe("text") {
       val text = trim pipe_: Mappings.text()

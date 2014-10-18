@@ -7,7 +7,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
   case class TestBean(id: Long, name: String, desc: Option[String] = None)
 
   describe("test pre-defined general usage mappings") {
-    val dummyMessages: Messages = (key) => "dummy"
+    val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("ignored-simple") {
       val ignored = Mappings.ignored(35)
@@ -302,8 +302,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("optional-compound") {
       val dummyMessages1: Messages = (key: String) => {
-        if (key == "error.object") "%s missing or not valid"
-        else "dummy"
+        if (key == "error.object") Some("%s missing or not valid")
+        else Some("dummy")
       }
 
       val base = Mappings.mapping(
@@ -380,8 +380,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("default-compound") {
       val dummyMessages1: Messages = (key: String) => {
-        if (key == "error.object") "%s missing or not valid"
-        else "dummy"
+        if (key == "error.object") Some("%s missing or not valid")
+        else Some("dummy")
       }
 
       val base = Mappings.mapping(
@@ -459,8 +459,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("list-compound") {
       val dummyMessages1: Messages = (key: String) => {
-        if (key == "error.object") "%s missing or not valid"
-        else "dummy"
+        if (key == "error.object") Some("%s missing or not valid")
+        else Some("dummy")
       }
 
       val base = Mappings.mapping(
@@ -541,8 +541,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("map-compound") {
       val dummyMessages1: Messages = (key: String) => {
-        if (key == "error.object") "%s missing or not valid"
-        else "dummy"
+        if (key == "error.object") Some("%s missing or not valid")
+        else Some("dummy")
       }
 
       val key = Mappings.number()
