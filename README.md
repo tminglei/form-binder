@@ -5,7 +5,7 @@ form-binder
 
 Form-binder is a micro, `play-data`-like data binding and validating framework, easy to use and hack.
 
-> _* Form-binder was initially created for my scalatra-based project, but it can be easily integrated/used with other frameworks. In fact, it didn't have built-in support for `Scalatra`; I just made an example for it. :)_
+> _Form-binder was initially created for my scalatra-based project, but it can be easily integrated/used with other frameworks. In fact, it didn't have built-in support for `Scalatra`; I just made an example for it. :)_
 
 
 Features
@@ -22,7 +22,7 @@ Usage & Description
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
 > **Principle**  
-> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate/convert and construct the result object._
+> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate/convert data and construct the result object._
 
 #### Major Components:  
 [1] **binder**: facade, two major methods: `bind`, `validate`  
