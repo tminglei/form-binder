@@ -101,38 +101,40 @@ object FrameworkUtils {
   }
   
   // convert map tree to json4s JValue
-  def mapTreeToJson4s(tree: HashMap[String, Any], useBigDecimalForDouble: Boolean = false): JValue = JObject(tree.map {
-    case (name, str: String) => JField(name, valueToJson4s(str, useBigDecimalForDouble))
-    case (name, obj: HashMap[String, Any]) => {
-      val mJValue =
-        if (name.endsWith(ARRAY_POSTFIX)) {
-          JArray(obj.toList.sortBy(_._1.toInt).map {
-            case (_, value) => valueToJson4s(value, useBigDecimalForDouble)
-          })
-        } else mapTreeToJson4s(obj)
+  def mapTreeToJson4s(tree: HashMap[String, Any], useBigDecimalForDouble: Boolean = false): JValue =
+    JObject(tree.map {
+      case (name, str: String) => JField(name, valueToJson4s(str, useBigDecimalForDouble))
+      case (name, obj: HashMap[String, Any]) => {
+        val name1 = name.replaceFirst(Pattern.quote(ARRAY_POSTFIX) +"$", "")
+        val mJValue =
+          if (name.endsWith(ARRAY_POSTFIX)) {
+            JArray(obj.toList.sortBy(_._1.toInt).map {
+              case (_, value) => valueToJson4s(value, useBigDecimalForDouble)
+            })
+          } else mapTreeToJson4s(obj, useBigDecimalForDouble)
 
-      JField(name, mJValue)
-    }
-    case (name, arr: List[String]) => JField(name, JArray(arr.map(JString(_))))
-    case (name, any) => sys.error(s"unsupported tuple ($name, $any)")
-  }.toSeq: _*)
+        JField(name1, mJValue)
+      }
+      case (name, any) => sys.error(s"unsupported tuple ($name, $any)")
+    }.toSeq: _*)
 
   // convert simple string to json4s JValue
   val INT_VALUE    = "^[-+]?\\d+$".r
   val DOUBLE_VALUE = "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$".r
   val BOOL_VALUE   = "^true$|^false$".r
-  def valueToJson4s(value: Any, useBigDecimalForDouble: Boolean = false): JValue = value match {
-    case str: String => str match {
-      case INT_VALUE()  => JInt(str.toInt)
-      case DOUBLE_VALUE() => if (useBigDecimalForDouble)
-        JDecimal(BigDecimal(str)) else JDouble(str.toDouble)
-      case BOOL_VALUE() => JBool(str.toBoolean)
-      case _ => JString(str)
+  def valueToJson4s(value: Any, useBigDecimalForDouble: Boolean = false): JValue =
+    value match {
+      case str: String => str match {
+        case INT_VALUE()  => JInt(str.toInt)
+        case DOUBLE_VALUE() => if (useBigDecimalForDouble)
+          JDecimal(BigDecimal(str)) else JDouble(str.toDouble)
+        case BOOL_VALUE() => JBool(str.toBoolean)
+        case _ => JString(str)
+      }
+      case map: HashMap[String, Any] => mapTreeToJson4s(map, useBigDecimalForDouble)
+      case null  => JNull
+      case _     => sys.error(s"unsupported value/type: $value")
     }
-    case map: HashMap[String, Any] => mapTreeToJson4s(map, useBigDecimalForDouble)
-    case null  => JNull
-    case _     => sys.error(s"unsupported value/type: $value")
-  }
 
   // Find a workObject from map tree workList; create one if not exist
   val ARRAY_POSTFIX = "_$array"
@@ -141,7 +143,7 @@ object FrameworkUtils {
     workList.get(name1) match {
       case Some(mapObj) => mapObj.asInstanceOf[HashMap[String, Any]]
       case None => {
-        val (parent, self, isArray1) = splitName(name)
+        val (parent, self, isArray1) = splitName(name1)
         val parentObj = workObject(workList, parent, isArray1)
         val theObj = HashMap[String, Any]()
         parentObj += (self -> theObj)

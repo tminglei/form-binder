@@ -59,26 +59,6 @@ trait Processors {
       } else data
     }
 
-//  private def mappedJsonData(prefix: String, json: JValue): Map[String, String] = json match {
-//    case JObject(fields) => {
-//      fields.map { case (key, value) =>
-//        mappedJsonData(Option(prefix).filterNot(_.isEmpty).map(_ + ".").getOrElse("") + key, value)
-//      }.foldLeft(Map.empty[String, String])(_ ++ _)
-//    }
-//    case JArray(values) => {
-//      values.zipWithIndex.map { case (value, i) =>
-//        mappedJsonData(prefix + "[" + i + "]", value)
-//      }.foldLeft(Map.empty[String, String])(_ ++ _)
-//    }
-//    case JNull => Map.empty
-//    case JNothing => Map.empty
-//    case JBool(value) => Map(prefix -> value.toString)
-//    case JDouble(value) => Map(prefix -> value.toString)
-//    case JDecimal(value) => Map(prefix -> value.toString)
-//    case JInt(value) => Map(prefix -> value.toString)
-//    case JString(value) => Map(prefix -> value.toString)
-//  }
-
   ////////////////////////////////////// pre-defined touch list extractor //////////////////////////
 
   def mergeJson4sTouched(json: JValue, destPrefix: String = "json"): TouchedExtractor =
@@ -114,53 +94,18 @@ trait Processors {
 
   def errsToJson4s(useBigDecimalForDouble: Boolean = false): PostErrProcessor[JValue] =
     (errs: Seq[(String, String)]) => {
-//      def treeMapToJson(tree: HashMap[String, Any]): JValue = JObject(tree.map {
-//        case (name, obj: HashMap[String, Any]) => JField(name, treeMapToJson(obj))
-//        case (name, arr: List[String]) => JField(name, JArray(arr.map(JString(_))))
-//        case (name, any) => sys.error(s"unsupported tuple ($name, $any)")
-//      }.toSeq: _*)
-      ///
       val root = HashMap[String, Any]()
       val workList = HashMap[String, Any]("" -> root)
+      var index = 0
       errs.map { case (name, err) =>
-        val name1 = name + "._errors"
-        val workObj = workObject(workList, name1, false)
-        workObj += (workObj.size.toString -> err)
+        index += 1
+        val name1 = name.replaceAll("\\[", ".").replaceAll("\\]", "") //convert array format to object format
+        val (parent, self, isArray) = splitName(name1 + "._errors[" + index + "]")
+        val workObj = workObject(workList, parent, isArray)
+        workObj += (self -> err)
       }
       mapTreeToJson4s(root, useBigDecimalForDouble)
     }
-
-//  protected def errsToTreeMap(errs: Seq[(String, String)]): HashMap[String, Any] = {
-//    def workObject(workList: HashMap[String, Any], name: String): HashMap[String, Any] =
-//      workList.get(name) match {
-//        case Some(mapObj) => mapObj.asInstanceOf[HashMap[String, Any]]
-//        case None => {
-//          val (parent, self) = splitNames(name)
-//          val parentObj = workObject(workList, parent)
-//          val theObj = HashMap[String, Any]()
-//          parentObj += (self -> theObj)
-//          workList  += (name -> theObj)
-//          theObj
-//        }
-//      }
-//
-//    val root = HashMap[String, Any]()
-//    val workList = HashMap[String, Any]("" -> root)
-//    errs.map { case (name, err) =>
-//      val workObj = workObject(workList, name)
-//      if (workObj.get("_errors").isEmpty) workObj += ("_errors" -> Nil)
-//      workObj("_errors") = workObj("_errors").asInstanceOf[List[String]] :+ err
-//    }
-//    root
-//  }
-
-//  private val OBJECT_ELEMENT = "^(.*)\\.([^\\.]*)$".r
-//  private val ARRAY_ELEMENT  = "^(.*)\\[([^\\.\\]]*)\\]$".r
-//  private def splitNames(name: String): (String, String) = name match {
-//    case ARRAY_ELEMENT (name, index)  => (name, index)
-//    case OBJECT_ELEMENT(parent, name) => (parent, name)
-//    case _                            => ("", name)
-//  }
 }
 
 object Processors extends Processors
