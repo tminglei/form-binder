@@ -9,7 +9,7 @@ object simple extends Mappings with Constraints with Processors {
   val  FormBinder = com.github.tminglei.bind.FormBinder
 }
 
-import BindUtils._
+import FrameworkUtils._
 // the Facade class
 case class FormBinder[R](messages: Messages,
                    preProcessors: Seq[BulkPreProcessor] = Nil,
@@ -164,53 +164,4 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
       }.flatten
     }
   }
-}
-
-/// ++++++++++++++++++++++++++ internal used util methods +++++++++++++++++++++++++++++
-object BindUtils {
-  @scala.annotation.tailrec
-  private[bind] def bulkProcessRec(data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
-    processors match {
-      case (process :: rest) => bulkProcessRec(process(data), rest)
-      case _ => data
-    }
-
-  @scala.annotation.tailrec
-  private[bind] def processRec(value: String, processors: List[PreProcessor]): String =
-    processors match {
-      case (process :: rest) => processRec(process(value), rest)
-      case _                 => value
-    }
-
-  private[bind] def validateRec(name: String, value: String, validates: List[Constraint],
-                        messages: Messages, options: Options): Seq[(String, String)] =
-    validates match {
-      case (validate :: rest) => validate(getLabel(messages, name, options), value, messages) match {
-        case Some(message) => Seq(name -> message) ++ (if (options.eagerCheck.getOrElse(false))
-          validateRec(name, value, rest, messages, options) else Nil)
-        case None          => validateRec(name, value, rest, messages, options)
-      }
-      case _ => Nil
-    }
-
-  private[bind] def extraValidateRec[T](name: String, value: T, validates: List[ExtraConstraint[T]],
-                         messages: Messages, options: Options): Seq[(String, String)] =
-    validates match {
-      case (validate :: rest) => validate(getLabel(messages, name, options), value, messages) match {
-        case Nil    => extraValidateRec(name, value, rest, messages, options)
-        case errors => errors.map { case (fieldName, message) => {
-          val fullName = if (name.isEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
-          (fullName, message)
-        }} ++ (if (options.eagerCheck.getOrElse(false))
-          extraValidateRec(name, value, rest, messages, options) else Nil)
-      }
-      case _ => Nil
-    }
-
-  // i18n on: use i18n label, if exists; else use label; else use default
-  // i18n off: use label; else use default
-  private[bind] def getLabel(messages: Messages, default: String, options: Options): String =
-    if (options.i18n.getOrElse(false)) {
-      options.label.flatMap(messages(_).orElse(options.label)).getOrElse(default)
-    } else options.label.getOrElse(default)
 }

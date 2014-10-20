@@ -1,7 +1,7 @@
 package com.github.tminglei.bind
 
 import java.util.UUID
-import java.util.regex.Pattern
+import FrameworkUtils._
 
 trait Mappings {
 
@@ -75,18 +75,6 @@ trait Mappings {
       })
   }
 
-  /** make a Constraint which will try to parse and collect errors */
-  protected def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
-    (label, value, messages) => value match {
-      case null|"" => None
-      case x => {
-        try { parse(x); None }
-        catch {
-          case e: Exception => Some(messages(messageKey).get.format(label, pattern))
-        }
-      }
-    }
-
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
   def ignored[T](instead: T): Mapping[T] = new Mapping[T]() {
@@ -122,12 +110,6 @@ trait Mappings {
       indexes(name, data).map { i =>
         base.validate(name + "[" + i + "]", data, messages, parentOptions)
       }.flatten
-
-    /** Computes the available indexes for the given key in this set of data. */
-    private def indexes(key: String, data: Map[String, String]): Seq[Int] = {
-      val KeyPattern = ("^" + Pattern.quote(key) + """\[(\d+)\].*$""").r
-      data.toSeq.collect { case (KeyPattern(index), _) => index.toInt }.sorted.distinct
-    }
   }
 
   def map[V](valueBinding: Mapping[V]): Mapping[Map[String, V]] = map(text(), valueBinding)
@@ -146,12 +128,6 @@ trait Mappings {
           case (name, err) => (name, "key: " + err)
         } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
       }.flatten
-
-    /** Computes the available keys for the given prefix in this set of data. */
-    private def keys(prefix: String, data: Map[String, String]): Seq[String] = {
-      val KeyPattern = ("^" + Pattern.quote(prefix) + """\.("?[^."]+"?).*$""").r
-      data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
-    }
   }
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////

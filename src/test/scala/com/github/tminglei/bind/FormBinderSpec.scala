@@ -52,7 +52,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "id" -> "133",
           "body" -> """{"price":337.5, "count":5}"""
         )
-        binder.withErr(errsToJson4s)
+        binder.withErr(errsToJson4s())
           .bind(mappings, invalidData) { case (id, (price, count)) =>
           ("invalid - shouldn't occur!") should be("")
         } should be(JsonMethods.parse(

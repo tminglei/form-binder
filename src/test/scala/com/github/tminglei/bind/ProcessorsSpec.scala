@@ -211,7 +211,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
             }
           """)
 
-        Processors.errsToJson4s(errs) should be (expected)
+        Processors.errsToJson4s()(errs) should be (expected)
       }
     }
   }
