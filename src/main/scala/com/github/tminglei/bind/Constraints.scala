@@ -37,6 +37,11 @@ trait Constraints {
       Some( (if (message.isEmpty) messages("error.pattern") else Some(message)).get.format(value, regex.toString))
     } else None
 
+  def patternNot(regex: Regex, message: String = ""): Constraint = (label, value, messages) =>
+    if (value != null && regex.findFirstIn(value).isDefined) {
+      Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
+    } else None
+
   def email(message: String = ""): Constraint = pattern(Constraints.EMAIL_REGEX, message)
 
   //////////////////////////////////////////  pre-defined extra constraints  ////////////////////////////////

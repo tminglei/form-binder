@@ -89,8 +89,7 @@ trait Mappings {
       if (data.keys.find(_.startsWith(name)).isEmpty ||
         (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
       else {
-        val dummyMessages: Messages = (key) => Some("dummy")
-        base.validate(name, data, dummyMessages, Options.apply()) match {
+        base.validate(name, data, (key) => Some("dummy"), Options.apply()) match {
           case Nil => Option(base.convert(name, data))
           case _   => None
         }
@@ -125,7 +124,7 @@ trait Mappings {
       keys(name, data).map { key =>
         val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
         keyBinding.validate(name + "." + key, pureKey, messages, parentOptions).map {
-          case (name, err) => (name, "key: " + err)
+          case (name, err) => (name, "name: " + err)
         } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
       }.flatten
   }
