@@ -91,6 +91,19 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
       }
     }
 
+    describe("patternNot") {
+      it("simple use") {
+        val pattern = Constraints.patternNot(""".*\[(\d*[^\d\[\]]+\d*)+\].*""".r)
+        pattern("", "eree.[1234657].eee", dummyMessages) should be (None)
+        pattern("", "errr.[32566y].ereee", dummyMessages) should be (Some("dummy"))
+      }
+
+      it("with custom message") {
+        val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' contains illegal array index")
+        pattern1("haha", "ewtr.[t4366].eweee", dummyMessages) should be (Some("'ewtr.[t4366].eweee' contains illegal array index"))
+      }
+    }
+
     /**
      * test cases copied from:
      * http://en.wikipedia.org/wiki/Email_address

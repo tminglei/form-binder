@@ -8,6 +8,7 @@ import org.json4s._
  * Framework internal used util methods (!!!NOTE: be careful if using it externally)
  */
 object FrameworkUtils {
+
   @scala.annotation.tailrec
   def bulkProcessRec(data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
     processors match {
