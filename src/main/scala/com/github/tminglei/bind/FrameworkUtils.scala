@@ -8,6 +8,8 @@ import org.json4s._
  * Framework internal used util methods (!!!NOTE: be careful if using it externally)
  */
 object FrameworkUtils {
+  /** copied from Play! form/mapping */
+  val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
 
   @scala.annotation.tailrec
   def bulkProcessRec(data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
@@ -48,6 +50,20 @@ object FrameworkUtils {
       case _ => Nil
     }
 
+  //////////////////////////// normal processing related //////////////////////////////
+
+  def isEmpty(value: Any): Boolean = value match {
+    case str: String => str.isEmpty
+    case seq: Seq[_] => seq.isEmpty
+    case map: Map[_, _] => map.isEmpty
+    case json: JValue => json match {
+      case JNull|JNothing => true
+      case _  => false
+    }
+    case null => true
+    case _  => throw new IllegalArgumentException(s"Unsupported value type: $value")
+  }
+
   // i18n on: use i18n label, if exists; else use label; else use default
   // i18n off: use label; else use default
   def getLabel(messages: Messages, default: String, options: Options): String =
@@ -79,7 +95,7 @@ object FrameworkUtils {
     data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
   }
   
-  /////////////////////////// json processing related //////////////////////////
+  /////////////////////////// json processing related /////////////////////////////////
   
   def json4sToMapData(prefix: String, json: JValue): Map[String, String] = json match {
     case JObject(fields) => {
@@ -120,9 +136,9 @@ object FrameworkUtils {
     }.toSeq: _*)
 
   // convert simple string to json4s JValue
-  val INT_VALUE    = "^[-+]?\\d+$".r
-  val DOUBLE_VALUE = "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$".r
-  val BOOL_VALUE   = "^true$|^false$".r
+  private val INT_VALUE    = "^[-+]?\\d+$".r
+  private val DOUBLE_VALUE = "^[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?$".r
+  private val BOOL_VALUE   = "^true$|^false$".r
   def valueToJson4s(value: Any, useBigDecimalForDouble: Boolean = false): JValue =
     value match {
       case str: String => str match {
@@ -138,7 +154,7 @@ object FrameworkUtils {
     }
 
   // Find a workObject from map tree workList; create one if not exist
-  val ARRAY_POSTFIX = "_$array"
+  private val ARRAY_POSTFIX = "_$array"
   def workObject(workList: HashMap[String, Any], name: String, isArray: Boolean): HashMap[String, Any] = {
     val name1 = if (isArray) name + ARRAY_POSTFIX else name
     workList.get(name1) match {
@@ -155,8 +171,8 @@ object FrameworkUtils {
   }
 
   // split a dot separated path name to parent part and self part, with indicating whether it's an array path
-  val OBJECT_ELEM_NAME = "^(.*)\\.([^\\.]*)$".r
-  val ARRAY_ELEM_NAME  = "^(.*)\\[([^\\.\\]]*)\\]$".r
+  private val OBJECT_ELEM_NAME = "^(.*)\\.([^\\.]*)$".r
+  private val ARRAY_ELEM_NAME  = "^(.*)\\[([^\\.\\]]*)\\]$".r
   def splitName(name: String): (String, String, Boolean) = name match {
     case ARRAY_ELEM_NAME (name, index)  => (name, index, true)
     case OBJECT_ELEM_NAME(parent, name) => (parent, name, false)

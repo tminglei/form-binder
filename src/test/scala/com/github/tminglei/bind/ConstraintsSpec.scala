@@ -1,5 +1,7 @@
 package com.github.tminglei.bind
 
+import org.json4s.{JValue, JNothing, JNull}
+import org.json4s.jackson.JsonMethods
 import org.scalatest._
 
 class ConstraintsSpec extends FunSpec with ShouldMatchers {
@@ -149,6 +151,40 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
 
   describe("test pre-defined extra constraints") {
     val dummyMessages: Messages = (key) => Some("dummy")
+
+    describe("notEmpty") {
+      it("for seq, with custom message") {
+        val notEmpty = Constraints.notEmpty[List[Int]](message = "%s is required")
+        notEmpty("xx", List(1), dummyMessages) should be (Nil)
+        notEmpty("xx", Nil, dummyMessages) should be (Seq("" -> "xx is required"))
+      }
+
+      it("for map, with custom message") {
+        val notEmpty = Constraints.notEmpty[Map[String,Int]](message = "%s is required")
+        notEmpty("xx", Map("aa" -> 1), dummyMessages) should be (Nil)
+        notEmpty("xx", Map(), dummyMessages) should be (Seq("" -> "xx is required"))
+      }
+
+      it("for json, with custom message") {
+        val notEmpty = Constraints.notEmpty[JValue](message = "%s is required")
+        notEmpty("xx", JsonMethods.parse("{}"), dummyMessages) should be (Nil)
+        notEmpty("xx", JNull, dummyMessages) should be (Seq("" -> "xx is required"))
+        notEmpty("xx", JNothing, dummyMessages) should be (Seq("" -> "xx is required"))
+      }
+
+      it("for string, with custom message") {
+        val notEmpty = Constraints.notEmpty[String](message = "%s is required")
+        notEmpty("xx", "sere", dummyMessages) should be (Nil)
+        notEmpty("xx", "", dummyMessages) should be (Seq("" -> "xx is required"))
+        notEmpty("xx", null, dummyMessages) should be (Seq("" -> "xx is required"))
+      }
+
+      it("for seq, with custom isEmpty") {
+        val notEmpty = Constraints.notEmpty[List[Int]](_.isEmpty)
+        notEmpty("xx", List(1), dummyMessages) should be (Nil)
+        notEmpty("xx", Nil, dummyMessages) should be (Seq("" -> "dummy"))
+      }
+    }
 
     describe("min") {
       it("for int, with custom message") {

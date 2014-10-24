@@ -42,9 +42,17 @@ trait Constraints {
       Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
     } else None
 
-  def email(message: String = ""): Constraint = pattern(Constraints.EMAIL_REGEX, message)
+  def email(message: String = ""): Constraint = pattern(FrameworkUtils.EMAIL_REGEX, message)
 
   //////////////////////////////////////////  pre-defined extra constraints  ////////////////////////////////
+
+  def notEmpty[T](isEmpty: (T) => Boolean = null, message: String = ""): ExtraConstraint[T] =
+    (label, value, messages) => {
+      val _isEmpty = if (isEmpty != null) isEmpty else FrameworkUtils.isEmpty(_)
+      if (_isEmpty(value)) {
+        Seq("" -> (if (message.isEmpty) messages("error.required") else Some(message)).get.format(label))
+      } else Nil
+    }
 
   def min[T: Ordering](minVal: T, message: String = ""): ExtraConstraint[T] = (label, value, messages) => {
     val ord = Ordering[T]; import ord._
@@ -61,7 +69,4 @@ trait Constraints {
   }
 }
 
-object Constraints extends Constraints {
-  /** copied from Play! form/mapping */
-  val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
-}
+object Constraints extends Constraints
