@@ -14,8 +14,8 @@ package object bind {
   // (input) => output
   type PreProcessor = (String) => String
 
-  // (data) => data
-  type BulkPreProcessor = (Map[String, String]) => Map[String, String]
+  // (prefix, data) => data
+  type BulkPreProcessor = (String, Map[String, String]) => Map[String, String]
 
   // (data) => touched list
   type TouchedExtractor = (Map[String, String]) => Seq[String]

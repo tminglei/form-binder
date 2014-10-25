@@ -41,21 +41,22 @@ trait Processors {
   ////////////////////////////////////// pre-defined bulk pre-processors ////////////////////////////
 
   def changePrefix(srcPrefix: String, destPrefix: String): BulkPreProcessor =
-    (data: Map[String, String]) => data.map {
+    (prefix: String, data: Map[String, String]) => data.map {
         case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
       }
 
   def mergeJson4sData(json: JValue, destPrefix: String = "json"): BulkPreProcessor =
-    (data: Map[String, String]) => {
+    (prefix: String, data: Map[String, String]) => {
       (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
-  def expandJsonData(sourceKey: String, destPrefix: Option[String] = None): BulkPreProcessor =
-    (data: Map[String, String]) => {
-      if (data.get(sourceKey).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
-        val prefix = destPrefix.getOrElse(sourceKey)
-        val json = JsonMethods.parse(data(sourceKey))
-        (data - prefix) ++ json4sToMapData(prefix, json)
+  def expandJson(sourceKey: Option[String] = None, destPrefix: Option[String] = None): BulkPreProcessor =
+    (prefix: String, data: Map[String, String]) => {
+      val sourceKey1 = sourceKey.getOrElse(prefix)
+      if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
+        val destPrefix1 = destPrefix.getOrElse(sourceKey1)
+        val json = JsonMethods.parse(data(sourceKey1))
+        (data - destPrefix1) ++ json4sToMapData(destPrefix1, json)
       } else data
     }
 

@@ -11,10 +11,11 @@ object FrameworkUtils {
   /** copied from Play! form/mapping */
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
 
+  //////////////////////////////////////////////////////////////////////////////////
   @scala.annotation.tailrec
-  def bulkProcessRec(data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
+  def bulkProcessRec(prefix: String, data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
     processors match {
-      case (process :: rest) => bulkProcessRec(process(data), rest)
+      case (process :: rest) => bulkProcessRec(prefix, process(prefix, data), rest)
       case _ => data
     }
 

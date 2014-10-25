@@ -84,14 +84,14 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "data.dr-1[1]" -> "45"
         )
 
-        changePrefix(data) should be (expected)
+        changePrefix("", data) should be (expected)
       }
     }
 
     describe("expandJsonData") {
 
       it("simple") {
-        val expandJsonData = Processors.expandJsonData("json")
+        val expandJsonData = Processors.expandJson(Some("json"))
         val data = Map(
           "aa" -> "wett",
           "json" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
@@ -104,24 +104,24 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "json.dr-1[1]" -> "45"
         )
 
-        expandJsonData(data) should be (expected)
+        expandJsonData("", data) should be (expected)
       }
 
       it("null or empty") {
-        val expandJsonData = Processors.expandJsonData("json")
+        val expandJsonData = Processors.expandJson(Some("json"))
 
         val nullData = Map("aa" -> "wett")
-        expandJsonData(nullData) should be (nullData)
+        expandJsonData("", nullData) should be (nullData)
 
         val nullData1 = Map("aa" -> "wett", "json" -> null)
-        expandJsonData(nullData1) should be (nullData1)
+        expandJsonData("", nullData1) should be (nullData1)
 
         val emptyData1 = Map("aa" -> "wett", "json" -> "")
-        expandJsonData(emptyData1) should be (emptyData1)
+        expandJsonData("", emptyData1) should be (emptyData1)
       }
 
       it("with dest prefix") {
-        val expandJsonData = Processors.expandJsonData("body", Some("json"))
+        val expandJsonData = Processors.expandJson(Some("body"), Some("json"))
         val data = Map(
           "aa" -> "wett",
           "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
@@ -135,7 +135,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "json.dr-1[1]" -> "45"
         )
 
-        expandJsonData(data) should be (expected)
+        expandJsonData("", data) should be (expected)
       }
     }
   }
