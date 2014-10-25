@@ -18,7 +18,7 @@ trait MyFormBindSupport extends I18nSupport { this: ScalatraBase =>
   }
 
   def binder(implicit request: HttpServletRequest) =
-    expandJsonData("json") pipe_: FormBinder(bindMessages.get).withErr(errsToJson4s)
+    expandJsonData("json") >>: FormBinder(bindMessages.get).withErr(errsToJson4s)
 
   ///
   private def bindMessages(implicit request: HttpServletRequest): Messages = if (request == null) {

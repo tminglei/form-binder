@@ -16,7 +16,7 @@ case class FormBinder[R](messages: Messages,
                    touchExtractor: Option[TouchedExtractor] = None,
                    errProcessor: Option[PostErrProcessor[R]] = None) {
 
-  def pipe_:(newProcessors: BulkPreProcessor*) = copy(preProcessors = newProcessors ++ preProcessors)
+  def >>:(newProcessors: BulkPreProcessor*) = copy(preProcessors = newProcessors ++ preProcessors)
   def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
   def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
@@ -134,7 +134,7 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def label(label: String) = copy(options = options.copy(label = Option(label)))
-  def pipe_:(newProcessors: PreProcessor*) = copy(processors = newProcessors ++ processors)
+  def >>:(newProcessors: PreProcessor*) = copy(processors = newProcessors ++ processors)
 
   def convert(name: String, data: Map[String, String]): T =
     convert(processRec(data.get(name).orNull, processors.toList))
