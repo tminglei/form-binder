@@ -145,7 +145,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("list-simple") {
       val base = Mappings.number()
-      val list = Mappings.list(base)
+      val list = Mappings.list(base).label("xx").verifying(Constraints.notEmpty())
 
       it("invalid data") {
         val invalidData = Map("number[0]" -> "t122345", "number[1]" -> "t11345")
@@ -173,18 +173,15 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        list.validate("number", nullData, dummyMessages, Options.apply()) match {
-          case Nil => {
-            base.validate("number[0]", nullData, dummyMessages, Options.apply()) should be (Nil)
-            list.convert("number", nullData) should be (Nil)
-          }
-          case err => err should be (Nil)
+        list.validate("number", nullData, (key) => Some("%s is required"), Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err.toList should be (List("number" -> "xx is required"))
         }
       }
 
       it("empty data") {
         val emptyData = Map("number[0]" -> "", "number[1]" -> "133")
-        list.validate("number", emptyData, dummyMessages, Options.apply()) match {
+        list.validate("number", emptyData, (key) => Some("%s is required"), Options.apply()) match {
           case Nil => {
             base.validate("number[0]", emptyData, dummyMessages, Options.apply()) should be (Nil)
             base.validate("number[1]", emptyData, dummyMessages, Options.apply()) should be (Nil)
@@ -197,7 +194,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("map-simple") {
       val base = Mappings.number()
-      val map = Mappings.map(base)
+      val map = Mappings.map(base).label("xx").verifying(Constraints.notEmpty())
 
       it("invalid data") {
         val invalidData = Map("map.aa" -> "t122345", "map.\"b-1\"" -> "t11345")
@@ -225,18 +222,15 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        map.validate("map", nullData, dummyMessages, Options.apply()) match {
-          case Nil => {
-            base.validate("map.aa", nullData, dummyMessages, Options.apply()) should be (Nil)
-            map.convert("map", nullData) should be (Map())
-          }
-          case err => err should be (Nil)
+        map.validate("map", nullData, (key) => Some("%s is required"), Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err.toList should be (List("map" -> "xx is required"))
         }
       }
 
       it("empty data") {
         val emptyData = Map("map.aa" -> "", "map.\"b-1\"" -> "133")
-        map.validate("map", emptyData, dummyMessages, Options.apply()) match {
+        map.validate("map", emptyData, (key) => Some("%s is required"), Options.apply()) match {
           case Nil => {
             base.validate("map.aa", emptyData, dummyMessages, Options.apply()) should be (Nil)
             base.validate("map.\"b-1\"", emptyData, dummyMessages, Options.apply()) should be (Nil)
@@ -592,7 +586,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val nullData = Map[String, String]()
         map.validate("test", nullData, dummyMessages1, Options.apply()) match {
           case Nil => {
-            value.validate("test.101", nullData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            value.validate("test.101", nullData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "101 missing or not valid"))
             map.convert("test", nullData) should be (Map())
           }
           case err => err should be (Nil)
@@ -603,7 +597,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val emptyData = Map("test" -> "")
         map.validate("test", emptyData, dummyMessages1, Options.apply()) match {
           case Nil => {
-            value.validate("test.101", emptyData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            value.validate("test.101", emptyData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "101 missing or not valid"))
             map.convert("test", emptyData) should be (Map())
           }
           case err => err should be (Nil)
@@ -614,7 +608,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val emptyData = Map("test" -> null)
         map.validate("test", emptyData, dummyMessages1, Options.apply()) match {
           case Nil => {
-            value.validate("test.101", emptyData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "test.101 missing or not valid"))
+            value.validate("test.101", emptyData, dummyMessages1, Options.apply()) should be (Seq("test.101" -> "101 missing or not valid"))
             map.convert("test", emptyData) should be (Map())
           }
           case err => err should be (Nil)
@@ -623,15 +617,6 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
     }
 
     describe("w/ options") {
-
-      it("not allow to set options") {
-        try {
-          Mappings.list(Mappings.long()).options(_.eagerCheck(true))
-          ("invalid - shouldn't occur!") should be ("")
-        } catch {
-          case e: Throwable => e.isInstanceOf[NotImplementedError] should be (true)
-        }
-      }
 
       it("pass thru options") {
         val base = Mappings.mapping(

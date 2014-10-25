@@ -64,12 +64,15 @@ object FrameworkUtils {
     case _  => throw new IllegalArgumentException(s"Unsupported value type: $value")
   }
 
-  // i18n on: use i18n label, if exists; else use label; else use default
-  // i18n off: use label; else use default
-  def getLabel(messages: Messages, default: String, options: Options): String =
+  // i18n on: use i18n label, if exists; else use label; else use last field name from full name
+  // i18n off: use label; else use last field name from full name
+  def getLabel(messages: Messages, fullName: String, options: Options): String = {
+    val (parent, name, isArray) = splitName(fullName)
+    val default = if (isArray) (splitName(parent)._2 + "[" + name + "]") else name
     if (options.i18n.getOrElse(false)) {
       options.label.flatMap(messages(_).orElse(options.label)).getOrElse(default)
     } else options.label.getOrElse(default)
+  }
 
   // make a Constraint which will try to parse and collect errors
   def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =

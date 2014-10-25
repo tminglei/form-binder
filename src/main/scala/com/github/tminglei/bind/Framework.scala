@@ -64,7 +64,6 @@ case class Options(
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
 
   def merge(parent: Options): Options = copy(
-    label = label.orElse(parent.label),
     i18n = i18n.orElse(parent.i18n),
     eagerCheck  = eagerCheck.orElse(parent.eagerCheck),
     ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
@@ -73,7 +72,8 @@ case class Options(
 
 trait Mapping[T] {
   def options: Options = Options.apply()
-  def options(setting: Options => Options): Mapping[T] = ???
+  def options(setting: Options => Options) = this
+  def label(label: String) = this
 
   def convert(name: String, data: Map[String, String]): T
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)]
@@ -86,6 +86,7 @@ private // A wrapper mapping, used to transform converted value to another
 case class TransformMapping[T, R](base: Mapping[T], transform: T => R) extends Mapping[R] {
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
+  override def label(label: String) = copy(base = base.label(label))
 
   def convert(name: String, data: Map[String, String]): R = transform(base.convert(name, data))
 
@@ -97,6 +98,7 @@ private // A wrapper mapping, used to hold and process extra constraints
 case class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[T]]) extends Mapping[T] {
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
+  override def label(label: String) = copy(base = base.label(label))
 
   def convert(name: String, data: Map[String, String]): T = base.convert(name, data)
 
@@ -113,14 +115,26 @@ case class MoreCheckMapping[T](base: Mapping[T], validates: Seq[ExtraConstraint[
   }
 }
 
+// A simple wrapped mapping, with label and options support
+case class ThinMapping[T](convert0: (String, Map[String, String]) => T,
+                validate0: (String, Map[String, String], Messages, Options) => Seq[(String, String)],
+                override val options: Options = Options.apply()) extends Mapping[T] {
+
+  override def options(setting: Options => Options) = copy(options = setting(options))
+  override def label(label: String) = copy(options = options.copy(label = Option(label)))
+
+  def convert(name: String, data: Map[String, String]): T = convert0(name, data)
+  def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
+    validate0(name, data, messages, options.merge(parentOptions))
+}
+
 // A field mapping is an atomic mapping, which doesn't contain other mappings
 case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, processors: Seq[PreProcessor] = Nil,
                   override val options: Options = Options.apply()) extends Mapping[T] {
 
-  override def options(setting: Options => Options): FieldMapping[T] = copy(options = setting(options))
-  def label(label: String): FieldMapping[T] = copy(options = options.copy(label = Option(label)))
-
-  def pipe_:(newProcessors: PreProcessor*): FieldMapping[T] = copy(processors = newProcessors ++ processors)
+  override def options(setting: Options => Options) = copy(options = setting(options))
+  override def label(label: String) = copy(options = options.copy(label = Option(label)))
+  def pipe_:(newProcessors: PreProcessor*) = copy(processors = newProcessors ++ processors)
 
   def convert(name: String, data: Map[String, String]): T =
     convert(processRec(data.get(name).orNull, processors.toList))
@@ -147,8 +161,8 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert: String => T, p
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
                   override val options: Options = Options.apply()) extends Mapping[T] {
 
-  override def options(setting: Options => Options): GroupMapping[T] = copy(options = setting(options))
-  def label(label: String): GroupMapping[T] = copy(options = options.copy(label = Option(label)))
+  override def options(setting: Options => Options) = copy(options = setting(options))
+  override def label(label: String) = copy(options = options.copy(label = Option(label)))
 
   def convert(name: String, data: Map[String, String]): T = convert0(name, data)
 
@@ -160,7 +174,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
     } else {
       fields.map { case (fieldName, binding) =>
         val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
-        binding.validate(fullName, data, messages, theOptions.copy(label = Some(fieldName)))
+        binding.validate(fullName, data, messages, theOptions)
       }.flatten
     }
   }

@@ -77,57 +77,64 @@ trait Mappings {
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
-  def ignored[T](instead: T): Mapping[T] = new Mapping[T]() {
-    override def convert(name: String, data: Map[String, String]): T = instead
-    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = Nil
-  }
+  def ignored[T](instead: T): Mapping[T] =
+    ThinMapping[T](
+      convert0 = (name, data) => instead,
+      validate0 = (name, data, messages, parentOptions) => Nil
+    )
 
   def default[T](base: Mapping[T], value: T): Mapping[T] = optional(base).mapTo(_.getOrElse(value))
 
-  def optional[T](base: Mapping[T]): Mapping[Option[T]] = new Mapping[Option[T]]() {
-    override def convert(name: String, data: Map[String, String]): Option[T] =
-      if (data.keys.find(_.startsWith(name)).isEmpty ||
-        (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
-      else {
-        base.validate(name, data, (key) => Some("dummy"), Options.apply()) match {
-          case Nil => Option(base.convert(name, data))
-          case _   => None
+  def optional[T](base: Mapping[T]): Mapping[Option[T]] =
+    ThinMapping[Option[T]](
+      convert0 = (name, data) => {
+        if (data.keys.find(_.startsWith(name)).isEmpty ||
+          (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
+        else {
+          base.validate(name, data, (key) => Some("dummy"), Options.apply()) match {
+            case Nil => Option(base.convert(name, data))
+            case _   => None
+          }
         }
-      }
-    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = Nil
-  }
+      },
+      validate0 = (name, data, messages, parentOptions) => Nil
+    )
 
   def list[T](base: Mapping[T]): Mapping[List[T]] = seq(base).mapTo(_.toList)
-
-  def seq[T](base: Mapping[T]): Mapping[Seq[T]] = new Mapping[Seq[T]] {
-    override def convert(name: String, data: Map[String, String]): Seq[T] =
-      indexes(name, data).map { i =>
-        base.convert(name + "[" + i + "]", data)
+  
+  def seq[T](base: Mapping[T]): Mapping[Seq[T]] =
+    ThinMapping[Seq[T]](
+      convert0 = (name, data) => {
+        indexes(name, data).map { i =>
+          base.convert(name + "[" + i + "]", data)
+        }
+      },
+      validate0 = (name, data, messages, parentOptions) => {
+        indexes(name, data).map { i =>
+          base.validate(name + "[" + i + "]", data, messages, parentOptions)
+        }.flatten
       }
-
-    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
-      indexes(name, data).map { i =>
-        base.validate(name + "[" + i + "]", data, messages, parentOptions)
-      }.flatten
-  }
+    )
 
   def map[V](valueBinding: Mapping[V]): Mapping[Map[String, V]] = map(text(), valueBinding)
 
-  def map[K, V](keyBinding: FieldMapping[K], valueBinding: Mapping[V]): Mapping[Map[K, V]] = new Mapping[Map[K, V]] {
-    override def convert(name: String, data: Map[String, String]): Map[K, V] =
-      Map.empty ++ keys(name, data).map { key =>
-        val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-        (keyBinding.convert(pureKey), valueBinding.convert(name + "." + key, data))
+  def map[K, V](keyBinding: FieldMapping[K], valueBinding: Mapping[V]): Mapping[Map[K, V]] =
+    ThinMapping[Map[K, V]](
+      convert0 = (name, data) => {
+        Map.empty ++ keys(name, data).map { key =>
+          val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
+          (keyBinding.convert(pureKey), valueBinding.convert(name + "." + key, data))
+        }
+      },
+      validate0 = (name, data, messages, parentOptions) => {
+        keys(name, data).map { key =>
+          val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
+          keyBinding.validate(name + "." + key, pureKey, messages, parentOptions).map {
+            case (name, err) => (name, "name: " + err)
+          } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
+        }.flatten
       }
-
-    override def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
-      keys(name, data).map { key =>
-        val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-        keyBinding.validate(name + "." + key, pureKey, messages, parentOptions).map {
-          case (name, err) => (name, "name: " + err)
-        } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
-      }.flatten
-  }
+    )
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////
 
