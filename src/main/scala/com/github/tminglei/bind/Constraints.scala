@@ -3,44 +3,44 @@ package com.github.tminglei.bind
 import scala.util.matching.Regex
 
 trait Constraints {
-
+  import FrameworkUtils.mkConstraint
   ////////////////////////////////////////////  pre-defined constraints  ////////////////////////////////////
 
-  def required(message: String = ""): Constraint = (label, value, messages) =>
+  def required(message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value == null || value.isEmpty) {
       Some( (if (message.isEmpty) messages("error.required") else Some(message)).get.format(label))
-    } else None
+    } else None)
 
-  def maxlength(length: Int, message: String = ""): Constraint = (label, value, messages) =>
+  def maxlength(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value != null && value.length > length) {
       Some( (if (message.isEmpty) messages("error.maxlength") else Some(message)).get.format(value, length))
-    } else None
+    } else None)
 
-  def minlength(length: Int, message: String = ""): Constraint = (label, value, messages) =>
+  def minlength(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value != null && value.length < length) {
       Some( (if (message.isEmpty) messages("error.minlength") else Some(message)).get.format(value, length))
-    } else None
+    } else None)
 
-  def length(length: Int, message: String = ""): Constraint = (label, value, messages) =>
+  def length(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value != null && value.length != length) {
       Some( (if (message.isEmpty) messages("error.length") else Some(message)).get.format(value, length))
-    } else None
+    } else None)
 
-  def oneOf(values: Seq[String], message: String = ""): Constraint = (label, value, messages) =>
+  def oneOf(values: Seq[String], message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (!values.contains(value)) {
       Some( (if (message.isEmpty) messages("error.oneOf") else Some(message))
         .get.format(value, values.map("'" + _ + "'").mkString(", ")) )
-    } else None
+    } else None)
 
-  def pattern(regex: Regex, message: String = ""): Constraint = (label, value, messages) =>
+  def pattern(regex: Regex, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value != null && regex.findFirstIn(value).isEmpty) {
       Some( (if (message.isEmpty) messages("error.pattern") else Some(message)).get.format(value, regex.toString))
-    } else None
+    } else None)
 
-  def patternNot(regex: Regex, message: String = ""): Constraint = (label, value, messages) =>
+  def patternNot(regex: Regex, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
     if (value != null && regex.findFirstIn(value).isDefined) {
       Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
-    } else None
+    } else None)
 
   def email(message: String = ""): Constraint = pattern(FrameworkUtils.EMAIL_REGEX, message)
 

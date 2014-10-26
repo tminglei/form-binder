@@ -26,13 +26,14 @@ object FrameworkUtils {
       case _                 => value
     }
 
-  def validateRec(name: String, value: String, validates: List[Constraint],
+  def validateRec(name: String, data: Map[String, String], validates: List[Constraint],
             messages: Messages, options: Options): Seq[(String, String)] =
     validates match {
-      case (validate :: rest) => validate(getLabel(messages, name, options), value, messages) match {
-        case Some(message) => Seq(name -> message) ++ (if (options.eagerCheck.getOrElse(false))
-          validateRec(name, value, rest, messages, options) else Nil)
-        case None          => validateRec(name, value, rest, messages, options)
+      case (validate :: rest) => {
+        val errors = validate(getLabel(name, messages, options), name, data, messages)
+        if (errors.isEmpty) validateRec(name, data, rest, messages, options)
+        else errors ++ (if (options.eagerCheck.getOrElse(false))
+          validateRec(name, data, rest, messages, options) else Nil)
       }
       case _ => Nil
     }
@@ -41,7 +42,7 @@ object FrameworkUtils {
             messages: Messages, options: Options): Seq[(String, String)] =
     if (value == null) Nil
     else validates match {
-      case (validate :: rest) => validate(getLabel(messages, name, options), value, messages) match {
+      case (validate :: rest) => validate(getLabel(name, messages, options), value, messages) match {
         case Nil    => extraValidateRec(name, value, rest, messages, options)
         case errors => errors.map { case (fieldName, message) => {
           val fullName = if (name.isEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
@@ -68,7 +69,7 @@ object FrameworkUtils {
 
   // i18n on: use i18n label, if exists; else use label; else use last field name from full name
   // i18n off: use label; else use last field name from full name
-  def getLabel(messages: Messages, fullName: String, options: Options): String = {
+  def getLabel(fullName: String, messages: Messages, options: Options): String = {
     val (parent, name, isArray) = splitName(fullName)
     val default = if (isArray) (splitName(parent)._2 + "[" + name + "]") else name
     if (options.i18n.getOrElse(false)) {
@@ -78,7 +79,7 @@ object FrameworkUtils {
 
   // make a Constraint which will try to parse and collect errors
   def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
-    (label, value, messages) => value match {
+    mkConstraint((label, value, messages) => value match {
       case null|"" => None
       case x => {
         try { parse(x); None }
@@ -86,6 +87,12 @@ object FrameworkUtils {
           case e: Exception => Some(messages(messageKey).get.format(label, pattern))
         }
       }
+    })
+
+  // make a constraint from `(label, vString, messages) => [error]`
+  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
+    (label, name, data, messages) => {
+      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
     }
 
   // Computes the available indexes for the given key in this set of data.

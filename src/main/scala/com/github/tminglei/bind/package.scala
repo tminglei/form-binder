@@ -5,8 +5,8 @@ package object bind {
   // (messageKey) => [message]
   type Messages = (String) => Option[String]
 
-  // (label, vString, messages) => [error]
-  type Constraint = (String, String, Messages) => Option[String]
+  // (label, name, data, message) => errors
+  type Constraint = (String, String, Map[String, String], Messages) => Seq[(String, String)]
 
   // (label, vObject, messages) => errors
   type ExtraConstraint[T] = (String, T, Messages) => Seq[(String, String)]

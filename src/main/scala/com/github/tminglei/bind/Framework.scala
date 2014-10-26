@@ -128,15 +128,12 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert0: String => T,
 
   def convert(name: String, data: Map[String, String]): T = convert0(processRec(data.get(name).orNull, processors))
 
-  def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] =
-    validate(name, data.get(name).orNull, messages, parentOptions)
-
-  def validate(name: String, value: String, messages: Messages, parentOptions: Options): Seq[(String, String)] = {
+  def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    val value1 = processRec(value, processors)
+    val value1 = processRec(data.get(name).orNull, processors)
     val errors = if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
         && (value1 == null || value1.isEmpty)) Nil
-      else validateRec(name, value1, constraints.toList, messages, theOptions)
+      else validateRec(name, data, constraints.toList, messages, theOptions)
     if (errors.isEmpty) extraValidateRec(name, convert0(value1), extraConstraints, messages, theOptions)
     else errors
   }
@@ -159,7 +156,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
     val data1 = bulkProcessRec(name, data, processors)
     val errors = if (data1.keys.find(_.startsWith(name)).isEmpty || data1.contains(name)) {
         if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty) Nil
-        else Seq(name -> messages("error.object").get.format(getLabel(messages, name, theOptions)))
+        else Seq(name -> messages("error.object").get.format(getLabel(name, messages, theOptions)))
       } else {
         fields.map { case (fieldName, binding) =>
           val fullName = if (name.isEmpty) fieldName else name + "." + fieldName

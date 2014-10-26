@@ -12,97 +12,98 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("required") {
       it("simple use") {
         val required = Constraints.required()
-        required("", null, dummyMessages) should be (Some("dummy"))
-        required("", "", dummyMessages) should be (Some("dummy"))
-        required("", "test", dummyMessages) should be (None)
+        required("", "", Map("" -> null), dummyMessages).toList should be (List("" -> "dummy"))
+        required("", "", Map("" -> ""), dummyMessages).toList should be (List("" -> "dummy"))
+        required("", "", Map("" -> "test"), dummyMessages).toList should be (Nil)
       }
 
       it("with custom message") {
         val required1 = Constraints.required("%s is required")
-        required1("haha", null, dummyMessages) should be (Some("haha is required"))
+        required1("haha", "tt.a", Map("tt.a" -> null), dummyMessages).toList should be (List("tt.a" -> "haha is required"))
       }
     }
 
     describe("maxlength") {
       it("simple use") {
         val maxlength = Constraints.maxlength(10)
-        maxlength("", "wetyyuu", dummyMessages) should be (None)
-        maxlength("", "wetyettyiiie", dummyMessages) should be (Some("dummy"))
-        maxlength("", "tuewerri97", dummyMessages) should be (None)
+        maxlength("", "", Map("" -> "wetyyuu"), dummyMessages).toList should be (Nil)
+        maxlength("", "", Map("" -> "wetyettyiiie"), dummyMessages).toList should be (List("" -> "dummy"))
+        maxlength("", "", Map("" -> "tuewerri97"), dummyMessages).toList should be (Nil)
       }
 
       it("with custom message") {
-        val maxlength1 = Constraints.maxlength(10, "'%s': length cannot > %d")
-        maxlength1("haha", "eewryuooerjhy", dummyMessages) should be (Some("'eewryuooerjhy': length cannot > 10"))
+        val maxlength1 = Constraints.maxlength(10, "'%s': length > %d")
+        maxlength1("haha", "", Map("" -> "eewryuooerjhy"), dummyMessages).toList should be (List("" -> "'eewryuooerjhy': length > 10"))
       }
     }
 
     describe("minlength") {
       it("simple use") {
         val minlength = Constraints.minlength(3)
-        minlength("", "er", dummyMessages) should be (Some("dummy"))
-        minlength("", "ert6", dummyMessages) should be (None)
-        minlength("", "tee", dummyMessages) should be (None)
+        minlength("", "", Map("" -> "er"), dummyMessages).toList should be (List("" -> "dummy"))
+        minlength("", "", Map("" -> "ert6"), dummyMessages).toList should be (Nil)
+        minlength("", "", Map("" -> "tee"), dummyMessages).toList should be (Nil)
       }
 
       it("with custom message") {
         val minlength1 = Constraints.minlength(3, "'%s': length cannot < %d")
-        minlength1("haha", "te", dummyMessages) should be (Some("'te': length cannot < 3"))
+        minlength1("haha", "", Map("" -> "te"), dummyMessages).toList should be (List("" -> "'te': length cannot < 3"))
       }
     }
 
     describe("length") {
       it("simple use") {
         val length = Constraints.length(9)
-        length("", "123456789", dummyMessages) should be (None)
-        length("", "123", dummyMessages) should be (Some("dummy"))
-        length("", "1234567890", dummyMessages) should be (Some("dummy"))
+        length("", "", Map("" -> "123456789"), dummyMessages).toList should be (Nil)
+        length("", "", Map("" -> "123"), dummyMessages).toList should be (List("" -> "dummy"))
+        length("", "", Map("" -> "1234567890"), dummyMessages).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val length1 = Constraints.length(9, "'%s': length not equal to %d")
-        length1("haha", "123", dummyMessages) should be (Some("'123': length not equal to 9"))
+        length1("haha", "", Map("" -> "123"), dummyMessages).toList should be (List("" -> "'123': length not equal to 9"))
       }
     }
 
     describe("oneOf") {
       it("simple use") {
         val oneof = Constraints.oneOf(Seq("a","b","c"))
-        oneof("", "a", dummyMessages) should be (None)
-        oneof("", "t", dummyMessages) should be (Some("dummy"))
-        oneof("", null, dummyMessages) should be (Some("dummy"))
+        oneof("", "", Map("" -> "a"), dummyMessages).toList should be (Nil)
+        oneof("", "", Map("" -> "t"), dummyMessages).toList should be (List("" -> "dummy"))
+        oneof("", "", Map("" -> null), dummyMessages).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val oneof1 = Constraints.oneOf(Seq("a","b","c"), "'%s': is not one of %s")
-        oneof1("haha", "ts", dummyMessages) should be (Some("'ts': is not one of 'a', 'b', 'c'"))
+        oneof1("haha", "t.a", Map("t.a" -> "ts"), dummyMessages).toList should be (List("t.a" -> "'ts': is not one of 'a', 'b', 'c'"))
       }
     }
 
     describe("pattern") {
       it("simple use") {
         val pattern = Constraints.pattern("^(\\d+)$".r)
-        pattern("", "1234657", dummyMessages) should be (None)
-        pattern("", "32566y", dummyMessages) should be (Some("dummy"))
-        pattern("", "123,567", dummyMessages) should be (Some("dummy"))
+        pattern("", "", Map("" -> "1234657"), dummyMessages).toList should be (Nil)
+        pattern("", "", Map("" -> "32566y"), dummyMessages).toList should be (List("" -> "dummy"))
+        pattern("", "", Map("" -> "123,567"), dummyMessages).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' not match '%s'")
-        pattern1("haha", "t4366", dummyMessages) should be (Some("'t4366' not match '^(\\d+)$'"))
+        pattern1("haha", "", Map("" -> "t4366"), dummyMessages).toList should be (List("" -> "'t4366' not match '^(\\d+)$'"))
       }
     }
 
     describe("patternNot") {
       it("simple use") {
         val pattern = Constraints.patternNot(""".*\[(\d*[^\d\[\]]+\d*)+\].*""".r)
-        pattern("", "eree.[1234657].eee", dummyMessages) should be (None)
-        pattern("", "errr.[32566y].ereee", dummyMessages) should be (Some("dummy"))
+        pattern("", "", Map("" -> "eree.[1234657].eee"), dummyMessages).toList should be (Nil)
+        pattern("", "", Map("" -> "errr.[32566y].ereee"), dummyMessages).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' contains illegal array index")
-        pattern1("haha", "ewtr.[t4366].eweee", dummyMessages) should be (Some("'ewtr.[t4366].eweee' contains illegal array index"))
+        pattern1("haha", "", Map("" -> "ewtr.[t4366].eweee"), dummyMessages)
+          .toList should be (List("" -> "'ewtr.[t4366].eweee' contains illegal array index"))
       }
     }
 
@@ -128,7 +129,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           //        "甲斐@黒川.日本",  //Japanese Characters
           //        "чебурашка@ящик-с-апельсинами.рф"  //Cyrillic Characters
         ).map { emailAddr =>
-          email("", emailAddr, dummyMessages) should be (None)
+          email("", "", Map("" -> emailAddr), dummyMessages).toList should be (Nil)
         }
       }
 
@@ -143,7 +144,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           "john..doe@example.com", //(double dot before @)
           "john.doe@example..com" //(double dot after @)
         ).map { emailAddr =>
-          email("", emailAddr, dummyMessages) should be (Some(s"'$emailAddr' not valid"))
+          email("", "", Map("" -> emailAddr), dummyMessages).toList should be (List("" -> s"'$emailAddr' not valid"))
         }
       }
     }

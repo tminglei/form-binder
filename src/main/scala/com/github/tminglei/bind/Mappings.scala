@@ -128,8 +128,9 @@ trait Mappings {
       },
       validate0 = (name, data, messages, parentOptions) => {
         keys(name, data).map { key =>
+          val keyName = name + "." + key
           val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-          keyBinding.validate(name + "." + key, pureKey, messages, parentOptions).map {
+          keyBinding.validate(keyName, Map(keyName -> pureKey), messages, parentOptions).map {
             case (name, err) => (name, "name: " + err)
           } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
         }.flatten
