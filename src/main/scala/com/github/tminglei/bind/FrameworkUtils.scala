@@ -39,7 +39,8 @@ object FrameworkUtils {
 
   def extraValidateRec[T](name: String, value: T, validates: List[ExtraConstraint[T]],
             messages: Messages, options: Options): Seq[(String, String)] =
-    validates match {
+    if (value == null) Nil
+    else validates match {
       case (validate :: rest) => validate(getLabel(messages, name, options), value, messages) match {
         case Nil    => extraValidateRec(name, value, rest, messages, options)
         case errors => errors.map { case (fieldName, message) => {
