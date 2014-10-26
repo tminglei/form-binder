@@ -13,17 +13,10 @@ object FrameworkUtils {
 
   //////////////////////////////////////////////////////////////////////////////////
   @scala.annotation.tailrec
-  def bulkProcessRec(prefix: String, data: Map[String,String], processors: List[BulkPreProcessor]): Map[String,String] =
+  def processDataRec(prefix: String, data: Map[String,String], processors: List[PreDataProcessor]): Map[String,String] =
     processors match {
-      case (process :: rest) => bulkProcessRec(prefix, process(prefix, data), rest)
-      case _ => data
-    }
-
-  @scala.annotation.tailrec
-  def processRec(value: String, processors: List[PreProcessor]): String =
-    processors match {
-      case (process :: rest) => processRec(process(value), rest)
-      case _                 => value
+      case (process :: rest) => processDataRec(prefix, process(prefix, data), rest)
+      case _  => data
     }
 
   def validateRec(name: String, data: Map[String, String], validates: List[Constraint],
@@ -77,6 +70,18 @@ object FrameworkUtils {
     } else options.label.getOrElse(default)
   }
 
+  // make a constraint from `(label, vString, messages) => [error]`
+  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
+    (label, name, data, messages) => {
+      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
+    }
+  
+  //
+  def mkPreProcessor(process: (String) => String): PreDataProcessor =
+    (name, data) => {
+      (data - name) + (name -> process(data.get(name).orNull))
+    }
+
   // make a Constraint which will try to parse and collect errors
   def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
     mkConstraint((label, value, messages) => value match {
@@ -88,12 +93,6 @@ object FrameworkUtils {
         }
       }
     })
-
-  // make a constraint from `(label, vString, messages) => [error]`
-  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
-    (label, name, data, messages) => {
-      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
-    }
 
   // Computes the available indexes for the given key in this set of data.
   def indexes(key: String, data: Map[String, String]): Seq[Int] = {

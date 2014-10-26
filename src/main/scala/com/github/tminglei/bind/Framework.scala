@@ -12,11 +12,11 @@ object simple extends Mappings with Constraints with Processors {
 import FrameworkUtils._
 // the Facade class
 case class FormBinder[R](messages: Messages,
-               processors: List[BulkPreProcessor] = Nil,
+               processors: List[PreDataProcessor] = Nil,
                touchExtractor: Option[TouchedExtractor] = None,
                errProcessor: Option[PostErrProcessor[R]] = None) {
 
-  def >>:(newProcessors: BulkPreProcessor*) = copy(processors = newProcessors ++: processors)
+  def >>:(newProcessors: PreDataProcessor*) = copy(processors = newProcessors ++: processors)
   def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
   def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
@@ -25,7 +25,7 @@ case class FormBinder[R](messages: Messages,
    * @return `consume` produced result, if validation passed; (transformed) errors, if validation failed
    */
   def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
-    val data1 = bulkProcessRec("", data, processors)
+    val data1 = processDataRec("", data, processors)
     mapping.validate("", data1, messages, mapping.options) match {
       case Nil  => consume(mapping.convert("", data1))
       case errs => errProcessor.getOrElse(defaultErrProcessor).apply(errs)
@@ -37,7 +37,7 @@ case class FormBinder[R](messages: Messages,
    * @return (transformed) errors
    */
   def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None) = {
-    val data1 = bulkProcessRec("", data, processors)
+    val data1 = processDataRec("", data, processors)
     val touched1 = touched.orElse(touchExtractor.map(_.apply(data))).getOrElse(Nil)
     val errs  = mapping.validate("", data1, messages, mapping.options.copy(touched = touched1))
     errProcessor.getOrElse(defaultErrProcessor).apply(errs)
@@ -118,22 +118,23 @@ case class ThinMapping[T](convert0: (String, Map[String, String]) => T,
 
 // A field mapping is an atomic mapping, which doesn't contain other mappings
 case class FieldMapping[T](constraints: Seq[Constraint], convert0: String => T,
-                extraConstraints: List[ExtraConstraint[T]] = Nil, processors: List[PreProcessor] = Nil,
+                extraConstraints: List[ExtraConstraint[T]] = Nil, processors: List[PreDataProcessor] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def label(label: String) = copy(options = options.copy(label = Option(label)))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
-  def >>:(newProcessors: PreProcessor*) = copy(processors = newProcessors ++: processors)
+  def >>:(newProcessors: PreDataProcessor*) = copy(processors = newProcessors ++: processors)
 
-  def convert(name: String, data: Map[String, String]): T = convert0(processRec(data.get(name).orNull, processors))
+  def convert(name: String, data: Map[String, String]): T = convert0(processDataRec(name, data, processors).get(name).orNull)
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    val value1 = processRec(data.get(name).orNull, processors)
+    val data1  = processDataRec(name, data, processors)
+    val value1 = data1.get(name).orNull
     val errors = if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
         && (value1 == null || value1.isEmpty)) Nil
-      else validateRec(name, data, constraints.toList, messages, theOptions)
+      else validateRec(name, data1, constraints.toList, messages, theOptions)
     if (errors.isEmpty) extraValidateRec(name, convert0(value1), extraConstraints, messages, theOptions)
     else errors
   }
@@ -141,19 +142,19 @@ case class FieldMapping[T](constraints: Seq[Constraint], convert0: String => T,
 
 // A group mapping is a compound mapping, and is used to construct a complex/nested mapping
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
-                extraConstraints: List[ExtraConstraint[T]] = Nil, processors: List[BulkPreProcessor] = Nil,
+                extraConstraints: List[ExtraConstraint[T]] = Nil, processors: List[PreDataProcessor] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def label(label: String) = copy(options = options.copy(label = Option(label)))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
-  def >>:(newProcessors: BulkPreProcessor*) = copy(processors = newProcessors ++: processors)
+  def >>:(newProcessors: PreDataProcessor*) = copy(processors = newProcessors ++: processors)
 
-  def convert(name: String, data: Map[String, String]): T = convert0(name, bulkProcessRec(name, data, processors))
+  def convert(name: String, data: Map[String, String]): T = convert0(name, processDataRec(name, data, processors))
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    val data1 = bulkProcessRec(name, data, processors)
+    val data1  = processDataRec(name, data, processors)
     val errors = if (data1.keys.find(_.startsWith(name)).isEmpty || data1.contains(name)) {
         if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty) Nil
         else Seq(name -> messages("error.object").get.format(getLabel(name, messages, theOptions)))

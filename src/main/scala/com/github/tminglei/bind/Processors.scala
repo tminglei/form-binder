@@ -7,50 +7,48 @@ import FrameworkUtils._
 import org.json4s._
 
 trait Processors {
+  import FrameworkUtils.mkPreProcessor
+  ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  ////////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
-
-  val trim: PreProcessor = (input: String) => {
+  val trim: PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  val cleanComma: PreProcessor = (input: String) => {
+  val cleanComma: PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(",", "")
   }
 
-  val cleanHyphen: PreProcessor = (input: String) => {
+  val cleanHyphen: PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("-", "")
   }
 
-  def cleanPrefix(prefix: String): PreProcessor = (input: String) => {
+  def cleanPrefix(prefix: String): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
   }
 
-  def cleanPostfix(postfix: String): PreProcessor = (input: String) => {
+  def cleanPostfix(postfix: String): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
-  val cleanRedundantSpaces: PreProcessor = (input: String) => {
+  val cleanRedundantSpaces: PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
-  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = (input: String) => {
+  def cleanMatched(regex: Regex, replacement: String = ""): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
-  ////////////////////////////////////// pre-defined bulk pre-processors ////////////////////////////
-
-  def changePrefix(srcPrefix: String, destPrefix: String): BulkPreProcessor =
+  def changePrefix(srcPrefix: String, destPrefix: String): PreDataProcessor =
     (prefix: String, data: Map[String, String]) => data.map {
         case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
       }
 
-  def mergeJson4sData(json: JValue, destPrefix: String = "json"): BulkPreProcessor =
+  def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreDataProcessor =
     (prefix: String, data: Map[String, String]) => {
       (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
-  def expandJson(sourceKey: Option[String] = None, destPrefix: Option[String] = None): BulkPreProcessor =
+  def expandJson(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreDataProcessor =
     (prefix: String, data: Map[String, String]) => {
       val sourceKey1 = sourceKey.getOrElse(prefix)
       if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
@@ -60,7 +58,7 @@ trait Processors {
       } else data
     }
 
-  ////////////////////////////////////// pre-defined touch list extractor //////////////////////////
+  ////////////////////////////////// pre-defined touch list extractor //////////////////////////////
 
   def mergeJson4sTouched(json: JValue, destPrefix: String = "json"): TouchedExtractor =
     (data: Map[String, String]) => {
@@ -90,7 +88,7 @@ trait Processors {
       case (key, value) => java.lang.Boolean.valueOf(value)
     }.keys.toSeq
 
-  ////////////////////////////////////// pre-defined post err-processors ////////////////////////////
+  //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
 
   def errsToJson4s(useBigDecimalForDouble: Boolean = false): PostErrProcessor[JValue] =

@@ -11,11 +11,8 @@ package object bind {
   // (label, vObject, messages) => errors
   type ExtraConstraint[T] = (String, T, Messages) => Seq[(String, String)]
 
-  // (input) => output
-  type PreProcessor = (String) => String
-
   // (prefix, data) => data
-  type BulkPreProcessor = (String, Map[String, String]) => Map[String, String]
+  type PreDataProcessor = (String, Map[String, String]) => Map[String, String]
 
   // (data) => touched list
   type TouchedExtractor = (Map[String, String]) => Seq[String]
