@@ -91,7 +91,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
     describe("expandJsonData") {
 
       it("simple") {
-        val expandJsonData = Processors.expandJson(Some("json"))
+        val expandJsonData = Processors.expandJsonString(Some("json"))
         val data = Map(
           "aa" -> "wett",
           "json" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
@@ -108,7 +108,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       }
 
       it("null or empty") {
-        val expandJsonData = Processors.expandJson(Some("json"))
+        val expandJsonData = Processors.expandJsonString(Some("json"))
 
         val nullData = Map("aa" -> "wett")
         expandJsonData("", nullData) should be (nullData)
@@ -121,7 +121,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       }
 
       it("with dest prefix") {
-        val expandJsonData = Processors.expandJson(Some("body"), Some("json"))
+        val expandJsonData = Processors.expandJsonString(Some("body"), Some("json"))
         val data = Map(
           "aa" -> "wett",
           "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""

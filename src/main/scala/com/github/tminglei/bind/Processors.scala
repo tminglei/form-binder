@@ -10,15 +10,15 @@ trait Processors {
   import FrameworkUtils.mkPreProcessor
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  val trim: PreDataProcessor = mkPreProcessor {(input: String) =>
+  def trim(): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  val cleanComma: PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanComma(): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(",", "")
   }
 
-  val cleanHyphen: PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanHyphen(): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("-", "")
   }
 
@@ -30,7 +30,7 @@ trait Processors {
     if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
-  val cleanRedundantSpaces: PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanRedundantSpaces(): PreDataProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
@@ -48,7 +48,7 @@ trait Processors {
       (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
-  def expandJson(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreDataProcessor =
+  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreDataProcessor =
     (prefix: String, data: Map[String, String]) => {
       val sourceKey1 = sourceKey.getOrElse(prefix)
       if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {

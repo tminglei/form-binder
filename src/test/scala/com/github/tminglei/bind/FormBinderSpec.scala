@@ -10,7 +10,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
     val messages = (key: String) => Some("dummy")
 
     describe("usage cases") {
-      val binder = expandJson(Some("body"), Some("json")) >-: FormBinder(messages)
+      val binder = expandJsonString(Some("body"), Some("json")) >-: FormBinder(messages)
 
       val mappings = tmapping(
         "id" -> long(),
@@ -67,7 +67,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
     }
 
     describe("w/ options") {
-      val binder = expandJson(Some("body"), Some("json")) >-: FormBinder(messages)
+      val binder = expandJsonString(Some("body"), Some("json")) >-: FormBinder(messages)
 
       val mappings = tmapping(
         "id" -> long(),
@@ -148,7 +148,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         //>>> group mapping with bulk pre-processor
         val mappings1 = tmapping(
           "id" -> long(),
-          "body" -> (expandJson() >-: tmapping(
+          "body" -> (expandJsonString() >-: tmapping(
             "email" -> text(maxlength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
             "price" -> (cleanPrefix("$") >-: float()),
             "count" -> number().verifying(min(3), max(10))
@@ -169,7 +169,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       }
 
       it("w/ ignore empty and touched (combined)") {
-        val expand = expandJson(Some("body"), Some("json"))
+        val expand = expandJsonString(Some("body"), Some("json"))
         val binder1 = expand >-: changePrefix("json.data", "json") >-: FormBinder(messages)
           .withTouched((data) => extractTouched("json.touched", "json").apply(expand("", data)))
         val invalidData = Map(
@@ -183,7 +183,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
 
       it("w/ i18n and label") {
         val messages1 = (key: String) => if (key == "xx") Some("haha") else Some("dummy")
-        val binder1 = expandJson(Some("body"), Some("json")) >-: FormBinder(messages1)
+        val binder1 = expandJsonString(Some("body"), Some("json")) >-: FormBinder(messages1)
 
         val invalidData = Map(
           "id" -> "133",
