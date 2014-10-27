@@ -10,7 +10,7 @@ Form-binder is a micro, `play-data`-like data binding and validating framework, 
 
 Features
 -------------
-- very lightweight, only 700+ lines (framework + built-in extensions)
+- very lightweight, only ~900 lines (framework + built-in extensions)
 - easy use, no verbose codes, and what you see is what you get
 - high customizable, you can extend almost every executing point
 - easily extensible, every extension interface is an alias of `FunctionN`
@@ -44,17 +44,16 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 ```
 
 #### Extension Points:  
-(1) **BulkPreProcessor**: `(String, Map[String, String]) => Map[String, String]`, *(prefix, data) => data*  
+(1) **PreDataProcessor**: `(String, Map[String, String]) => Map[String, String]`, *(prefix, data) => data*  
 (2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
 (3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
-(4) **PreProcessor**: `(String) => String`, *(input) => output*  
-(5) **Constraint**: `(String, String, Messages) => Option[String]`, *(label, vString, messages) => [error]*  
-(6) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
+(4) **Constraint**: `(String, String, Map[String, String], Messages) => Seq[(String, String)]`, *(label, name, data, messages) => errors*  
+(5) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
 
 #### Options & Others:  
 1) **label**: `feature`, readable name for current group/field  
 2) **mapTo**: `feature`, map converted value to another type  
-3) **i18n**: `option`, for label, if i18n on, the label value can be used as a key to fetch a i18n value from `messages`   
+3) **i18n**: `option`, let label value can be used as a message key to fetch a i18n value from `messages`   
 4) **eagerCheck**: `option`, check errors as more as possible  
 5) **ignoreEmpty**: `option`, not check empty field/values  
 6) **touched**: `parameter`, a name list, which were touched by user  

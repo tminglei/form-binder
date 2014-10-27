@@ -124,7 +124,7 @@ case class ThinMapping[T](convert0: (String, Map[String, String]) => T,
 
 // A field mapping is an atomic mapping, which doesn't contain other mappings
 case class FieldMapping[T](convert0: String => T,
-                extraConstraints: List[ExtraConstraint[T]] = Nil, //processors: List[PreDataProcessor] = Nil,
+                extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
@@ -147,7 +147,7 @@ case class FieldMapping[T](convert0: String => T,
 
 // A group mapping is a compound mapping, and is used to construct a complex/nested mapping
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
-                extraConstraints: List[ExtraConstraint[T]] = Nil, //processors: List[PreDataProcessor] = Nil,
+                extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
