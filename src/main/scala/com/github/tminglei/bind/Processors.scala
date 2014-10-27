@@ -91,7 +91,14 @@ trait Processors {
   //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
 
-  def errsToJson4s(useBigDecimalForDouble: Boolean = false): PostErrProcessor[JValue] =
+  def errsToMapList(): PostErrProcessor[Map[String, List[String]]] =
+    (errors: Seq[(String, String)]) => { Map.empty ++
+      errors.groupBy(_._1).map {
+        case (key, pairs) => (key, pairs.map(_._2).toList)
+      }
+    }
+
+  def errsToJson4s(): PostErrProcessor[JValue] =
     (errs: Seq[(String, String)]) => {
       val root = HashMap[String, Any]()
       val workList = HashMap[String, Any]("" -> root)
@@ -103,7 +110,7 @@ trait Processors {
         val workObj = workObject(workList, parent, isArray)
         workObj += (self -> err)
       }
-      mapTreeToJson4s(root, useBigDecimalForDouble)
+      mapTreeToJson4s(root)
     }
 }
 

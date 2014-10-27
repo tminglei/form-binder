@@ -31,9 +31,9 @@ object FrameworkUtils {
       case _ => Nil
     }
 
-  def extraValidateRec[T](name: String, value: T, validates: List[ExtraConstraint[T]],
+  def extraValidateRec[T](name: String, value: => T, validates: List[ExtraConstraint[T]],
             messages: Messages, options: Options): Seq[(String, String)] =
-    if (value == null) Nil
+    if (validates.isEmpty || value == null) Nil
     else validates match {
       case (validate :: rest) => validate(getLabel(name, messages, options), value, messages) match {
         case Nil    => extraValidateRec(name, value, rest, messages, options)
@@ -70,13 +70,13 @@ object FrameworkUtils {
     } else options.label.getOrElse(default)
   }
 
-  // make a constraint from `(label, vString, messages) => [error]`
+  // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
   def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
     (label, name, data, messages) => {
       validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
     }
   
-  //
+  // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
   def mkPreProcessor(process: (String) => String): PreDataProcessor =
     (name, data) => {
       (data - name) + (name -> process(data.get(name).orNull))

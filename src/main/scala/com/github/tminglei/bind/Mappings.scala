@@ -7,72 +7,72 @@ trait Mappings {
 
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
 
-  def text(constraints: Constraint*): FieldMapping[String] =
-    new FieldMapping[String](constraints, convert0 = identity)
+  def text(constraints: Constraint*): Mapping[String] =
+    new FieldMapping[String](convert0 = identity).>+:(constraints: _*)
 
-  def boolean(constraints: Constraint*): FieldMapping[Boolean] =
-    new FieldMapping[Boolean](parsing(_.toBoolean, "error.boolean") +: constraints,
+  def boolean(constraints: Constraint*): Mapping[Boolean] =
+    new FieldMapping[Boolean](
       convert0 = (value: String) => value match {
         case null|"" => false
         case x => x.toBoolean
-      })
+      }).>+:((parsing(_.toBoolean, "error.boolean") +: constraints): _*)
 
-  def number(constraints: Constraint*): FieldMapping[Int] =
-    new FieldMapping[Int](parsing(_.toInt, "error.number") +: constraints,
+  def number(constraints: Constraint*): Mapping[Int] =
+    new FieldMapping[Int](
       convert0 = (value: String) => value match {
         case null|"" => 0
         case x => x.toInt
-      })
+      }).>+:((parsing(_.toInt, "error.number") +: constraints): _*)
 
-  def double(constraints: Constraint*): FieldMapping[Double] =
-    new FieldMapping[Double](parsing(_.toDouble, "error.double") +: constraints,
+  def double(constraints: Constraint*): Mapping[Double] =
+    new FieldMapping[Double](
       convert0 = (value: String) => value match {
         case null|"" => 0d
         case x => x.toDouble
-      })
+      }).>+:((parsing(_.toDouble, "error.double") +: constraints): _*)
 
-  def float(constraints: Constraint*): FieldMapping[Float] =
-    new FieldMapping[Float](parsing(_.toFloat, "error.float") +: constraints,
+  def float(constraints: Constraint*): Mapping[Float] =
+    new FieldMapping[Float](
       convert0 = (value: String) => value match {
         case null|"" => 0f
         case x => x.toFloat
-      })
+      }).>+:((parsing(_.toFloat, "error.float") +: constraints): _*)
 
-  def long(constraints: Constraint*): FieldMapping[Long] =
-    new FieldMapping[Long](parsing(_.toLong, "error.long") +: constraints,
+  def long(constraints: Constraint*): Mapping[Long] =
+    new FieldMapping[Long](
       convert0 = (value: String) => value match {
         case null|"" => 0l
         case x => x.toLong
-      })
+      }).>+:((parsing(_.toLong, "error.long") +: constraints): _*)
 
-  def bigDecimal(constraints: Constraint*): FieldMapping[BigDecimal] =
-    new FieldMapping[BigDecimal](parsing(BigDecimal.apply, "error.bigdecimal") +: constraints,
+  def bigDecimal(constraints: Constraint*): Mapping[BigDecimal] =
+    new FieldMapping[BigDecimal](
       convert0 = (value: String) => value match {
         case null|"" => 0d
         case x => BigDecimal(x)
-      })
+      }).>+:((parsing(BigDecimal.apply, "error.bigdecimal") +: constraints): _*)
 
-  def bigInt(constraints: Constraint*): FieldMapping[BigInt] =
-    new FieldMapping[BigInt](parsing(BigInt.apply, "error.bigint") +: constraints,
+  def bigInt(constraints: Constraint*): Mapping[BigInt] =
+    new FieldMapping[BigInt](
       convert0 = (value: String) => value match {
         case null|"" => 0l
         case x => BigInt(x)
-      })
+      }).>+:((parsing(BigInt.apply, "error.bigint") +: constraints): _*)
 
-  def uuid(constraints: Constraint*): FieldMapping[UUID] =
-    new FieldMapping[UUID](parsing(UUID.fromString, "error.uuid") +: constraints,
+  def uuid(constraints: Constraint*): Mapping[UUID] =
+    new FieldMapping[UUID](
       convert0 = (value: String) => value match {
         case null|"" => null
         case x => UUID.fromString(x)
-      })
+      }).>+:((parsing(UUID.fromString, "error.uuid") +: constraints): _*)
 
-  def date(pattern: String, constraints: Constraint*): FieldMapping[java.util.Date] = {
+  def date(pattern: String, constraints: Constraint*): Mapping[java.util.Date] = {
     val dateFormatter = new java.text.SimpleDateFormat(pattern)
-    new FieldMapping[java.util.Date](parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints,
+    new FieldMapping[java.util.Date](
       convert0 = (value: String) => value match {
         case null|"" => null
         case x => dateFormatter.parse(x)
-      })
+      }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)
   }
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
@@ -118,12 +118,13 @@ trait Mappings {
 
   def map[V](valueBinding: Mapping[V]): Mapping[Map[String, V]] = map(text(), valueBinding)
 
-  def map[K, V](keyBinding: FieldMapping[K], valueBinding: Mapping[V]): Mapping[Map[K, V]] =
+  def map[K, V](keyBinding: Mapping[K], valueBinding: Mapping[V]): Mapping[Map[K, V]] =
     ThinMapping[Map[K, V]](
       convert0 = (name, data) => {
         Map.empty ++ keys(name, data).map { key =>
+          val keyName = name + "." + key
           val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-          (keyBinding.convert0(pureKey), valueBinding.convert(name + "." + key, data))
+          (keyBinding.convert(keyName, Map(keyName -> pureKey)), valueBinding.convert(keyName, data))
         }
       },
       validate0 = (name, data, messages, parentOptions) => {
@@ -132,7 +133,7 @@ trait Mappings {
           val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
           keyBinding.validate(keyName, Map(keyName -> pureKey), messages, parentOptions).map {
             case (name, err) => (name, "name: " + err)
-          } ++ valueBinding.validate(name + "." + key, data, messages, parentOptions)
+          } ++ valueBinding.validate(keyName, data, messages, parentOptions)
         }.flatten
       }
     )
