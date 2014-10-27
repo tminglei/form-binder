@@ -148,6 +148,24 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
         }
       }
     }
+
+    describe("numArrayIndex") {
+      it("simple use") {
+        val numArrayIndex = Constraints.numArrayIndex()
+        numArrayIndex("xx", "a", Map("a[0]" -> "aaa"), dummyMessages).toList should be (Nil)
+        numArrayIndex("", "a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages).toList should be (List("a[t0]" -> "name: dummy"))
+        numArrayIndex("xx", "a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages)
+          .toList should be (List("a[t1]" -> "name: dummy", "a[t4]" -> "name: dummy"))
+      }
+
+      it("w/ custom message") {
+        val numArrayIndex = Constraints.numArrayIndex("illegal array index")
+        numArrayIndex("xx", "a", Map("a[0]" -> "aaa"), dummyMessages).toList should be (Nil)
+        numArrayIndex("", "a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages).toList should be (List("a[t0]" -> "name: illegal array index"))
+        numArrayIndex("xx", "a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages)
+          .toList should be (List("a[t1]" -> "name: illegal array index", "a[t4].er" -> "name: illegal array index"))
+      }
+    }
   }
 
   describe("test pre-defined extra constraints") {

@@ -8,6 +8,8 @@ import org.json4s._
  * Framework internal used util methods (!!!NOTE: be careful if using it externally)
  */
 object FrameworkUtils {
+  val NAME_ERR_PREFIX = "name: "
+  val ILLEGAL_ARRAY_INDEX = """.*\[(\d*[^\d\[\]]+\d*)+\].*""".r
   /** copied from Play! form/mapping */
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
 

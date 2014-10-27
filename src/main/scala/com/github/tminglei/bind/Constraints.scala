@@ -3,7 +3,7 @@ package com.github.tminglei.bind
 import scala.util.matching.Regex
 
 trait Constraints {
-  import FrameworkUtils.mkConstraint
+  import FrameworkUtils._
   ////////////////////////////////////////////  pre-defined constraints  ////////////////////////////////////
 
   def required(message: String = ""): Constraint = mkConstraint((label, value, messages) =>
@@ -42,7 +42,15 @@ trait Constraints {
       Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
     } else None)
 
-  def email(message: String = ""): Constraint = pattern(FrameworkUtils.EMAIL_REGEX, message)
+  def email(message: String = ""): Constraint = pattern(EMAIL_REGEX, message)
+
+  def numArrayIndex(message: String = ""): Constraint = (label, name, data, messages) => {
+    data.filter(_._1.startsWith(name)).map { case (key, value) =>
+      ILLEGAL_ARRAY_INDEX.findFirstIn(key).map { m =>
+        (key -> (NAME_ERR_PREFIX + (if (message.isEmpty) messages("error.arrayindex") else Some(message)).get).format(key))
+      }
+    }.filterNot(_.isEmpty).map(_.get).toSeq
+  }
 
   //////////////////////////////////////////  pre-defined extra constraints  ////////////////////////////////
 
