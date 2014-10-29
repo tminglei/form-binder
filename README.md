@@ -44,7 +44,7 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 ```
 
 #### Extension Points:  
-(1) **PreDataProcessor**: `(String, Map[String, String]) => Map[String, String]`, *(prefix, data) => data*  
+(1) **PreProcessor**: `(String, Map[String, String]) => Map[String, String]`, *(prefix, data) => data*  
 (2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
 (3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
 (4) **Constraint**: `(String, String, Map[String, String], Messages) => Seq[(String, String)]`, *(label, name, data, messages) => errors*  

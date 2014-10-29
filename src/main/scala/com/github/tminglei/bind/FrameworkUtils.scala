@@ -14,36 +14,61 @@ object FrameworkUtils {
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
 
   //////////////////////////////////////////////////////////////////////////////////
+  val PassValidating: (String, Map[String, String], Messages, Options) => Seq[(String, String)] =
+    (name, data, messages, parentOptions) => Nil
+
+  def isEmptyInput(name: String, data: Map[String, String], multiInput: Boolean): Boolean =
+    multiInput match {
+      case true  => data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
+      case false => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty
+    }
+
+  // make an internal converter from `(vString) => value`
+  def mkConverter[T](convert: String => T) =
+    (name: String, data: Map[String, String]) => {
+      convert(data.get(name).orNull)
+    }
+  
+  // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
+  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
+    (label, name, data, messages) => {
+      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
+    }
+
+  // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
+  def mkPreProcessor(process: (String) => String): PreProcessor =
+    (name, data) => {
+      (data - name) + (name -> process(data.get(name).orNull))
+    }
+  
   @scala.annotation.tailrec
-  def processDataRec(prefix: String, data: Map[String,String], processors: List[PreDataProcessor]): Map[String,String] =
+  def processDataRec(prefix: String, data: Map[String,String], processors: List[PreProcessor]): Map[String,String] =
     processors match {
       case (process :: rest) => processDataRec(prefix, process(prefix, data), rest)
       case _  => data
     }
 
-  def validateRec(name: String, data: Map[String, String], validates: List[Constraint],
-            messages: Messages, options: Options): Seq[(String, String)] =
-    validates match {
-      case (validate :: rest) => {
-        val errors = validate(getLabel(name, messages, options), name, data, messages)
-        if (errors.isEmpty) validateRec(name, data, rest, messages, options)
-        else errors ++ (if (options.eagerCheck.getOrElse(false))
-          validateRec(name, data, rest, messages, options) else Nil)
+  def validateRec(name: String, data: Map[String, String], messages: Messages, options: Options,
+            validates: List[Constraint]): Seq[(String, String)] = validates match {
+        case (validate :: rest) => {
+          val errors = validate(getLabel(name, messages, options), name, data, messages)
+          if (errors.isEmpty) validateRec(name, data, messages, options, rest)
+          else errors ++ (if (options.eagerCheck.getOrElse(false))
+            validateRec(name, data, messages, options, rest) else Nil)
+        }
+        case _ => Nil
       }
-      case _ => Nil
-    }
 
-  def extraValidateRec[T](name: String, value: => T, validates: List[ExtraConstraint[T]],
-            messages: Messages, options: Options): Seq[(String, String)] =
-    if (validates.isEmpty || value == null) Nil
-    else validates match {
+  def extraValidateRec[T](name: String, value: => T, messages: Messages, options: Options,
+            validates: List[ExtraConstraint[T]]): Seq[(String, String)] =
+    validates match {
       case (validate :: rest) => validate(getLabel(name, messages, options), value, messages) match {
-        case Nil    => extraValidateRec(name, value, rest, messages, options)
+        case Nil    => extraValidateRec(name, value, messages, options, rest)
         case errors => errors.map { case (fieldName, message) => {
           val fullName = if (name.isEmpty) fieldName else if (fieldName.isEmpty) name else name + "." + fieldName
           (fullName, message)
         }} ++ (if (options.eagerCheck.getOrElse(false))
-          extraValidateRec(name, value, rest, messages, options) else Nil)
+          extraValidateRec(name, value, messages, options, rest) else Nil)
       }
       case _ => Nil
     }
@@ -68,21 +93,9 @@ object FrameworkUtils {
     val (parent, name, isArray) = splitName(fullName)
     val default = if (isArray) (splitName(parent)._2 + "[" + name + "]") else name
     if (options.i18n.getOrElse(false)) {
-      options.label.flatMap(messages(_).orElse(options.label)).getOrElse(default)
-    } else options.label.getOrElse(default)
+      options._label.flatMap(messages(_).orElse(options._label)).getOrElse(default)
+    } else options._label.getOrElse(default)
   }
-
-  // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
-  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
-    (label, name, data, messages) => {
-      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
-    }
-  
-  // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
-  def mkPreProcessor(process: (String) => String): PreDataProcessor =
-    (name, data) => {
-      (data - name) + (name -> process(data.get(name).orNull))
-    }
 
   // make a Constraint which will try to parse and collect errors
   def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =

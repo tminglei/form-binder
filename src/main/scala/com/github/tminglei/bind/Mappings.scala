@@ -8,60 +8,62 @@ trait Mappings {
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
 
   def text(constraints: Constraint*): Mapping[String] =
-    new FieldMapping[String](convert0 = identity).>+:(constraints: _*)
+    new FieldMapping[String](
+      convert0 = mkConverter(identity)
+    ).>+:(constraints: _*)
 
   def boolean(constraints: Constraint*): Mapping[Boolean] =
     new FieldMapping[Boolean](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => false
         case x => x.toBoolean
       }).>+:((parsing(_.toBoolean, "error.boolean") +: constraints): _*)
 
   def number(constraints: Constraint*): Mapping[Int] =
     new FieldMapping[Int](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0
         case x => x.toInt
       }).>+:((parsing(_.toInt, "error.number") +: constraints): _*)
 
   def double(constraints: Constraint*): Mapping[Double] =
     new FieldMapping[Double](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0d
         case x => x.toDouble
       }).>+:((parsing(_.toDouble, "error.double") +: constraints): _*)
 
   def float(constraints: Constraint*): Mapping[Float] =
     new FieldMapping[Float](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0f
         case x => x.toFloat
       }).>+:((parsing(_.toFloat, "error.float") +: constraints): _*)
 
   def long(constraints: Constraint*): Mapping[Long] =
     new FieldMapping[Long](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0l
         case x => x.toLong
       }).>+:((parsing(_.toLong, "error.long") +: constraints): _*)
 
   def bigDecimal(constraints: Constraint*): Mapping[BigDecimal] =
     new FieldMapping[BigDecimal](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
       }).>+:((parsing(BigDecimal.apply, "error.bigdecimal") +: constraints): _*)
 
   def bigInt(constraints: Constraint*): Mapping[BigInt] =
     new FieldMapping[BigInt](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => 0l
         case x => BigInt(x)
       }).>+:((parsing(BigInt.apply, "error.bigint") +: constraints): _*)
 
   def uuid(constraints: Constraint*): Mapping[UUID] =
     new FieldMapping[UUID](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => null
         case x => UUID.fromString(x)
       }).>+:((parsing(UUID.fromString, "error.uuid") +: constraints): _*)
@@ -69,7 +71,7 @@ trait Mappings {
   def date(pattern: String, constraints: Constraint*): Mapping[java.util.Date] = {
     val dateFormatter = new java.text.SimpleDateFormat(pattern)
     new FieldMapping[java.util.Date](
-      convert0 = (value: String) => value match {
+      convert0 = mkConverter {
         case null|"" => null
         case x => dateFormatter.parse(x)
       }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)
@@ -78,48 +80,46 @@ trait Mappings {
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
   def ignored[T](instead: T): Mapping[T] =
-    ThinMapping[T](
+    FieldMapping[T](
       convert0 = (name, data) => instead,
-      validate0 = (name, data, messages, parentOptions) => Nil
-    )
+      myValidate = PassValidating
+    ).options(_.copy(_ignoreConstraints = true))
 
   def default[T](base: Mapping[T], value: T): Mapping[T] = optional(base).mapTo(_.getOrElse(value))
 
   def optional[T](base: Mapping[T]): Mapping[Option[T]] =
-    ThinMapping[Option[T]](
+    FieldMapping[Option[T]](
       convert0 = (name, data) => {
-        if (data.keys.find(_.startsWith(name)).isEmpty ||
-          (data.contains(name) && data.get(name).map {v => (v == null || v.isEmpty)} == Some(true))) None
-        else {
-          base.validate(name, data, (key) => Some("dummy"), Options.apply()) match {
-            case Nil => Option(base.convert(name, data))
-            case _   => None
-          }
-        }
+        if (isEmptyInput(name, data, base.options._multiInput)) None
+        else Some(base.convert(name, data))
       },
-      validate0 = (name, data, messages, parentOptions) => Nil
-    )
+      myValidate = (name, data, messages, parentOptions) => {
+        if (isEmptyInput(name, data, base.options._multiInput)) Nil
+        else
+          base.validate(name, data, messages, parentOptions)
+      }
+    ).options(_.copy(_ignoreConstraints = true))
 
   def list[T](base: Mapping[T]): Mapping[List[T]] = seq(base).mapTo(_.toList)
   
   def seq[T](base: Mapping[T]): Mapping[Seq[T]] =
-    ThinMapping[Seq[T]](
+    FieldMapping[Seq[T]](
       convert0 = (name, data) => {
         indexes(name, data).map { i =>
           base.convert(name + "[" + i + "]", data)
         }
       },
-      validate0 = (name, data, messages, parentOptions) => {
+      myValidate = (name, data, messages, parentOptions) => {
         indexes(name, data).map { i =>
           base.validate(name + "[" + i + "]", data, messages, parentOptions)
         }.flatten
       }
-    )
+    ).options(_.copy(_multiInput = true))
 
   def map[V](valueBinding: Mapping[V]): Mapping[Map[String, V]] = map(text(), valueBinding)
 
   def map[K, V](keyBinding: Mapping[K], valueBinding: Mapping[V]): Mapping[Map[K, V]] =
-    ThinMapping[Map[K, V]](
+    FieldMapping[Map[K, V]](
       convert0 = (name, data) => {
         Map.empty ++ keys(name, data).map { key =>
           val keyName = name + "." + key
@@ -127,7 +127,7 @@ trait Mappings {
           (keyBinding.convert(keyName, Map(keyName -> pureKey)), valueBinding.convert(keyName, data))
         }
       },
-      validate0 = (name, data, messages, parentOptions) => {
+      myValidate = (name, data, messages, parentOptions) => {
         keys(name, data).map { key =>
           val keyName = name + "." + key
           val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
@@ -136,7 +136,7 @@ trait Mappings {
           } ++ valueBinding.validate(keyName, data, messages, parentOptions)
         }.flatten
       }
-    )
+    ).options(_.copy(_multiInput = true))
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////
 

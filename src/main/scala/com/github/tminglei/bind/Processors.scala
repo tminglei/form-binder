@@ -10,45 +10,45 @@ trait Processors {
   import FrameworkUtils.mkPreProcessor
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def trim(): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  def cleanComma(): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanComma(): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(",", "")
   }
 
-  def cleanHyphen(): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanHyphen(): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("-", "")
   }
 
-  def cleanPrefix(prefix: String): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanPrefix(prefix: String): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
   }
 
-  def cleanPostfix(postfix: String): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanPostfix(postfix: String): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
-  def cleanRedundantSpaces(): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanRedundantSpaces(): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
-  def cleanMatched(regex: Regex, replacement: String = ""): PreDataProcessor = mkPreProcessor {(input: String) =>
+  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = mkPreProcessor {(input: String) =>
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
-  def changePrefix(srcPrefix: String, destPrefix: String): PreDataProcessor =
+  def changePrefix(srcPrefix: String, destPrefix: String): PreProcessor =
     (prefix: String, data: Map[String, String]) => data.map {
         case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
       }
 
-  def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreDataProcessor =
+  def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreProcessor =
     (prefix: String, data: Map[String, String]) => {
       (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
-  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreDataProcessor =
+  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreProcessor =
     (prefix: String, data: Map[String, String]) => {
       val sourceKey1 = sourceKey.getOrElse(prefix)
       if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
