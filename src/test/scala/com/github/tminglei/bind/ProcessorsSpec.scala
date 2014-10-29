@@ -9,57 +9,57 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
 
     it("trim") {
       val trim = Processors.trim
-      trim("", Map("" -> null)) should be (Map("" -> null))
-      trim("", Map("" -> " yuu")) should be (Map("" -> "yuu"))
-      trim("a", Map("a" -> "eyuu")) should be (Map("a" -> "eyuu"))
+      trim("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      trim("", Map("" -> " yuu"), Options.apply()) should be (Map("" -> "yuu"))
+      trim("a", Map("a" -> "eyuu"), Options.apply()) should be (Map("a" -> "eyuu"))
     }
 
     it("clean-comma") {
       val cleanComma = Processors.cleanComma
-      cleanComma("", Map("" -> null)) should be (Map("" -> null))
-      cleanComma("", Map("" -> "123,334")) should be (Map("" -> "123334"))
-      cleanComma("a", Map("a" -> "2.345e+5")) should be (Map("a" -> "2.345e+5"))
+      cleanComma("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanComma("", Map("" -> "123,334"), Options.apply()) should be (Map("" -> "123334"))
+      cleanComma("a", Map("a" -> "2.345e+5"), Options.apply()) should be (Map("a" -> "2.345e+5"))
     }
 
     it("clean-hyphen") {
       val cleanHyphen = Processors.cleanHyphen
-      cleanHyphen("", Map("" -> null)) should be (Map("" -> null))
-      cleanHyphen("", Map("" -> "2342-334")) should be (Map("" -> "2342334"))
-      cleanHyphen("a", Map("a" -> "2342334")) should be (Map("a" -> "2342334"))
+      cleanHyphen("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanHyphen("", Map("" -> "2342-334"), Options.apply()) should be (Map("" -> "2342334"))
+      cleanHyphen("a", Map("a" -> "2342334"), Options.apply()) should be (Map("a" -> "2342334"))
     }
 
     it("clean-prefix") {
       val cleanPrefix = Processors.cleanPrefix("$")
-      cleanPrefix("", Map("" -> null)) should be (Map("" -> null))
-      cleanPrefix("", Map("" -> "$3,567")) should be (Map("" -> "3,567"))
-      cleanPrefix("a", Map("a" -> "35667")) should be (Map("a" -> "35667"))
+      cleanPrefix("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanPrefix("", Map("" -> "$3,567"), Options.apply()) should be (Map("" -> "3,567"))
+      cleanPrefix("a", Map("a" -> "35667"), Options.apply()) should be (Map("a" -> "35667"))
     }
 
     it("clean-postfix") {
       val cleanPostfix = Processors.cleanPostfix("-tat")
-      cleanPostfix("", Map("" -> null)) should be (Map("" -> null))
-      cleanPostfix("a", Map("a" -> "tewwwtt-tat")) should be (Map("a" -> "tewwwtt"))
+      cleanPostfix("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanPostfix("a", Map("a" -> "tewwwtt-tat"), Options.apply()) should be (Map("a" -> "tewwwtt"))
     }
 
     it("clean-redundant-spaces") {
       val cleanRedundantSpaces = Processors.cleanRedundantSpaces
-      cleanRedundantSpaces("", Map("" -> null)) should be (Map("" -> null))
-      cleanRedundantSpaces("a", Map("a" -> " a  teee  86y")) should be (Map("a" -> " a teee 86y"))
-      cleanRedundantSpaces("", Map("" -> "te yu ")) should be (Map("" -> "te yu "))
+      cleanRedundantSpaces("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanRedundantSpaces("a", Map("a" -> " a  teee  86y"), Options.apply()) should be (Map("a" -> " a teee 86y"))
+      cleanRedundantSpaces("", Map("" -> "te yu "), Options.apply()) should be (Map("" -> "te yu "))
     }
 
     it("clean-matched") {
       val cleanMatched = Processors.cleanMatched("-\\d\\d$".r)
-      cleanMatched("", Map("" -> null)) should be (Map("" -> null))
-      cleanMatched("", Map("" -> "2342-334-12")) should be (Map("" -> "2342-334"))
-      cleanMatched("a", Map("a" -> "2342-334")) should be (Map("a" -> "2342-334"))
+      cleanMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334"))
+      cleanMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
     }
 
     it("clean-matched-with-replacement") {
       val cleanMatched = Processors.cleanMatched("-\\d\\d$".r, "-1")
-      cleanMatched("", Map("" -> null)) should be (Map("" -> null))
-      cleanMatched("", Map("" -> "2342-334-12")) should be (Map("" -> "2342-334-1"))
-      cleanMatched("a", Map("a" -> "2342-334")) should be (Map("a" -> "2342-334"))
+      cleanMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334-1"))
+      cleanMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
     }
   }
 
@@ -84,7 +84,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "data.dr-1[1]" -> "45"
         )
 
-        changePrefix("", data) should be (expected)
+        changePrefix("", data, Options.apply()) should be (expected)
       }
     }
 
@@ -104,20 +104,20 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "json.dr-1[1]" -> "45"
         )
 
-        expandJsonData("", data) should be (expected)
+        expandJsonData("", data, Options.apply()) should be (expected)
       }
 
       it("null or empty") {
         val expandJsonData = Processors.expandJsonString(Some("json"))
 
         val nullData = Map("aa" -> "wett")
-        expandJsonData("", nullData) should be (nullData)
+        expandJsonData("", nullData, Options.apply()) should be (nullData)
 
         val nullData1 = Map("aa" -> "wett", "json" -> null)
-        expandJsonData("", nullData1) should be (nullData1)
+        expandJsonData("", nullData1, Options.apply()) should be (nullData1)
 
         val emptyData1 = Map("aa" -> "wett", "json" -> "")
-        expandJsonData("", emptyData1) should be (emptyData1)
+        expandJsonData("", emptyData1, Options.apply()) should be (emptyData1)
       }
 
       it("with dest prefix") {
@@ -135,7 +135,7 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "json.dr-1[1]" -> "45"
         )
 
-        expandJsonData("", data) should be (expected)
+        expandJsonData("", data, Options.apply()) should be (expected)
       }
     }
   }

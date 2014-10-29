@@ -27,7 +27,7 @@ case class FormBinder[R](messages: Messages,
    * @return `consume` produced result, if validation passed; (transformed) errors, if validation failed
    */
   def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
-    val data1  = processDataRec("", data, processors)
+    val data1  = processDataRec("", data, mapping.options, processors)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
     if (errors.isEmpty) {
       mapping.validate("", data1, messages, mapping.options) match {
@@ -42,10 +42,12 @@ case class FormBinder[R](messages: Messages,
    * @return (transformed) errors
    */
   def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None) = {
-    val data1 = processDataRec("", data, processors)
+    val data1 = processDataRec("", data, mapping.options, processors)
     val touched1 = touched.orElse(touchExtractor.map(_.apply(data))).getOrElse(Nil)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
-    val errs = if (errors.isEmpty) mapping.validate("", data1, messages, mapping.options.copy(touched = touched1)) else errors
+    val errs = if (errors.isEmpty)
+        mapping.validate("", data1, messages, mapping.options.copy(touched = touched1))
+      else errors
     errProcessor.getOrElse(Processors.errsToMapList).apply(errs)
   }
 }
@@ -115,16 +117,17 @@ case class FieldMapping[T](convert0: (String, Map[String, String]) => T,
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
-  def convert(name: String, data: Map[String, String]): T = convert0(name, processDataRec(name, data, options._processors))
+  def convert(name: String, data: Map[String, String]): T =
+    convert0(name, processDataRec(name, data, options, options._processors))
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    val data1  = processDataRec(name, data, theOptions._processors)
+    val data1  = processDataRec(name, data, theOptions, theOptions._processors)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
       && isEmptyInput(name, data1, theOptions._multiInput)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, (if (theOptions._ignoreConstraints) Nil else theOptions._constraints) :+
-        { (label: String, name: String, data: Map[String, String], messages: Messages) => myValidate(name, data, messages, theOptions) })
+        { (name: String, data: Map[String, String], messages: Messages, options: Options) => myValidate(name, data, messages, options) })
       if (errors.isEmpty)
         Option(convert(name, data1)).map { v =>
           extraValidateRec(name, v, messages, theOptions, extraConstraints)
@@ -143,24 +146,24 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String,
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
-    val data1 = processDataRec(name, data, options._processors)
+    val data1 = processDataRec(name, data, options, options._processors)
     if (isEmptyInput(name, data1, options._multiInput)) null.asInstanceOf[T]
     else convert0(name, data1)
   }
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
-    val data1  = processDataRec(name, data, theOptions._processors)
+    val data1  = processDataRec(name, data, theOptions, theOptions._processors)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
       && isEmptyInput(name, data1, theOptions._multiInput)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, theOptions._constraints :+
-        { (label: String, name: String, data: Map[String, String], messages: Messages) =>
-          if (isEmptyInput(name, data, theOptions._multiInput)) Nil
+        { (name: String, data: Map[String, String], messages: Messages, options: Options) =>
+          if (isEmptyInput(name, data, options._multiInput)) Nil
           else {
             fields.map { case (fieldName, binding) =>
               val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
-              binding.validate(fullName, data, messages, theOptions)
+              binding.validate(fullName, data, messages, options)
             }.flatten
           }
         })

@@ -39,17 +39,17 @@ trait Processors {
   }
 
   def changePrefix(srcPrefix: String, destPrefix: String): PreProcessor =
-    (prefix: String, data: Map[String, String]) => data.map {
+    (prefix, data, options) => data.map {
         case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
       }
 
   def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreProcessor =
-    (prefix: String, data: Map[String, String]) => {
+    (prefix, data, options) => {
       (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
   def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreProcessor =
-    (prefix: String, data: Map[String, String]) => {
+    (prefix, data, options) => {
       val sourceKey1 = sourceKey.getOrElse(prefix)
       if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
         val destPrefix1 = destPrefix.getOrElse(sourceKey1)

@@ -44,7 +44,7 @@ trait Constraints {
 
   def email(message: String = ""): Constraint = pattern(EMAIL_REGEX, message)
 
-  def numArrayIndex(message: String = ""): Constraint = (label, name, data, messages) => {
+  def numArrayIndex(message: String = ""): Constraint = (name, data, messages, options) => {
     data.filter(_._1.startsWith(name)).map { case (key, value) =>
       ILLEGAL_ARRAY_INDEX.findFirstIn(key).map { m =>
         (key -> (NAME_ERR_PREFIX + (if (message.isEmpty) messages("error.arrayindex") else Some(message)).get).format(key))

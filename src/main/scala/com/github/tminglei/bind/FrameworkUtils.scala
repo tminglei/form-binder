@@ -31,27 +31,29 @@ object FrameworkUtils {
   
   // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
   def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
-    (label, name, data, messages) => {
-      validate(label, data.get(name).orNull, messages).map { error => Seq(name -> error) }.getOrElse(Nil)
+    (name, data, messages, options) => {
+      validate(getLabel(name, messages, options), data.get(name).orNull, messages)
+        .map { error => Seq(name -> error) }.getOrElse(Nil)
     }
 
   // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
   def mkPreProcessor(process: (String) => String): PreProcessor =
-    (name, data) => {
+    (name, data, options) => {
       (data - name) + (name -> process(data.get(name).orNull))
     }
   
   @scala.annotation.tailrec
-  def processDataRec(prefix: String, data: Map[String,String], processors: List[PreProcessor]): Map[String,String] =
+  def processDataRec(prefix: String, data: Map[String,String], options: Options,
+            processors: List[PreProcessor]): Map[String,String] =
     processors match {
-      case (process :: rest) => processDataRec(prefix, process(prefix, data), rest)
+      case (process :: rest) => processDataRec(prefix, process(prefix, data, options), options, rest)
       case _  => data
     }
 
   def validateRec(name: String, data: Map[String, String], messages: Messages, options: Options,
             validates: List[Constraint]): Seq[(String, String)] = validates match {
         case (validate :: rest) => {
-          val errors = validate(getLabel(name, messages, options), name, data, messages)
+          val errors = validate(name, data, messages, options)
           if (errors.isEmpty) validateRec(name, data, messages, options, rest)
           else errors ++ (if (options.eagerCheck.getOrElse(false))
             validateRec(name, data, messages, options, rest) else Nil)

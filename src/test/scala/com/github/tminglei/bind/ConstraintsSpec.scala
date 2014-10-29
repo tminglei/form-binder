@@ -12,97 +12,98 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("required") {
       it("simple use") {
         val required = Constraints.required()
-        required("", "", Map("" -> null), dummyMessages).toList should be (List("" -> "dummy"))
-        required("", "", Map("" -> ""), dummyMessages).toList should be (List("" -> "dummy"))
-        required("", "", Map("" -> "test"), dummyMessages).toList should be (Nil)
+        required("", Map("" -> null), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        required("", Map("" -> ""), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        required("", Map("" -> "test"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
       }
 
       it("with custom message") {
         val required1 = Constraints.required("%s is required")
-        required1("haha", "tt.a", Map("tt.a" -> null), dummyMessages).toList should be (List("tt.a" -> "haha is required"))
+        required1("tt.a", Map("tt.a" -> null), dummyMessages, Options(_label = Some("haha"))).toList should be (List("tt.a" -> "haha is required"))
+        required1("tt.a", Map("tt.a" -> null), dummyMessages, Options.apply()).toList should be (List("tt.a" -> "a is required"))
       }
     }
 
     describe("maxlength") {
       it("simple use") {
         val maxlength = Constraints.maxlength(10)
-        maxlength("", "", Map("" -> "wetyyuu"), dummyMessages).toList should be (Nil)
-        maxlength("", "", Map("" -> "wetyettyiiie"), dummyMessages).toList should be (List("" -> "dummy"))
-        maxlength("", "", Map("" -> "tuewerri97"), dummyMessages).toList should be (Nil)
+        maxlength("", Map("" -> "wetyyuu"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        maxlength("", Map("" -> "wetyettyiiie"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        maxlength("", Map("" -> "tuewerri97"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
       }
 
       it("with custom message") {
         val maxlength1 = Constraints.maxlength(10, "'%s': length > %d")
-        maxlength1("haha", "", Map("" -> "eewryuooerjhy"), dummyMessages).toList should be (List("" -> "'eewryuooerjhy': length > 10"))
+        maxlength1("", Map("" -> "eewryuooerjhy"), dummyMessages, Options(_label = Some("haha"))).toList should be (List("" -> "'eewryuooerjhy': length > 10"))
       }
     }
 
     describe("minlength") {
       it("simple use") {
         val minlength = Constraints.minlength(3)
-        minlength("", "", Map("" -> "er"), dummyMessages).toList should be (List("" -> "dummy"))
-        minlength("", "", Map("" -> "ert6"), dummyMessages).toList should be (Nil)
-        minlength("", "", Map("" -> "tee"), dummyMessages).toList should be (Nil)
+        minlength("", Map("" -> "er"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        minlength("", Map("" -> "ert6"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        minlength("", Map("" -> "tee"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
       }
 
       it("with custom message") {
         val minlength1 = Constraints.minlength(3, "'%s': length cannot < %d")
-        minlength1("haha", "", Map("" -> "te"), dummyMessages).toList should be (List("" -> "'te': length cannot < 3"))
+        minlength1("", Map("" -> "te"), dummyMessages, Options(_label = Some("haha"))).toList should be (List("" -> "'te': length cannot < 3"))
       }
     }
 
     describe("length") {
       it("simple use") {
         val length = Constraints.length(9)
-        length("", "", Map("" -> "123456789"), dummyMessages).toList should be (Nil)
-        length("", "", Map("" -> "123"), dummyMessages).toList should be (List("" -> "dummy"))
-        length("", "", Map("" -> "1234567890"), dummyMessages).toList should be (List("" -> "dummy"))
+        length("", Map("" -> "123456789"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        length("", Map("" -> "123"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        length("", Map("" -> "1234567890"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val length1 = Constraints.length(9, "'%s': length not equal to %d")
-        length1("haha", "", Map("" -> "123"), dummyMessages).toList should be (List("" -> "'123': length not equal to 9"))
+        length1("", Map("" -> "123"), dummyMessages, Options(_label = Some("haha"))).toList should be (List("" -> "'123': length not equal to 9"))
       }
     }
 
     describe("oneOf") {
       it("simple use") {
         val oneof = Constraints.oneOf(Seq("a","b","c"))
-        oneof("", "", Map("" -> "a"), dummyMessages).toList should be (Nil)
-        oneof("", "", Map("" -> "t"), dummyMessages).toList should be (List("" -> "dummy"))
-        oneof("", "", Map("" -> null), dummyMessages).toList should be (List("" -> "dummy"))
+        oneof("", Map("" -> "a"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        oneof("", Map("" -> "t"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        oneof("", Map("" -> null), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val oneof1 = Constraints.oneOf(Seq("a","b","c"), "'%s': is not one of %s")
-        oneof1("haha", "t.a", Map("t.a" -> "ts"), dummyMessages).toList should be (List("t.a" -> "'ts': is not one of 'a', 'b', 'c'"))
+        oneof1("t.a", Map("t.a" -> "ts"), dummyMessages, Options(_label = Some("haha"))).toList should be (List("t.a" -> "'ts': is not one of 'a', 'b', 'c'"))
       }
     }
 
     describe("pattern") {
       it("simple use") {
         val pattern = Constraints.pattern("^(\\d+)$".r)
-        pattern("", "", Map("" -> "1234657"), dummyMessages).toList should be (Nil)
-        pattern("", "", Map("" -> "32566y"), dummyMessages).toList should be (List("" -> "dummy"))
-        pattern("", "", Map("" -> "123,567"), dummyMessages).toList should be (List("" -> "dummy"))
+        pattern("", Map("" -> "1234657"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        pattern("", Map("" -> "32566y"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        pattern("", Map("" -> "123,567"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' not match '%s'")
-        pattern1("haha", "", Map("" -> "t4366"), dummyMessages).toList should be (List("" -> "'t4366' not match '^(\\d+)$'"))
+        pattern1("", Map("" -> "t4366"), dummyMessages, Options(_label = Some("haha"))).toList should be (List("" -> "'t4366' not match '^(\\d+)$'"))
       }
     }
 
     describe("patternNot") {
       it("simple use") {
         val pattern = Constraints.patternNot(""".*\[(\d*[^\d\[\]]+\d*)+\].*""".r)
-        pattern("", "", Map("" -> "eree.[1234657].eee"), dummyMessages).toList should be (Nil)
-        pattern("", "", Map("" -> "errr.[32566y].ereee"), dummyMessages).toList should be (List("" -> "dummy"))
+        pattern("", Map("" -> "eree.[1234657].eee"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
+        pattern("", Map("" -> "errr.[32566y].ereee"), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
       }
 
       it("with custom message") {
         val pattern1 = Constraints.pattern("^(\\d+)$".r, "'%s' contains illegal array index")
-        pattern1("haha", "", Map("" -> "ewtr.[t4366].eweee"), dummyMessages)
+        pattern1("", Map("" -> "ewtr.[t4366].eweee"), dummyMessages, Options(_label = Some("haha")))
           .toList should be (List("" -> "'ewtr.[t4366].eweee' contains illegal array index"))
       }
     }
@@ -129,7 +130,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           //        "甲斐@黒川.日本",  //Japanese Characters
           //        "чебурашка@ящик-с-апельсинами.рф"  //Cyrillic Characters
         ).map { emailAddr =>
-          email("", "", Map("" -> emailAddr), dummyMessages).toList should be (Nil)
+          email("", Map("" -> emailAddr), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
         }
       }
 
@@ -144,7 +145,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
           "john..doe@example.com", //(double dot before @)
           "john.doe@example..com" //(double dot after @)
         ).map { emailAddr =>
-          email("", "", Map("" -> emailAddr), dummyMessages).toList should be (List("" -> s"'$emailAddr' not valid"))
+          email("", Map("" -> emailAddr), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> s"'$emailAddr' not valid"))
         }
       }
     }
@@ -152,17 +153,19 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("numArrayIndex") {
       it("simple use") {
         val numArrayIndex = Constraints.numArrayIndex()
-        numArrayIndex("xx", "a", Map("a[0]" -> "aaa"), dummyMessages).toList should be (Nil)
-        numArrayIndex("", "a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages).toList should be (List("a[t0]" -> "name: dummy"))
-        numArrayIndex("xx", "a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages)
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"))).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some("")))
+          .toList should be (List("a[t0]" -> "name: dummy"))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages, Options(_label = Some("xx")))
           .toList should be (List("a[t1]" -> "name: dummy", "a[t4]" -> "name: dummy"))
       }
 
       it("w/ custom message") {
         val numArrayIndex = Constraints.numArrayIndex("illegal array index")
-        numArrayIndex("xx", "a", Map("a[0]" -> "aaa"), dummyMessages).toList should be (Nil)
-        numArrayIndex("", "a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages).toList should be (List("a[t0]" -> "name: illegal array index"))
-        numArrayIndex("xx", "a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages)
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"))).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some("")))
+          .toList should be (List("a[t0]" -> "name: illegal array index"))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages, Options(_label = Some("xx")))
           .toList should be (List("a[t1]" -> "name: illegal array index", "a[t4].er" -> "name: illegal array index"))
       }
     }

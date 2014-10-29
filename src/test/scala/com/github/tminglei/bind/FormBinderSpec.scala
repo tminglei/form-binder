@@ -171,7 +171,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       it("w/ ignore empty and touched (combined)") {
         val expand = expandJsonString(Some("body"), Some("json"))
         val binder1 = expand >-: changePrefix("json.data", "json") >-: FormBinder(messages)
-          .withTouched((data) => extractTouched("json.touched", "json").apply(expand("", data)))
+          .withTouched((data) => extractTouched("json.touched", "json").apply(expand("", data, Options.apply())))
         val invalidData = Map(
           "id" -> "133",
           "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": {"email":true, "price":false}}"""
