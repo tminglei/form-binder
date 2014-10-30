@@ -56,14 +56,6 @@ trait Constraints {
 
   //////////////////////////////////////////  pre-defined extra constraints  ////////////////////////////////
 
-  def notEmpty[T](isEmpty: (T) => Boolean = null, message: String = ""): ExtraConstraint[T] =
-    (label, value, messages) => {
-      val _isEmpty = if (isEmpty != null) isEmpty else FrameworkUtils.isEmpty(_)
-      if (_isEmpty(value)) {
-        Seq("" -> (if (message.isEmpty) messages("error.required") else Some(message)).get.format(label))
-      } else Nil
-    }
-
   def min[T: Ordering](minVal: T, message: String = ""): ExtraConstraint[T] = (label, value, messages) => {
     val ord = Ordering[T]; import ord._
     if (value < minVal) {

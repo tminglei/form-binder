@@ -79,18 +79,6 @@ object FrameworkUtils {
 
   //////////////////////////// normal processing related //////////////////////////////
 
-  def isEmpty(value: Any): Boolean = value match {
-    case str: String => str.isEmpty
-    case seq: Seq[_] => seq.isEmpty
-    case map: Map[_, _] => map.isEmpty
-    case json: JValue => json match {
-      case JNull|JNothing => true
-      case _  => false
-    }
-    case null => true
-    case _  => throw new IllegalArgumentException(s"Unsupported value type: $value")
-  }
-
   // i18n on: use i18n label, if exists; else use label; else use last field name from full name
   // i18n off: use label; else use last field name from full name
   def getLabel(fullName: String, messages: Messages, options: Options): String = {
