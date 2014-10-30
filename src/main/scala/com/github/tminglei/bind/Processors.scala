@@ -10,52 +10,58 @@ trait Processors {
   import FrameworkUtils.mkSimplePreProcessor
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def trim(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  def cleanComma(): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanComma(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(",", "")
   }
 
-  def cleanHyphen(): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanHyphen(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("-", "")
   }
 
-  def cleanPrefix(prefix: String): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanPrefix(prefix: String): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
   }
 
-  def cleanPostfix(postfix: String): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanPostfix(postfix: String): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
-  def cleanRedundantSpaces(): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanRedundantSpaces(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
-  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = mkSimplePreProcessor {(input: String) =>
+  def cleanMatched(regex: Regex, replacement: String = "") = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
-  def changePrefix(srcPrefix: String, destPrefix: String): PreProcessor =
-    (prefix, data, options) => data.map {
-      case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+  def changePrefix(srcPrefix: String, destPrefix: String) =
+    new PreProcessor with OneInput with MultiInput {
+      def apply(prefix: String, data: Map[String, String], options: Options) =
+        data.map {
+          case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+        }
     }
 
-  def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreProcessor =
-    (prefix, data, options) => {
-      (data - destPrefix) ++ json4sToMapData(destPrefix, json)
+  def mergeJson4sData(json: JValue, destPrefix: String = "json") =
+    new PreProcessor with OneInput with MultiInput {
+      def apply(prefix: String, data: Map[String, String], options: Options) =
+        (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
-  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None): PreProcessor =
-    (prefix, data, options) => {
-      val sourceKey1 = sourceKey.getOrElse(prefix)
-      if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
-        val destPrefix1 = destPrefix.getOrElse(sourceKey1)
-        val json = JsonMethods.parse(data(sourceKey1))
-        (data - destPrefix1) ++ json4sToMapData(destPrefix1, json)
-      } else data
+  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None) =
+    new PreProcessor with OneInput with MultiInput {
+      def apply(prefix: String, data: Map[String, String], options: Options) = {
+        val sourceKey1 = sourceKey.getOrElse(prefix)
+        if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
+          val destPrefix1 = destPrefix.getOrElse(sourceKey1)
+          val json = JsonMethods.parse(data(sourceKey1))
+          (data - destPrefix1) ++ json4sToMapData(destPrefix1, json)
+        } else data
+      }
     }
 
   ////////////////////////////////// pre-defined touch list extractor //////////////////////////////

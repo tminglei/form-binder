@@ -10,7 +10,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     val dummyMessages: Messages = (key) => Some("%s dummy")
 
     describe("text") {
-      val text = trim >-: Mappings.text()
+      val text = trim() >-: Mappings.text()
 
       it("valid data") {
         val data = Map("text" -> "tett ")

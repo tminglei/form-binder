@@ -194,7 +194,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
     describe("map-simple") {
       val base = Mappings.number()
-      val map  = Constraints.required() >+: Mappings.map(base).label("xx")
+      val map  = Mappings.map(base, Constraints.required()).label("xx")
 
       it("invalid data") {
         val invalidData = Map("map.aa" -> "t122345", "map.\"b-1\"" -> "t11345")

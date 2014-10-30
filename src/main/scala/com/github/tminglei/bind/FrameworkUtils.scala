@@ -30,20 +30,20 @@ object FrameworkUtils {
     }
   
   // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
-  def mkSimpleConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
-    (name, data, messages, options) => {
-      if (options._multiInput == true) throw new RuntimeException("This constraint only accepts SINGLE INPUT!!!")
-      validate(getLabel(name, messages, options), data.get(name).orNull, messages)
-        .map { error => Seq(name -> error) }.getOrElse(Nil)
+  def mkSimpleConstraint(validate: (String, String, Messages) => Option[String]) =
+    new Constraint with OneInput {
+      def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
+        validate(getLabel(name, messages, options), data.get(name).orNull, messages)
+          .map { error => Seq(name -> error) }.getOrElse(Nil)
     }
 
   // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
-  def mkSimplePreProcessor(process: (String) => String): PreProcessor =
-    (name, data, options) => {
-      if (options._multiInput == true) throw new RuntimeException("This pre-processor only accepts SINGLE INPUT!!!")
-      (data - name) + (name -> process(data.get(name).orNull))
+  def mkSimplePreProcessor(process: (String) => String): PreProcessor with OneInput =
+    new PreProcessor with OneInput {
+      def apply(name: String, data: Map[String, String], options: Options) =
+        (data - name) + (name -> process(data.get(name).orNull))
     }
-  
+
   @scala.annotation.tailrec
   def processDataRec(prefix: String, data: Map[String,String], options: Options,
             processors: List[PreProcessor]): Map[String,String] =
@@ -90,7 +90,7 @@ object FrameworkUtils {
   }
 
   // make a Constraint which will try to parse and collect errors
-  def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
+  def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint with OneInput =
     mkSimpleConstraint((label, value, messages) => value match {
       case null|"" => None
       case x => {

@@ -17,8 +17,8 @@ case class FormBinder[R](messages: Messages,
                touchExtractor: Option[TouchedExtractor] = None,
                errProcessor: Option[PostErrProcessor[R]] = None) {
 
-  def >-:(newProcessors: PreProcessor*) = copy(processors = newProcessors ++: processors)
-  def >+:(newConstraints: Constraint*) = copy(constraints = newConstraints ++: constraints)
+  def >-:(newProcessors: (PreProcessor with MultiInput)*) = copy(processors = newProcessors ++: processors)
+  def >+:(newConstraints: (Constraint with MultiInput)*) = copy(constraints = newConstraints ++: constraints)
   def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
   def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
@@ -26,7 +26,7 @@ case class FormBinder[R](messages: Messages,
    * bind mappings to data, if validation passed, consume it
    * @return `consume` produced result, if validation passed; (transformed) errors, if validation failed
    */
-  def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2) = {
+  def bind[T, R2, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String])(consume: T => R2) = {
     val data1  = processDataRec("", data, mapping.options, processors)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
     if (errors.isEmpty) {
@@ -41,7 +41,7 @@ case class FormBinder[R](messages: Messages,
    * bind and validate only data, not consume it
    * @return (transformed) errors
    */
-  def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None) = {
+  def validate[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String], touched: Option[Seq[String]] = None) = {
     val data1 = processDataRec("", data, mapping.options, processors)
     val touched1 = touched.orElse(touchExtractor.map(_.apply(data))).getOrElse(Nil)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
@@ -76,22 +76,26 @@ case class Options(
     touched = parent.touched)
 }
 
-trait Mapping[T] {
+sealed trait InputMode
+trait OneInput extends InputMode
+trait MultiInput extends InputMode
+
+trait Mapping[T, M <: InputMode] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
   def label(label: String) = options(_.copy(_label = Option(label)))
-  def >-:(newProcessors: PreProcessor*) = options(_.copy(_processors = newProcessors ++: options._processors))
-  def >+:(newConstraints: Constraint*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
+  def >-:(newProcessors: (PreProcessor with M)*) = options(_.copy(_processors = newProcessors ++: options._processors))
+  def >+:(newConstraints: (Constraint with M)*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
   def verifying(validates: ExtraConstraint[T]*) = this
 
   def convert(name: String, data: Map[String, String]): T
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)]
-  def mapTo[R](transform: T => R): Mapping[R] = new TransformMapping(this, transform)
+  def mapTo[R](transform: T => R): Mapping[R, M] = new TransformMapping[T, R, M](this, transform)
 }
 
 /////////////////////////// core mapping implementations /////////////////////////////////
 private // A wrapper mapping, used to transform converted value to another
-case class TransformMapping[T, R](base: Mapping[T], transform: T => R, extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R] {
+case class TransformMapping[T, R, M <: InputMode](base: Mapping[T, M], transform: T => R, extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R, M] {
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
   override def verifying(validates: ExtraConstraint[R]*) = copy(extraConstraints = extraConstraints ++ validates)
@@ -109,10 +113,10 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R, extraCons
 }
 
 // A field mapping is an atomic mapping, which doesn't contain other mappings
-case class FieldMapping[T](convert0: (String, Map[String, String]) => T,
+case class FieldMapping[T, M <: InputMode](convert0: (String, Map[String, String]) => T,
                 myValidate: (String, Map[String, String], Messages, Options) => Seq[(String, String)] = PassValidating,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
-                override val options: Options = Options.apply()) extends Mapping[T] {
+                override val options: Options = Options.apply()) extends Mapping[T, M] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
@@ -138,9 +142,9 @@ case class FieldMapping[T](convert0: (String, Map[String, String]) => T,
 }
 
 // A group mapping is a compound mapping, and is used to construct a complex/nested mapping
-case class GroupMapping[T](fields: Seq[(String, Mapping[_])], convert0: (String, Map[String, String]) => T,
+case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (String, Map[String, String]) => T,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
-                override val options: Options = Options.apply(_multiInput = true)) extends Mapping[T] {
+                override val options: Options = Options.apply(_multiInput = true)) extends Mapping[T, MultiInput] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
