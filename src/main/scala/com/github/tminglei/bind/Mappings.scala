@@ -9,61 +9,61 @@ trait Mappings {
 
   def text(constraints: Constraint*): Mapping[String] =
     new FieldMapping[String](
-      convert0 = mkConverter(identity)
+      convert0 = mkSimpleConverter(identity)
     ).>+:(constraints: _*)
 
   def boolean(constraints: Constraint*): Mapping[Boolean] =
     new FieldMapping[Boolean](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => false
         case x => x.toBoolean
       }).>+:((parsing(_.toBoolean, "error.boolean") +: constraints): _*)
 
   def number(constraints: Constraint*): Mapping[Int] =
     new FieldMapping[Int](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0
         case x => x.toInt
       }).>+:((parsing(_.toInt, "error.number") +: constraints): _*)
 
   def double(constraints: Constraint*): Mapping[Double] =
     new FieldMapping[Double](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0d
         case x => x.toDouble
       }).>+:((parsing(_.toDouble, "error.double") +: constraints): _*)
 
   def float(constraints: Constraint*): Mapping[Float] =
     new FieldMapping[Float](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0f
         case x => x.toFloat
       }).>+:((parsing(_.toFloat, "error.float") +: constraints): _*)
 
   def long(constraints: Constraint*): Mapping[Long] =
     new FieldMapping[Long](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0l
         case x => x.toLong
       }).>+:((parsing(_.toLong, "error.long") +: constraints): _*)
 
   def bigDecimal(constraints: Constraint*): Mapping[BigDecimal] =
     new FieldMapping[BigDecimal](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
       }).>+:((parsing(BigDecimal.apply, "error.bigdecimal") +: constraints): _*)
 
   def bigInt(constraints: Constraint*): Mapping[BigInt] =
     new FieldMapping[BigInt](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => 0l
         case x => BigInt(x)
       }).>+:((parsing(BigInt.apply, "error.bigint") +: constraints): _*)
 
   def uuid(constraints: Constraint*): Mapping[UUID] =
     new FieldMapping[UUID](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => null
         case x => UUID.fromString(x)
       }).>+:((parsing(UUID.fromString, "error.uuid") +: constraints): _*)
@@ -71,7 +71,7 @@ trait Mappings {
   def date(pattern: String, constraints: Constraint*): Mapping[java.util.Date] = {
     val dateFormatter = new java.text.SimpleDateFormat(pattern)
     new FieldMapping[java.util.Date](
-      convert0 = mkConverter {
+      convert0 = mkSimpleConverter {
         case null|"" => null
         case x => dateFormatter.parse(x)
       }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)

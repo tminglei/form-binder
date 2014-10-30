@@ -7,41 +7,41 @@ import FrameworkUtils._
 import org.json4s._
 
 trait Processors {
-  import FrameworkUtils.mkPreProcessor
+  import FrameworkUtils.mkSimplePreProcessor
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreProcessor = mkPreProcessor {(input: String) =>
+  def trim(): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  def cleanComma(): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanComma(): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(",", "")
   }
 
-  def cleanHyphen(): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanHyphen(): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("-", "")
   }
 
-  def cleanPrefix(prefix: String): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanPrefix(prefix: String): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
   }
 
-  def cleanPostfix(postfix: String): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanPostfix(postfix: String): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
   }
 
-  def cleanRedundantSpaces(): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanRedundantSpaces(): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.replaceAll("[ ]+", " ")
   }
 
-  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = mkPreProcessor {(input: String) =>
+  def cleanMatched(regex: Regex, replacement: String = ""): PreProcessor = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
   def changePrefix(srcPrefix: String, destPrefix: String): PreProcessor =
     (prefix, data, options) => data.map {
-        case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
-      }
+      case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+    }
 
   def mergeJson4sData(json: JValue, destPrefix: String = "json"): PreProcessor =
     (prefix, data, options) => {

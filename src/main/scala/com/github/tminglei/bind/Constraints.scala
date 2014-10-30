@@ -6,38 +6,39 @@ trait Constraints {
   import FrameworkUtils._
   ////////////////////////////////////////////  pre-defined constraints  ////////////////////////////////////
 
-  def required(message: String = ""): Constraint = mkConstraint((label, value, messages) =>
-    if (value == null || value.isEmpty) {
-      Some( (if (message.isEmpty) messages("error.required") else Some(message)).get.format(label))
-    } else None)
+  def required(message: String = ""): Constraint = (name, data, messages, options) =>
+    if (isEmptyInput(name, data, options._multiInput)) {
+      Seq( name -> (if (message.isEmpty) messages("error.required") else Some(message))
+        .get.format(getLabel(name, messages, options)))
+    } else Nil
 
-  def maxlength(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def maxlength(length: Int, message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (value != null && value.length > length) {
       Some( (if (message.isEmpty) messages("error.maxlength") else Some(message)).get.format(value, length))
     } else None)
 
-  def minlength(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def minlength(length: Int, message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (value != null && value.length < length) {
       Some( (if (message.isEmpty) messages("error.minlength") else Some(message)).get.format(value, length))
     } else None)
 
-  def length(length: Int, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def length(length: Int, message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (value != null && value.length != length) {
       Some( (if (message.isEmpty) messages("error.length") else Some(message)).get.format(value, length))
     } else None)
 
-  def oneOf(values: Seq[String], message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def oneOf(values: Seq[String], message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (!values.contains(value)) {
       Some( (if (message.isEmpty) messages("error.oneOf") else Some(message))
         .get.format(value, values.map("'" + _ + "'").mkString(", ")) )
     } else None)
 
-  def pattern(regex: Regex, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def pattern(regex: Regex, message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (value != null && regex.findFirstIn(value).isEmpty) {
       Some( (if (message.isEmpty) messages("error.pattern") else Some(message)).get.format(value, regex.toString))
     } else None)
 
-  def patternNot(regex: Regex, message: String = ""): Constraint = mkConstraint((label, value, messages) =>
+  def patternNot(regex: Regex, message: String = ""): Constraint = mkSimpleConstraint((label, value, messages) =>
     if (value != null && regex.findFirstIn(value).isDefined) {
       Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
     } else None)
@@ -45,6 +46,7 @@ trait Constraints {
   def email(message: String = ""): Constraint = pattern(EMAIL_REGEX, message)
 
   def numArrayIndex(message: String = ""): Constraint = (name, data, messages, options) => {
+    if (options._multiInput == false) throw new RuntimeException("This constraint only accepts MULTI INPUT!!!")
     data.filter(_._1.startsWith(name)).map { case (key, value) =>
       ILLEGAL_ARRAY_INDEX.findFirstIn(key).map { m =>
         (key -> (NAME_ERR_PREFIX + (if (message.isEmpty) messages("error.arrayindex") else Some(message)).get).format(key))

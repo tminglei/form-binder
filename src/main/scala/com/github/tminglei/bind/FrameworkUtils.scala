@@ -24,21 +24,23 @@ object FrameworkUtils {
     }
 
   // make an internal converter from `(vString) => value`
-  def mkConverter[T](convert: String => T) =
+  def mkSimpleConverter[T](convert: String => T) =
     (name: String, data: Map[String, String]) => {
       convert(data.get(name).orNull)
     }
   
   // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
-  def mkConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
+  def mkSimpleConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
     (name, data, messages, options) => {
+      if (options._multiInput == true) throw new RuntimeException("This constraint only accepts SINGLE INPUT!!!")
       validate(getLabel(name, messages, options), data.get(name).orNull, messages)
         .map { error => Seq(name -> error) }.getOrElse(Nil)
     }
 
   // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
-  def mkPreProcessor(process: (String) => String): PreProcessor =
+  def mkSimplePreProcessor(process: (String) => String): PreProcessor =
     (name, data, options) => {
+      if (options._multiInput == true) throw new RuntimeException("This pre-processor only accepts SINGLE INPUT!!!")
       (data - name) + (name -> process(data.get(name).orNull))
     }
   
@@ -101,7 +103,7 @@ object FrameworkUtils {
 
   // make a Constraint which will try to parse and collect errors
   def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
-    mkConstraint((label, value, messages) => value match {
+    mkSimpleConstraint((label, value, messages) => value match {
       case null|"" => None
       case x => {
         try { parse(x); None }

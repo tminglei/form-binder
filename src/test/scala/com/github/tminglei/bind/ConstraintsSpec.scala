@@ -153,19 +153,19 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("numArrayIndex") {
       it("simple use") {
         val numArrayIndex = Constraints.numArrayIndex()
-        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"))).toList should be (Nil)
-        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some("")))
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _multiInput = true)).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _multiInput = true))
           .toList should be (List("a[t0]" -> "name: dummy"))
-        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages, Options(_label = Some("xx")))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _multiInput = true))
           .toList should be (List("a[t1]" -> "name: dummy", "a[t4]" -> "name: dummy"))
       }
 
       it("w/ custom message") {
         val numArrayIndex = Constraints.numArrayIndex("illegal array index")
-        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"))).toList should be (Nil)
-        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some("")))
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _multiInput = true)).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _multiInput = true))
           .toList should be (List("a[t0]" -> "name: illegal array index"))
-        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages, Options(_label = Some("xx")))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _multiInput = true))
           .toList should be (List("a[t1]" -> "name: illegal array index", "a[t4].er" -> "name: illegal array index"))
       }
     }
