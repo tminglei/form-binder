@@ -1,7 +1,5 @@
 package com.github.tminglei.bind
 
-import org.json4s.{JValue, JNothing, JNull}
-import org.json4s.jackson.JsonMethods
 import org.scalatest._
 
 class ConstraintsSpec extends FunSpec with ShouldMatchers {
@@ -10,17 +8,27 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("required") {
-      it("simple use") {
+      it("single input") {
         val required = Constraints.required()
-        required("", Map("" -> null), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
+        required("", Map("" -> null), dummyMessages, Options(_inputMode = OneInput)).toList should be (List("" -> "dummy"))
         required("", Map("" -> ""), dummyMessages, Options(_label = Some(""))).toList should be (List("" -> "dummy"))
         required("", Map("" -> "test"), dummyMessages, Options(_label = Some(""))).toList should be (Nil)
       }
 
-      it("with custom message") {
+      it("multi input") {
         val required1 = Constraints.required("%s is required")
-        required1("tt.a", Map("tt.a" -> null), dummyMessages, Options(_label = Some("haha"))).toList should be (List("tt.a" -> "haha is required"))
-        required1("tt.a", Map("tt.a" -> null), dummyMessages, Options.apply()).toList should be (List("tt.a" -> "a is required"))
+        required1("tt", Map("tt.a" -> "tt"), dummyMessages, Options(_label = Some("haha"), _inputMode = MultiInput)).toList should be (Nil)
+        required1("tt", Map("tt.a" -> null), dummyMessages, Options(_label = Some("haha"), _inputMode = MultiInput)).toList should be (Nil)
+        required1("tt", Map("tt" -> null), dummyMessages, Options(_inputMode = MultiInput)).toList should be (List("tt" -> "tt is required"))
+        required1("tt", Map(), dummyMessages, Options(_inputMode = MultiInput)).toList should be (List("tt" -> "tt is required"))
+      }
+
+      it("poly input") {
+        val required1 = Constraints.required("%s is required")
+        required1("tt", Map("tt.a" -> "tt"), dummyMessages, Options(_label = Some("haha"), _inputMode = PolyInput)).toList should be (Nil)
+        required1("tt", Map("tt.a" -> null), dummyMessages, Options(_label = Some("haha"), _inputMode = PolyInput)).toList should be (Nil)
+        required1("tt", Map("tt" -> null), dummyMessages, Options(_inputMode = PolyInput)).toList should be (List("tt" -> "tt is required"))
+        required1("tt.a", Map("tt.a" -> null), dummyMessages, Options(_inputMode = PolyInput)).toList should be (List("tt.a" -> "a is required"))
       }
     }
 
@@ -153,19 +161,19 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("numArrayIndex") {
       it("simple use") {
         val numArrayIndex = Constraints.numArrayIndex()
-        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _multiInput = true)).toList should be (Nil)
-        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _multiInput = true))
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _inputMode = MultiInput)).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _inputMode = MultiInput))
           .toList should be (List("a[t0]" -> "name: dummy"))
-        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _multiInput = true))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _inputMode = MultiInput))
           .toList should be (List("a[t1]" -> "name: dummy", "a[t4]" -> "name: dummy"))
       }
 
       it("w/ custom message") {
         val numArrayIndex = Constraints.numArrayIndex("illegal array index")
-        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _multiInput = true)).toList should be (Nil)
-        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _multiInput = true))
+        numArrayIndex("a", Map("a[0]" -> "aaa"), dummyMessages, Options(_label = Some("xx"), _inputMode = MultiInput)).toList should be (Nil)
+        numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), dummyMessages, Options(_label = Some(""), _inputMode = MultiInput))
           .toList should be (List("a[t0]" -> "name: illegal array index"))
-        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _multiInput = true))
+        numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4].er" -> "ewre"), dummyMessages, Options(_label = Some("xx"), _inputMode = MultiInput))
           .toList should be (List("a[t1]" -> "name: illegal array index", "a[t4].er" -> "name: illegal array index"))
       }
     }

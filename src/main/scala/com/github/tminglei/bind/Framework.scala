@@ -53,6 +53,14 @@ case class FormBinder[R](messages: Messages,
 }
 
 /////////////////////////// core interfaces and classes //////////////////////////////////
+sealed trait InputMode
+trait OneInput extends InputMode
+trait MultiInput extends InputMode
+
+object OneInput extends OneInput
+object MultiInput extends MultiInput
+object PolyInput extends OneInput with MultiInput
+
 case class Options(
   i18n: Option[Boolean] = None,
   eagerCheck: Option[Boolean] = None,
@@ -63,7 +71,7 @@ case class Options(
   _constraints: List[Constraint] = Nil,
   _processors: List[PreProcessor] = Nil,
   _ignoreConstraints: Boolean = false,
-  _multiInput: Boolean = false
+  _inputMode: InputMode = OneInput
  ) {
   def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
@@ -75,10 +83,6 @@ case class Options(
     ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
     touched = parent.touched)
 }
-
-sealed trait InputMode
-trait OneInput extends InputMode
-trait MultiInput extends InputMode
 
 trait Mapping[T, M <: InputMode] {
   def options: Options = Options.apply()
@@ -113,7 +117,7 @@ case class TransformMapping[T, R, M <: InputMode](base: Mapping[T, M], transform
 }
 
 // A field mapping is an atomic mapping, which doesn't contain other mappings
-case class FieldMapping[T, M <: InputMode](convert0: (String, Map[String, String]) => T,
+case class FieldMapping[T, M <: InputMode](inputMode: M = OneInput, convert0: (String, Map[String, String]) => T,
                 myValidate: (String, Map[String, String], Messages, Options) => Seq[(String, String)] = PassValidating,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T, M] {
@@ -125,10 +129,10 @@ case class FieldMapping[T, M <: InputMode](convert0: (String, Map[String, String
     convert0(name, processDataRec(name, data, options, options._processors))
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
-    val theOptions = options.merge(parentOptions)
+    val theOptions = options.merge(parentOptions).copy(_inputMode = inputMode)
     val data1  = processDataRec(name, data, theOptions, theOptions._processors)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
-      && isEmptyInput(name, data1, theOptions._multiInput)) Nil
+      && isEmptyInput(name, data1, theOptions._inputMode)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, (if (theOptions._ignoreConstraints) Nil else theOptions._constraints) :+
         { (name: String, data: Map[String, String], messages: Messages, options: Options) => myValidate(name, data, messages, options) })
@@ -144,14 +148,14 @@ case class FieldMapping[T, M <: InputMode](convert0: (String, Map[String, String
 // A group mapping is a compound mapping, and is used to construct a complex/nested mapping
 case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (String, Map[String, String]) => T,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
-                override val options: Options = Options.apply(_multiInput = true)) extends Mapping[T, MultiInput] {
+                override val options: Options = Options.apply(_inputMode = MultiInput)) extends Mapping[T, MultiInput] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
     val data1 = processDataRec(name, data, options, options._processors)
-    if (isEmptyInput(name, data1, options._multiInput)) null.asInstanceOf[T]
+    if (isEmptyInput(name, data1, options._inputMode)) null.asInstanceOf[T]
     else convert0(name, data1)
   }
 
@@ -159,11 +163,11 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (Stri
     val theOptions = options.merge(parentOptions)
     val data1  = processDataRec(name, data, theOptions, theOptions._processors)
     if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
-      && isEmptyInput(name, data1, theOptions._multiInput)) Nil
+      && isEmptyInput(name, data1, theOptions._inputMode)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, theOptions._constraints :+
         { (name: String, data: Map[String, String], messages: Messages, options: Options) =>
-          if (isEmptyInput(name, data, options._multiInput)) Nil
+          if (isEmptyInput(name, data, options._inputMode)) Nil
           else {
             fields.map { case (fieldName, binding) =>
               val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
@@ -172,7 +176,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (Stri
           }
         })
       if (errors.isEmpty) {
-        if (isEmptyInput(name, data1, options._multiInput)) Nil
+        if (isEmptyInput(name, data1, options._inputMode)) Nil
         else {
           extraValidateRec(name, convert0(name, data1), messages, theOptions, extraConstraints)
         }

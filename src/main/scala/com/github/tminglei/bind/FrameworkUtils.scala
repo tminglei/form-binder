@@ -17,10 +17,13 @@ object FrameworkUtils {
   val PassValidating: (String, Map[String, String], Messages, Options) => Seq[(String, String)] =
     (name, data, messages, parentOptions) => Nil
 
-  def isEmptyInput(name: String, data: Map[String, String], multiInput: Boolean): Boolean =
-    multiInput match {
-      case true  => data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
-      case false => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty
+  def isEmptyInput(name: String, data: Map[String, String], inputMode: InputMode): Boolean =
+    inputMode match {
+      case PolyInput => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty &&
+        data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
+      case _: MultiInput => data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
+      case _: OneInput   => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty
+      case _  => throw new IllegalArgumentException(s"Illegal InputMode: $inputMode")
     }
 
   // make an internal converter from `(vString) => value`
@@ -161,7 +164,7 @@ object FrameworkUtils {
     value match {
       case str: String => str match {
         case INT_VALUE()  => JInt(str.toInt)
-        case DOUBLE_VALUE() => if (useBigDecimalForDouble)
+        case DOUBLE_VALUE(_) => if (useBigDecimalForDouble)
           JDecimal(BigDecimal(str)) else JDouble(str.toDouble)
         case BOOL_VALUE() => JBool(str.toBoolean)
         case _ => JString(str)

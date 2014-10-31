@@ -2,6 +2,7 @@ package com.github.tminglei.bind
 
 import java.util.UUID
 
+import org.json4s._
 import org.scalatest._
 
 class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints with Processors {
@@ -522,6 +523,43 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         date1.validate("date", emptyData, dummyMessages, Options.apply()) match {
           case Nil => date1.convert("date", emptyData) should be (null)
           case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("json") {
+      val json = Constraints.numArrayIndex() >+: Mappings.json4s(false, required())
+
+      it("invalid data") {
+        val invalidData = Map("json[t1]" -> "tesstt")
+        json.validate("json", invalidData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("json[t1]" -> "name: json[t1] dummy"))
+        }
+      }
+
+      it("valid data") {
+        val validData = Map("json.a" -> "23545.2355", "json.b" -> "tesstt")
+        json.validate("json", validData, dummyMessages, Options.apply()) match {
+          case Nil => json.convert("json", validData) should be (
+            JObject(List("b" -> JString("tesstt"), "a" -> JDouble(23545.2355))))
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val nullData = Map[String, String]()
+        json.validate("json", nullData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("json" -> "json dummy"))
+        }
+      }
+
+      it("empty data") {
+        val emptyData = Map("json" -> "")
+        json.validate("json", emptyData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("json" -> "json dummy"))
         }
       }
     }

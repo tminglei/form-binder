@@ -1,6 +1,9 @@
 package com.github.tminglei.bind
 
 import java.util.UUID
+import java.util.regex.Pattern
+import org.json4s.{JNull, JValue}
+import scala.collection.mutable.HashMap
 import FrameworkUtils._
 
 trait Mappings {
@@ -77,10 +80,27 @@ trait Mappings {
       }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)
   }
 
+  def json4s(useBigDecimalForDouble: Boolean, constraints: (Constraint with MultiInput with OneInput)*) =
+    new FieldMapping[JValue, InputMode](
+      inputMode = PolyInput,
+      convert0 = (name, data) => {
+        val root = HashMap[String, Any]()
+        val workList = HashMap[String, Any]("" -> root)
+        data.filter(_._1.startsWith(name)).map { case (key, value) =>
+          val key1 = key.replaceFirst("^"+Pattern.quote(name), "")
+          val (parent, self, isArray) = splitName(key1)
+          val workObj = workObject(workList, parent, isArray)
+          workObj += (self -> value)
+        }
+        if (root.isEmpty) JNull else mapTreeToJson4s(root, useBigDecimalForDouble)
+      }
+    ).>+:(constraints: _*)
+
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
   def ignored[T](instead: T): Mapping[T, OneInput with MultiInput] =
     FieldMapping[T, OneInput with MultiInput](
+      inputMode = PolyInput,
       convert0 = (name, data) => instead,
       myValidate = PassValidating
     ).options(_.copy(_ignoreConstraints = true))
@@ -89,12 +109,13 @@ trait Mappings {
 
   def optional[T, M <: InputMode](base: Mapping[T, M]): Mapping[Option[T], M] =
     FieldMapping[Option[T], M](
+      inputMode = base.options._inputMode.asInstanceOf[M],
       convert0 = (name, data) => {
-        if (isEmptyInput(name, data, base.options._multiInput)) None
+        if (isEmptyInput(name, data, base.options._inputMode)) None
         else Some(base.convert(name, data))
       },
       myValidate = (name, data, messages, parentOptions) => {
-        if (isEmptyInput(name, data, base.options._multiInput)) Nil
+        if (isEmptyInput(name, data, base.options._inputMode)) Nil
         else
           base.validate(name, data, messages, parentOptions)
       }
@@ -105,6 +126,7 @@ trait Mappings {
   
   def seq[T](base: Mapping[T, _], constraints: (Constraint with MultiInput)*): Mapping[Seq[T], MultiInput] =
     FieldMapping[Seq[T], MultiInput](
+      inputMode = MultiInput,
       convert0 = (name, data) => {
         indexes(name, data).map { i =>
           base.convert(name + "[" + i + "]", data)
@@ -115,8 +137,7 @@ trait Mappings {
           base.validate(name + "[" + i + "]", data, messages, parentOptions)
         }.flatten
       }
-    ).options(_.copy(_multiInput = true))
-      .>+:(constraints: _*)
+    ).>+:(constraints: _*)
 
   def map[V](valueBinding: Mapping[V, _], constraints: (Constraint with MultiInput)*): Mapping[Map[String, V], MultiInput] =
     map(text(), valueBinding, constraints: _*)
@@ -124,6 +145,7 @@ trait Mappings {
   def map[K, V](keyBinding: Mapping[K, OneInput], valueBinding: Mapping[V, _],
           constraints: (Constraint with MultiInput)*): Mapping[Map[K, V], MultiInput] =
     FieldMapping[Map[K, V], MultiInput](
+      inputMode = MultiInput,
       convert0 = (name, data) => {
         Map.empty ++ keys(name, data).map { key =>
           val keyName = name + "." + key
@@ -140,8 +162,7 @@ trait Mappings {
           } ++ valueBinding.validate(keyName, data, messages, parentOptions)
         }.flatten
       }
-    ).options(_.copy(_multiInput = true))
-      .>+:(constraints: _*)
+    ).>+:(constraints: _*)
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////
 

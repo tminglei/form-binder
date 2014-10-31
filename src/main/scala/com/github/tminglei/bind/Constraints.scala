@@ -9,7 +9,7 @@ trait Constraints {
   def required(message: String = ""): Constraint with OneInput with MultiInput =
     new Constraint with OneInput with MultiInput {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
-        if (isEmptyInput(name, data, options._multiInput)) {
+        if (isEmptyInput(name, data, options._inputMode)) {
           Seq( name -> (if (message.isEmpty) messages("error.required") else Some(message))
             .get.format(getLabel(name, messages, options)))
         } else Nil
