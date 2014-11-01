@@ -114,10 +114,13 @@ trait Mappings {
         if (isEmptyInput(name, data, base.options._inputMode)) None
         else Some(base.convert(name, data))
       },
-      myValidate = (name, data, messages, parentOptions) => {
+      myValidate = (name, data, messages, theOptions) => {
         if (isEmptyInput(name, data, base.options._inputMode)) Nil
-        else
-          base.validate(name, data, messages, parentOptions)
+        else { // merge optional's pre-processors/constraints to base mapping
+          base.options(_.copy(_processors = theOptions._processors ++ base.options._processors))
+            .options(_.copy(_constraints = theOptions._constraints ++ base.options._constraints))
+            .validate(name, data, messages, theOptions)
+        }
       }
     ).options(_.copy(_ignoreConstraints = true))
 
@@ -132,9 +135,9 @@ trait Mappings {
           base.convert(name + "[" + i + "]", data)
         }
       },
-      myValidate = (name, data, messages, parentOptions) => {
+      myValidate = (name, data, messages, theOptions) => {
         indexes(name, data).map { i =>
-          base.validate(name + "[" + i + "]", data, messages, parentOptions)
+          base.validate(name + "[" + i + "]", data, messages, theOptions)
         }.flatten
       }
     ).>+:(constraints: _*)
@@ -153,13 +156,13 @@ trait Mappings {
           (keyBinding.convert(keyName, Map(keyName -> pureKey)), valueBinding.convert(keyName, data))
         }
       },
-      myValidate = (name, data, messages, parentOptions) => {
+      myValidate = (name, data, messages, theOptions) => {
         keys(name, data).map { key =>
           val keyName = name + "." + key
           val pureKey = key.replaceAll("^\"", "").replaceAll("\"$", "")
-          keyBinding.validate(keyName, Map(keyName -> pureKey), messages, parentOptions).map {
+          keyBinding.validate(keyName, Map(keyName -> pureKey), messages, theOptions).map {
             case (name, err) => (name, NAME_ERR_PREFIX + err)
-          } ++ valueBinding.validate(keyName, data, messages, parentOptions)
+          } ++ valueBinding.validate(keyName, data, messages, theOptions)
         }.flatten
       }
     ).>+:(constraints: _*)

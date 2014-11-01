@@ -92,6 +92,30 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           case err => err should be (Nil)
         }
       }
+
+      it("delegate pre-processors") {
+        val optional1 = Processors.cleanPrefix("$") >-: optional
+        val validData = Map("number" -> "$12453")
+        optional1.validate("number", validData, dummyMessages, Options.apply()) match {
+          case Nil => {
+            base.validate("number", validData, dummyMessages, Options.apply()) should be (Seq("number" -> "dummy"))
+            optional1.convert("number", validData) should be (Some(12453))
+          }
+          case err => err should be (Nil)
+        }
+      }
+
+      it("delegate constraints") {
+        val optional1 = Constraints.maxlength(8) >+: optional
+        val invalidData = Map("number" -> "146896540")
+        optional1.validate("number", invalidData, dummyMessages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => {
+            base.validate("number", invalidData, dummyMessages, Options.apply()) should be (Nil)
+            err should be (Seq("number" -> "dummy"))
+          }
+        }
+      }
     }
 
     describe("default-simple") {
