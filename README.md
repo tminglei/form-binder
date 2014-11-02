@@ -3,7 +3,7 @@ form-binder
 [![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
 
 
-Form-binder is a micro, `play-data`-like data binding and validating framework, easy to use and hack.
+Form-binder is a micro, `play-data`-like data binding and validating framework, simple and powerful, easy to use and hack.
 
 > _Form-binder was initially created for my scalatra-based project, but it can be easily integrated/used with other frameworks. In fact, it didn't have built-in support for `Scalatra`; I just made an example for it. :)_
 
@@ -68,9 +68,9 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 
 Install & Build
 -------------------
-The latest version of form-binder is `0.6.0`, and is published to [Maven Central](http://search.maven.org/):
+The latest version of form-binder is `0.8.0`, and is published to [Maven Central](http://search.maven.org/):
 ```scala
-libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.6.0"
+libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.8.0"
 ```
 
 To hack it and make your contribution, you can setup it like this:
