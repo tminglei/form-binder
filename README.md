@@ -43,7 +43,7 @@ binder **validate**, _validate only_ and not consume converted data, method sign
 def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None)
 ```
 
-> _*Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala) for built-in *mapping*s._  
+> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala) for built-in **mapping**s._  
 
 #### Extension Points:  
 (1) **PreProcessor**: `(String, Map[String, String], Options) => Map[String, String]`, *(prefix, data, options) => data*  
