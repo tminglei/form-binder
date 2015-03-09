@@ -21,8 +21,8 @@ object FrameworkUtils {
     inputMode match {
       case PolyInput => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty &&
         data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
-      case _: MultiInput => data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
-      case _: OneInput   => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty
+      case _: BulkInput => data.keys.find(k => k.startsWith(name) && k.length > name.length).isEmpty
+      case _: SoloInput => data.get(name).filterNot(v => v == null || v.isEmpty).isEmpty
       case _  => throw new IllegalArgumentException(s"Illegal InputMode: $inputMode")
     }
 
@@ -34,15 +34,15 @@ object FrameworkUtils {
   
   // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
   def mkSimpleConstraint(validate: (String, String, Messages) => Option[String]) =
-    new Constraint with OneInput {
+    new Constraint with SoloInput {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
         validate(getLabel(name, messages, options), data.get(name).orNull, messages)
           .map { error => Seq(name -> error) }.getOrElse(Nil)
     }
 
   // make a pre-processor from `(inputString) => outputString` (ps: inputString may be NULL/EMPTY)
-  def mkSimplePreProcessor(process: (String) => String): PreProcessor with OneInput =
-    new PreProcessor with OneInput {
+  def mkSimplePreProcessor(process: (String) => String): PreProcessor with SoloInput =
+    new PreProcessor with SoloInput {
       def apply(name: String, data: Map[String, String], options: Options) =
         (data - name) + (name -> process(data.get(name).orNull))
     }
@@ -93,7 +93,7 @@ object FrameworkUtils {
   }
 
   // make a Constraint which will try to parse and collect errors
-  def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint with OneInput =
+  def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint with SoloInput =
     mkSimpleConstraint((label, value, messages) => value match {
       case null|"" => None
       case x => {

@@ -14,52 +14,45 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       trim("a", Map("a" -> "eyuu"), Options.apply()) should be (Map("a" -> "eyuu"))
     }
 
-    it("clean-comma") {
-      val cleanComma = Processors.cleanComma
-      cleanComma("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanComma("", Map("" -> "123,334"), Options.apply()) should be (Map("" -> "123334"))
-      cleanComma("a", Map("a" -> "2.345e+5"), Options.apply()) should be (Map("a" -> "2.345e+5"))
+    it("omit") {
+      val omit = Processors.omit(",")
+      omit("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      omit("", Map("" -> "123,334"), Options.apply()) should be (Map("" -> "123334"))
+      omit("a", Map("a" -> "2.345e+5"), Options.apply()) should be (Map("a" -> "2.345e+5"))
     }
 
-    it("clean-hyphen") {
-      val cleanHyphen = Processors.cleanHyphen
-      cleanHyphen("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanHyphen("", Map("" -> "2342-334"), Options.apply()) should be (Map("" -> "2342334"))
-      cleanHyphen("a", Map("a" -> "2342334"), Options.apply()) should be (Map("a" -> "2342334"))
+    it("omit-left") {
+      val omitLeft = Processors.omitLeft("$")
+      omitLeft("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      omitLeft("", Map("" -> "$3,567"), Options.apply()) should be (Map("" -> "3,567"))
+      omitLeft("a", Map("a" -> "35667"), Options.apply()) should be (Map("a" -> "35667"))
     }
 
-    it("clean-prefix") {
-      val cleanPrefix = Processors.cleanPrefix("$")
-      cleanPrefix("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanPrefix("", Map("" -> "$3,567"), Options.apply()) should be (Map("" -> "3,567"))
-      cleanPrefix("a", Map("a" -> "35667"), Options.apply()) should be (Map("a" -> "35667"))
+    it("omit-right") {
+      val omitRight = Processors.omitRight("-tat")
+      omitRight("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      omitRight("a", Map("a" -> "tewwwtt-tat"), Options.apply()) should be (Map("a" -> "tewwwtt"))
     }
 
-    it("clean-postfix") {
-      val cleanPostfix = Processors.cleanPostfix("-tat")
-      cleanPostfix("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanPostfix("a", Map("a" -> "tewwwtt-tat"), Options.apply()) should be (Map("a" -> "tewwwtt"))
+    it("omit-redundant") {
+      val cleanRedundant = Processors.omitRedundant(" ")
+      cleanRedundant("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      cleanRedundant("a", Map("a" -> " a  teee  86y"), Options.apply()) should be (Map("a" -> " a teee 86y"))
+      cleanRedundant("", Map("" -> "te yu "), Options.apply()) should be (Map("" -> "te yu "))
     }
 
-    it("clean-redundant-spaces") {
-      val cleanRedundantSpaces = Processors.cleanRedundantSpaces
-      cleanRedundantSpaces("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanRedundantSpaces("a", Map("a" -> " a  teee  86y"), Options.apply()) should be (Map("a" -> " a teee 86y"))
-      cleanRedundantSpaces("", Map("" -> "te yu "), Options.apply()) should be (Map("" -> "te yu "))
+    it("omit-matched") {
+      val omitMatched = Processors.omitMatched("-\\d\\d$".r)
+      omitMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      omitMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334"))
+      omitMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
     }
 
-    it("clean-matched") {
-      val cleanMatched = Processors.cleanMatched("-\\d\\d$".r)
-      cleanMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334"))
-      cleanMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
-    }
-
-    it("clean-matched-with-replacement") {
-      val cleanMatched = Processors.cleanMatched("-\\d\\d$".r, "-1")
-      cleanMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
-      cleanMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334-1"))
-      cleanMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
+    it("omit-matched w/ replacement") {
+      val omitMatched = Processors.omitMatched("-\\d\\d$".r, "-1")
+      omitMatched("", Map("" -> null), Options.apply()) should be (Map("" -> null))
+      omitMatched("", Map("" -> "2342-334-12"), Options.apply()) should be (Map("" -> "2342-334-1"))
+      omitMatched("a", Map("a" -> "2342-334"), Options.apply()) should be (Map("a" -> "2342-334"))
     }
   }
 

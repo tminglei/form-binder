@@ -10,36 +10,32 @@ trait Processors {
   import FrameworkUtils.mkSimplePreProcessor
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
+  def trim(): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else input.trim
   }
 
-  def cleanComma(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll(",", "")
+  def omit(str: String): PreProcessor with SoloInput = mkSimplePreProcessor { (input: String) =>
+    if (input == null) null else input.replaceAll(str, "")
   }
 
-  def cleanHyphen(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll("-", "")
+  def omitLeft(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
+    if (input == null) null else input.replaceAll("^"+Pattern.quote(str), "")
   }
 
-  def cleanPrefix(prefix: String): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll("^"+Pattern.quote(prefix), "")
+  def omitRight(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
+    if (input == null) null else input.replaceAll(Pattern.quote(str)+"$", "")
   }
 
-  def cleanPostfix(postfix: String): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll(Pattern.quote(postfix)+"$", "")
+  def omitRedundant(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
+    if (input == null) null else input.replaceAll("["+str+"]+", str)
   }
 
-  def cleanRedundantSpaces(): PreProcessor with OneInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll("[ ]+", " ")
-  }
-
-  def cleanMatched(regex: Regex, replacement: String = "") = mkSimplePreProcessor {(input: String) =>
+  def omitMatched(regex: Regex, replacement: String = "") = mkSimplePreProcessor {(input: String) =>
     if (input == null) null else regex.replaceAllIn(input, replacement)
   }
 
   def changePrefix(srcPrefix: String, destPrefix: String) =
-    new PreProcessor with OneInput with MultiInput {
+    new PreProcessor with SoloInput with BulkInput {
       def apply(prefix: String, data: Map[String, String], options: Options) =
         data.map {
           case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
@@ -47,13 +43,13 @@ trait Processors {
     }
 
   def mergeJson4sData(json: JValue, destPrefix: String = "json") =
-    new PreProcessor with OneInput with MultiInput {
+    new PreProcessor with SoloInput with BulkInput {
       def apply(prefix: String, data: Map[String, String], options: Options) =
         (data - destPrefix) ++ json4sToMapData(destPrefix, json)
     }
 
   def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None) =
-    new PreProcessor with OneInput with MultiInput {
+    new PreProcessor with SoloInput with BulkInput {
       def apply(prefix: String, data: Map[String, String], options: Options) = {
         val sourceKey1 = sourceKey.getOrElse(prefix)
         if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {

@@ -6,8 +6,8 @@ trait Constraints {
   import FrameworkUtils._
   ////////////////////////////////////////////  pre-defined constraints  ////////////////////////////////////
 
-  def required(message: String = ""): Constraint with OneInput with MultiInput =
-    new Constraint with OneInput with MultiInput {
+  def required(message: String = ""): Constraint with SoloInput with BulkInput =
+    new Constraint with SoloInput with BulkInput {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
         if (isEmptyInput(name, data, options._inputMode)) {
           Seq( name -> (if (message.isEmpty) messages("error.required") else Some(message))
@@ -46,10 +46,10 @@ trait Constraints {
       Some( (if (message.isEmpty) messages("error.patternnot") else Some(message)).get.format(value, regex.toString))
     } else None)
 
-  def email(message: String = ""): Constraint with OneInput = pattern(EMAIL_REGEX, message)
+  def email(message: String = ""): Constraint with SoloInput = pattern(EMAIL_REGEX, message)
 
-  def numArrayIndex(message: String = ""): Constraint with MultiInput =
-    new Constraint with MultiInput {
+  def numArrayIndex(message: String = ""): Constraint with BulkInput =
+    new Constraint with BulkInput {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
         data.filter(_._1.startsWith(name)).map { case (key, value) =>
           ILLEGAL_ARRAY_INDEX.findFirstIn(key).map { m =>

@@ -20,4 +20,14 @@ package object bind {
   // (errors) => R (ps: all inputs parameter WON'T BE NULL/EMPTY)
   type PostErrProcessor[R] = (Seq[(String, String)]) => R
 
+  /**
+   * A helper object, used to simplify `form-binder` usage
+   *
+   * Note: add {{{import com.github.tminglei.bind.simple._}}} to your class, then
+   *   you can use form binder's built-in mappings/constraints/processors directly
+   */
+  object simple extends Mappings with Constraints with Processors {
+    type FormBinder[R] = com.github.tminglei.bind.FormBinder[R]
+    val  FormBinder = com.github.tminglei.bind.FormBinder
+  }
 }

@@ -1,24 +1,18 @@
 package com.github.tminglei.bind
 
-/**
- * add {{{import com.github.tminglei.bind.simple._}}} to use
- * form binder's built-in mappings/constraints/processors directly
- */
-object simple extends Mappings with Constraints with Processors {
-  type FormBinder[R] = com.github.tminglei.bind.FormBinder[R]
-  val  FormBinder = com.github.tminglei.bind.FormBinder
-}
-
 import FrameworkUtils._
-// the Facade class
+
+/**
+ * The Facade class
+ */
 case class FormBinder[R](messages: Messages,
                constraints: List[Constraint] = Nil,
                processors: List[PreProcessor] = Nil,
                touchExtractor: Option[TouchedExtractor] = None,
                errProcessor: Option[PostErrProcessor[R]] = None) {
 
-  def >-:(newProcessors: (PreProcessor with MultiInput)*) = copy(processors = newProcessors ++: processors)
-  def >+:(newConstraints: (Constraint with MultiInput)*) = copy(constraints = newConstraints ++: constraints)
+  def >-:(newProcessors: (PreProcessor with BulkInput)*) = copy(processors = newProcessors ++: processors)
+  def >+:(newConstraints: (Constraint with BulkInput)*) = copy(constraints = newConstraints ++: constraints)
   def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
   def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
@@ -53,14 +47,20 @@ case class FormBinder[R](messages: Messages,
 }
 
 /////////////////////////// core interfaces and classes //////////////////////////////////
+/**
+ * Some mark traits, used to help ensure the matching of fixtures in a data processing flow/pipe
+ */
 sealed trait InputMode
-trait OneInput extends InputMode
-trait MultiInput extends InputMode
+trait SoloInput extends InputMode
+trait BulkInput extends InputMode
 
-object OneInput extends OneInput
-object MultiInput extends MultiInput
-object PolyInput extends OneInput with MultiInput
+object SoloInput extends SoloInput
+object BulkInput extends BulkInput
+object PolyInput extends SoloInput with BulkInput
 
+/**
+ * Used to transfer config info in the data processing flow
+ */
 case class Options(
   i18n: Option[Boolean] = None,
   eagerCheck: Option[Boolean] = None,
@@ -71,7 +71,7 @@ case class Options(
   _constraints: List[Constraint] = Nil,
   _processors: List[PreProcessor] = Nil,
   _ignoreConstraints: Boolean = false,
-  _inputMode: InputMode = OneInput
+  _inputMode: InputMode = SoloInput
  ) {
   def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
@@ -84,6 +84,9 @@ case class Options(
     touched = parent.touched)
 }
 
+/**
+ * A mapping, w/ constraints/processors/options, was used to validate/convert input data
+ */
 trait Mapping[T, M <: InputMode] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
@@ -98,7 +101,10 @@ trait Mapping[T, M <: InputMode] {
 }
 
 /////////////////////////// core mapping implementations /////////////////////////////////
-private // A wrapper mapping, used to transform converted value to another
+/**
+ * A wrapper mapping, used to transform converted value to another
+ */
+private
 case class TransformMapping[T, R, M <: InputMode](base: Mapping[T, M], transform: T => R, extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R, M] {
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
@@ -116,8 +122,10 @@ case class TransformMapping[T, R, M <: InputMode](base: Mapping[T, M], transform
   }
 }
 
-// A field mapping is an atomic mapping, which doesn't contain other mappings
-case class FieldMapping[T, M <: InputMode](inputMode: M = OneInput, convert0: (String, Map[String, String]) => T,
+/**
+ * A field mapping is an atomic mapping, which doesn't contain other mappings
+ */
+case class FieldMapping[T, M <: InputMode](inputMode: M = SoloInput, convert0: (String, Map[String, String]) => T,
                 myValidate: (String, Map[String, String], Messages, Options) => Seq[(String, String)] = PassValidating,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T, M] {
@@ -145,10 +153,12 @@ case class FieldMapping[T, M <: InputMode](inputMode: M = OneInput, convert0: (S
   }
 }
 
-// A group mapping is a compound mapping, and is used to construct a complex/nested mapping
+/**
+ * A group mapping is a compound mapping, and is used to construct a complex/nested mapping
+ */
 case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (String, Map[String, String]) => T,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
-                override val options: Options = Options.apply(_inputMode = MultiInput)) extends Mapping[T, MultiInput] {
+                override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T, BulkInput] {
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)

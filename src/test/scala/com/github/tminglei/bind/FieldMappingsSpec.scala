@@ -205,7 +205,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
     }
 
     describe("number") {
-      val number = (cleanComma >-: Mappings.number()).verifying(min(1000), max(10000))
+      val number = (omit(",") >-: Mappings.number()).verifying(min(1000), max(10000))
 
       it("invalid data") {
         val number1 = Mappings.number().label("xx")

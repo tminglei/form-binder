@@ -15,7 +15,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       val mappings = tmapping(
         "id" -> long(),
         "json" -> tmapping(
-          "price" -> (cleanPrefix("$") >-: float()),
+          "price" -> (omitLeft("$") >-: float()),
           "count" -> number().verifying(min(3), max(10))
         ).label("xx").verifying { case (label, (price, count), messages) =>
           if (price * count > 1000) {
@@ -73,7 +73,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         "id" -> long(),
         "json" -> tmapping(
           "email" -> text(maxlength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "price" -> (cleanPrefix("$") >-: float()),
+          "price" -> (omitLeft("$") >-: float()),
           "count" -> number().verifying(min(3), max(10))
         ).label("xx").verifying { case (label, (email, price, count), messages) =>
           if (price * count > 1000) {
@@ -150,7 +150,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "id" -> long(),
           "body" -> (expandJsonString() >-: tmapping(
             "email" -> text(maxlength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-            "price" -> (cleanPrefix("$") >-: float()),
+            "price" -> (omitLeft("$") >-: float()),
             "count" -> number().verifying(min(3), max(10))
           )).label("xx").verifying { case (label, (email, price, count), messages) =>
             if (price * count > 1000) {

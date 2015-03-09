@@ -10,77 +10,77 @@ trait Mappings {
 
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
 
-  def text(constraints: (Constraint with OneInput)*): Mapping[String, OneInput] =
-    new FieldMapping[String, OneInput](
+  def text(constraints: (Constraint with SoloInput)*): Mapping[String, SoloInput] =
+    new FieldMapping[String, SoloInput](
       convert0 = mkSimpleConverter(identity)
     ).>+:(constraints: _*)
 
-  def boolean(constraints: (Constraint with OneInput)*): Mapping[Boolean, OneInput] =
-    new FieldMapping[Boolean, OneInput](
+  def boolean(constraints: (Constraint with SoloInput)*): Mapping[Boolean, SoloInput] =
+    new FieldMapping[Boolean, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => false
         case x => x.toBoolean
       }).>+:((parsing(_.toBoolean, "error.boolean") +: constraints): _*)
 
-  def number(constraints: (Constraint with OneInput)*): Mapping[Int, OneInput] =
-    new FieldMapping[Int, OneInput](
+  def number(constraints: (Constraint with SoloInput)*): Mapping[Int, SoloInput] =
+    new FieldMapping[Int, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0
         case x => x.toInt
       }).>+:((parsing(_.toInt, "error.number") +: constraints): _*)
 
-  def double(constraints: (Constraint with OneInput)*): Mapping[Double, OneInput] =
-    new FieldMapping[Double, OneInput](
+  def double(constraints: (Constraint with SoloInput)*): Mapping[Double, SoloInput] =
+    new FieldMapping[Double, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0d
         case x => x.toDouble
       }).>+:((parsing(_.toDouble, "error.double") +: constraints): _*)
 
-  def float(constraints: (Constraint with OneInput)*): Mapping[Float, OneInput] =
-    new FieldMapping[Float, OneInput](
+  def float(constraints: (Constraint with SoloInput)*): Mapping[Float, SoloInput] =
+    new FieldMapping[Float, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0f
         case x => x.toFloat
       }).>+:((parsing(_.toFloat, "error.float") +: constraints): _*)
 
-  def long(constraints: (Constraint with OneInput)*): Mapping[Long, OneInput] =
-    new FieldMapping[Long, OneInput](
+  def long(constraints: (Constraint with SoloInput)*): Mapping[Long, SoloInput] =
+    new FieldMapping[Long, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0l
         case x => x.toLong
       }).>+:((parsing(_.toLong, "error.long") +: constraints): _*)
 
-  def bigDecimal(constraints: (Constraint with OneInput)*): Mapping[BigDecimal, OneInput] =
-    new FieldMapping[BigDecimal, OneInput](
+  def bigDecimal(constraints: (Constraint with SoloInput)*): Mapping[BigDecimal, SoloInput] =
+    new FieldMapping[BigDecimal, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
       }).>+:((parsing(BigDecimal.apply, "error.bigdecimal") +: constraints): _*)
 
-  def bigInt(constraints: (Constraint with OneInput)*): Mapping[BigInt, OneInput] =
-    new FieldMapping[BigInt, OneInput](
+  def bigInt(constraints: (Constraint with SoloInput)*): Mapping[BigInt, SoloInput] =
+    new FieldMapping[BigInt, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => 0l
         case x => BigInt(x)
       }).>+:((parsing(BigInt.apply, "error.bigint") +: constraints): _*)
 
-  def uuid(constraints: (Constraint with OneInput)*): Mapping[UUID, OneInput] =
-    new FieldMapping[UUID, OneInput](
+  def uuid(constraints: (Constraint with SoloInput)*): Mapping[UUID, SoloInput] =
+    new FieldMapping[UUID, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => null
         case x => UUID.fromString(x)
       }).>+:((parsing(UUID.fromString, "error.uuid") +: constraints): _*)
 
-  def date(pattern: String, constraints: (Constraint with OneInput)*): Mapping[java.util.Date, OneInput] = {
+  def date(pattern: String, constraints: (Constraint with SoloInput)*): Mapping[java.util.Date, SoloInput] = {
     val dateFormatter = new java.text.SimpleDateFormat(pattern)
-    new FieldMapping[java.util.Date, OneInput](
+    new FieldMapping[java.util.Date, SoloInput](
       convert0 = mkSimpleConverter {
         case null|"" => null
         case x => dateFormatter.parse(x)
       }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)
   }
 
-  def json4s(useBigDecimalForDouble: Boolean, constraints: (Constraint with MultiInput with OneInput)*) =
+  def json4s(useBigDecimalForDouble: Boolean, constraints: (Constraint with BulkInput with SoloInput)*) =
     new FieldMapping[JValue, InputMode](
       inputMode = PolyInput,
       convert0 = (name, data) => {
@@ -98,8 +98,8 @@ trait Mappings {
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////
 
-  def ignored[T](instead: T): Mapping[T, OneInput with MultiInput] =
-    FieldMapping[T, OneInput with MultiInput](
+  def ignored[T](instead: T): Mapping[T, SoloInput with BulkInput] =
+    FieldMapping[T, SoloInput with BulkInput](
       inputMode = PolyInput,
       convert0 = (name, data) => instead,
       myValidate = PassValidating
@@ -124,12 +124,12 @@ trait Mappings {
       }
     ).options(_.copy(_ignoreConstraints = true))
 
-  def list[T](base: Mapping[T, _], constraints: (Constraint with MultiInput)*): Mapping[List[T], MultiInput] =
+  def list[T](base: Mapping[T, _], constraints: (Constraint with BulkInput)*): Mapping[List[T], BulkInput] =
     seq(base, constraints: _*).mapTo(_.toList)
   
-  def seq[T](base: Mapping[T, _], constraints: (Constraint with MultiInput)*): Mapping[Seq[T], MultiInput] =
-    FieldMapping[Seq[T], MultiInput](
-      inputMode = MultiInput,
+  def seq[T](base: Mapping[T, _], constraints: (Constraint with BulkInput)*): Mapping[Seq[T], BulkInput] =
+    FieldMapping[Seq[T], BulkInput](
+      inputMode = BulkInput,
       convert0 = (name, data) => {
         indexes(name, data).map { i =>
           base.convert(name + "[" + i + "]", data)
@@ -142,13 +142,13 @@ trait Mappings {
       }
     ).>+:(constraints: _*)
 
-  def map[V](valueBinding: Mapping[V, _], constraints: (Constraint with MultiInput)*): Mapping[Map[String, V], MultiInput] =
+  def map[V](valueBinding: Mapping[V, _], constraints: (Constraint with BulkInput)*): Mapping[Map[String, V], BulkInput] =
     map(text(), valueBinding, constraints: _*)
 
-  def map[K, V](keyBinding: Mapping[K, OneInput], valueBinding: Mapping[V, _],
-          constraints: (Constraint with MultiInput)*): Mapping[Map[K, V], MultiInput] =
-    FieldMapping[Map[K, V], MultiInput](
-      inputMode = MultiInput,
+  def map[K, V](keyBinding: Mapping[K, SoloInput], valueBinding: Mapping[V, _],
+          constraints: (Constraint with BulkInput)*): Mapping[Map[K, V], BulkInput] =
+    FieldMapping[Map[K, V], BulkInput](
+      inputMode = BulkInput,
       convert0 = (name, data) => {
         Map.empty ++ keys(name, data).map { key =>
           val keyName = name + "." + key

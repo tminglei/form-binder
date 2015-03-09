@@ -94,7 +94,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
       }
 
       it("delegate pre-processors") {
-        val optional1 = Processors.cleanPrefix("$") >-: optional
+        val optional1 = Processors.omitLeft("$") >-: optional
         val validData = Map("number" -> "$12453")
         optional1.validate("number", validData, dummyMessages, Options.apply()) match {
           case Nil => {
