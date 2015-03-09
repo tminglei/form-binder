@@ -2,9 +2,9 @@ name := "form-binder"
 
 version := "0.8.0"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.6"
 
-crossScalaVersions := Seq("2.11.2", "2.10.4")
+crossScalaVersions := Seq("2.11.6", "2.10.5")
 
 organizationName := "form-binder"
 
