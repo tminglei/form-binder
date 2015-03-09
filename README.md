@@ -43,12 +43,17 @@ binder **validate**, _validate only_ and not consume converted data, method sign
 def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None)
 ```
 
+> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala) for built-in **mapping**s._  
+
 #### Extension Points:  
 (1) **PreProcessor**: `(String, Map[String, String], Options) => Map[String, String]`, *(prefix, data, options) => data*  
 (2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
 (3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
 (4) **Constraint**: `(String, Map[String, String], Messages, Options) => Seq[(String, String)]`, *(name, data, messages, options) => errors*  
 (5) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
+
+> _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`TouchedExtractor`/`PostErrProcessor`._  
+> _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`._
 
 #### Options & Others:  
 1) **label**: `feature`, readable name for current group/field  
