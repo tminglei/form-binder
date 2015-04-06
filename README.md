@@ -5,7 +5,7 @@ form-binder
 
 Form-binder is a micro data binding and validating framework, simple and powerful, easy to use and hack.
 
-> _It was initially created for my [Scalatra](https://github.com/scalatra/scalatra)-based project, but it's for general purpose. You can easily integrate and use it with other frameworks._
+> _It was initially created for my [`Scalatra`](https://github.com/scalatra/scalatra)-based project, but it's for general purpose. You can easily integrate and use it with other frameworks._
 
 
 Features
@@ -40,7 +40,7 @@ Then you can integrate it with your framework to simplify normal usage.
 
 Here's the way in my `Scalatra` project:
 
-Firstly, I defined a `FormBindSupport` trait,
+First, I defined a `FormBindSupport` trait,
 ```scala
 trait MyFormBindSupport extends I18nSupport { this: ScalatraBase =>
   import MyFormBindSupport._
@@ -77,7 +77,7 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
 }
 ```
 
-_p.s. you can check more integration sample codes [here](https://github.com/tminglei/form-binder/tree/master/integrations)._
+_p.s. you can check more integration sample codes under  [/integrations](https://github.com/tminglei/form-binder/tree/master/integrations)._
 
 
 Build & Test
