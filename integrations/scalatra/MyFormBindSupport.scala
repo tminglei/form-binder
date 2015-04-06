@@ -10,7 +10,7 @@ object MyFormBindSupport {
   val BindMessagesKey = "bind-messages"
 }
 
-trait MyFormBindSupport extends I18nSupport { this: ScalatraBase =>
+trait MyFormBindSupport extends I18nSupport { self: ScalatraBase =>
   import MyFormBindSupport._
 
   before() {

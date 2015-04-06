@@ -77,7 +77,7 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
 }
 ```
 
-_p.s. you can check the integration sample codes [here](https://github.com/tminglei/form-binder/tree/master/integrations/scalatra)._
+_p.s. you can check more integration sample codes [here](https://github.com/tminglei/form-binder/tree/master/integrations)._
 
 
 Build & Test
