@@ -3,9 +3,9 @@ form-binder
 [![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
 
 
-Form-binder is a micro, `play-data`-like data binding and validating framework, simple and powerful, easy to use and hack.
+Form-binder is a micro data binding and validating framework, simple and powerful, easy to use and hack.
 
-> _Form-binder was initially created for my [Scalatra](https://github.com/scalatra/scalatra)-based project, but it can be easily integrated/used with other frameworks. In fact, it didn't have built-in support for `Scalatra`; I just made an example for it. :)_
+> _It was initially created for my [Scalatra](https://github.com/scalatra/scalatra)-based project, but it's for general purpose. You can easily integrate and use it with other frameworks._
 
 
 Features
@@ -17,67 +17,71 @@ Features
 - immutable, you can share mapping definition object safely
 
 
-Usage & Description
---------------------
+Usage
+-------------
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
-> **Principle**  
-> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate/convert data and construct the result object._
+1. define your binder
+2. define your mappings
+3. prepare your data
+4. bind and consume the results
 
-#### Major Components:  
-[1] **binder**: facade, two major methods: `bind`, `validate`  
-[2] **messages**: `(String) => Option[String]`, *(messageKey) => [message]*  
-[3] **mapping**: validate/convert data, two types of mappings: `FieldMapping` and `GroupMapping`  
-[4] **data**: `Map[String, String]`  
-
-binder **bind** method signature:
-```scala
-//if validation passed, consume will be executed, and return `R2`; if validation failed, 
-//return errors map or user transformed errors
-def bind[T, R2](mapping: Mapping[T], data: Map[String, String])(consume: T => R2)
-```
-
-binder **validate**, _validate only_ and not consume converted data, method signature:
-```scala
-//return errors map or user transformed errors
-def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None)
-```
-
-> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala) for built-in **mapping**s._  
-
-#### Extension Points:  
-(1) **PreProcessor**: `(String, Map[String, String], Options) => Map[String, String]`, *(prefix, data, options) => data*  
-(2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
-(3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
-(4) **Constraint**: `(String, Map[String, String], Messages, Options) => Seq[(String, String)]`, *(name, data, messages, options) => errors*  
-(5) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
-
-> _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`TouchedExtractor`/`PostErrProcessor`._  
-> _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`._
-
-#### Options & Others:  
-1) **label**: `feature`, readable name for current group/field  
-2) **mapTo**: `feature`, map converted value to another type  
-3) **i18n**: `option`, let label value can be used as a message key to fetch a i18n value from `messages`   
-4) **eagerCheck**: `option`, check errors as more as possible  
-5) **ignoreEmpty**: `option`, not check empty field/values  
-6) **touched**: `parameter`, a name list, which were touched by user  
-
-> _* By default, form-binder would return right after encountered a validation error._  
-> _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._
+_p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it, more dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
 
 
-**For more implementation and/or usage details, pls check the [codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [tests](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind).**  
-**For `form-binder`/`Scalatra` integration, pls see [here](https://github.com/tminglei/form-binder/tree/master/integrations/scalatra).**  
-
-
-Install & Build
--------------------
-The latest version of form-binder is `0.8.0`, and is published to [Maven Central](http://search.maven.org/):
+Install & Integrate
+--------------------
+To use `form-binder`, pls add the dependency to your [sbt](http://www.scala-sbt.org/ "slick-sbt") project file:
 ```scala
 libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.8.0"
 ```
 
+Then you can integrate it with your framework to simplify normal usage. 
+
+Here's the way in my `Scalatra` project:
+
+Firstly, I defined a `FormBindSupport` trait,
+```scala
+trait MyFormBindSupport extends I18nSupport { this: ScalatraBase =>
+  import MyFormBindSupport._
+
+  before() {
+    request(BindMessagesKey) = Messages(locale, bundlePath = "i18n/bind-messages")
+  }
+
+  def binder(implicit request: HttpServletRequest) =
+    expandJsonString(Some("json")) >-: FormBinder(bindMessages.get).withErr(errsToJson4s)
+
+  ///
+  private def bindMessages(implicit request: HttpServletRequest): Messages = if (request == null) {
+    throw new ScalatraException("There needs to be a request in scope to call bindMessages")
+  } else {
+    request.get(BindMessagesKey).map(_.asInstanceOf[Messages]).orNull
+  }
+}
+```
+Then mix it to my xxxServlet, and use it like this,
+```scala
+import com.github.tminglei.bind.simple._
+
+class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
+
+  get("/:id") {
+    val mappings = tmapping(
+      "id" -> long()
+    )
+    binder.bind(mappings, params) { case (id) =>
+      repos.features.get(id)
+    }
+  }
+}
+```
+
+_p.s. you can check the integration sample codes [here](https://github.com/tminglei/form-binder/tree/master/integrations/scalatra)._
+
+
+Build & Test
+-------------------
 To hack it and make your contribution, you can setup it like this:
 ```bash
  $ git clone https://github.com/tminglei/form-binder.git

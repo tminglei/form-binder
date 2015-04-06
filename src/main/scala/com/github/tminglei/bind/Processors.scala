@@ -3,11 +3,10 @@ package com.github.tminglei.bind
 import java.util.regex.Pattern
 import scala.util.matching.Regex
 import org.json4s.jackson.JsonMethods
-import FrameworkUtils._
 import org.json4s._
 
 trait Processors {
-  import FrameworkUtils.mkSimplePreProcessor
+  import FrameworkUtils._
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
   def trim(): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>

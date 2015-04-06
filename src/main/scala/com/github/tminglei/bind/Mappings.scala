@@ -4,10 +4,9 @@ import java.util.UUID
 import java.util.regex.Pattern
 import org.json4s.{JNull, JValue}
 import scala.collection.mutable.HashMap
-import FrameworkUtils._
 
 trait Mappings {
-
+  import FrameworkUtils._
   ////////////////////////////////////////////  pre-defined field mappings  ///////////////////////////////////
 
   def text(constraints: (Constraint with SoloInput)*): Mapping[String, SoloInput] =
