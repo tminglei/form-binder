@@ -1,9 +1,11 @@
 How it works
 --------------------
-![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
+### Principle
+The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate data and construct the result value object.
 
-> **Principle**  
-> _The core of `form-binder` is `Mapping`, **tree structure** mappings. With **depth-first** algorithm, it was used to validate/convert data and construct the result object._
+### Details
+
+![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
 #### Major Components:  
 [1] **binder**: facade, two major methods: `bind`, `validate`  
