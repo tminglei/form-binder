@@ -1,6 +1,6 @@
 name := "form-binder"
 
-version := "0.8.0"
+version := "0.8.1"
 
 scalaVersion := "2.11.6"
 
@@ -12,7 +12,7 @@ organization := "com.github.tminglei"
 
 libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-jackson" % "3.2.10" % "provided",
-  "org.scalatest" %% "scalatest" % "2.2.2" % "test"
+  "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 
 /////////////////  for publish/release  ///////////////////////////////
