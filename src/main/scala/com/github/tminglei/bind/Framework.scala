@@ -8,12 +8,10 @@ import FrameworkUtils._
 case class FormBinder[R](messages: Messages,
                constraints: List[Constraint] = Nil,
                processors: List[PreProcessor] = Nil,
-               touchExtractor: Option[TouchedExtractor] = None,
                errProcessor: Option[PostErrProcessor[R]] = None) {
 
   def >-:(newProcessors: (PreProcessor with BulkInput)*) = copy(processors = newProcessors ++: processors)
   def >+:(newConstraints: (Constraint with BulkInput)*) = copy(constraints = newConstraints ++: constraints)
-  def withTouched(touchExtractor: TouchedExtractor) = copy(touchExtractor = Some(touchExtractor))
   def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
 
   /**
@@ -37,10 +35,9 @@ case class FormBinder[R](messages: Messages,
    */
   def validate[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String], touched: Option[Seq[String]] = None) = {
     val data1 = processDataRec("", data, mapping.options, processors)
-    val touched1 = touched.orElse(touchExtractor.map(_.apply(data))).getOrElse(Nil)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
     val errs = if (errors.isEmpty)
-        mapping.validate("", data1, messages, mapping.options.copy(touched = touched1))
+        mapping.validate("", data1, messages, mapping.options.copy(touched = touched))
       else errors
     errProcessor.getOrElse(Processors.errsToMapList).apply(errs)
   }
@@ -65,7 +62,7 @@ case class Options(
   i18n: Option[Boolean] = None,
   eagerCheck: Option[Boolean] = None,
   ignoreEmpty: Option[Boolean] = None,
-  touched: Seq[String] = Nil,
+  touched: Option[Seq[String]] = None,
   // internal options, only applied to current mapping
   _label: Option[String] = None,
   _constraints: List[Constraint] = Nil,
@@ -76,6 +73,7 @@ case class Options(
   def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
+  def touched(touched: Seq[String]): Options = copy(touched = Some(touched))
 
   def merge(parent: Options): Options = copy(
     i18n = i18n.orElse(parent.i18n),
@@ -139,7 +137,7 @@ case class FieldMapping[T, M <: InputMode](inputMode: M = SoloInput, convert0: (
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions).copy(_inputMode = inputMode)
     val data1  = processDataRec(name, data, theOptions, theOptions._processors)
-    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
+    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.flatMap(_.find(_.startsWith(name))).isEmpty
       && isEmptyInput(name, data1, theOptions._inputMode)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, (if (theOptions._ignoreConstraints) Nil else theOptions._constraints) :+
@@ -172,7 +170,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_, _])], convert0: (Stri
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val theOptions = options.merge(parentOptions)
     val data1  = processDataRec(name, data, theOptions, theOptions._processors)
-    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.find(_.startsWith(name)).isEmpty
+    if (theOptions.ignoreEmpty.getOrElse(false) && theOptions.touched.flatMap(_.find(_.startsWith(name))).isEmpty
       && isEmptyInput(name, data1, theOptions._inputMode)) Nil
     else {
       val errors = validateRec(name, data1, messages, theOptions, theOptions._constraints :+

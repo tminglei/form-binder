@@ -14,9 +14,6 @@ package object bind {
   // (prefix, data, options) => data (ps: all input parameters WON'T BE NULL/EMPTY)
   type PreProcessor = (String, Map[String, String], Options) => Map[String, String]
 
-  // (data) => touched list (ps: all input parameters WON'T BE NULL/EMPTY)
-  type TouchedExtractor = (Map[String, String]) => Seq[String]
-
   // (errors) => R (ps: all inputs parameter WON'T BE NULL/EMPTY)
   type PostErrProcessor[R] = (Seq[(String, String)]) => R
 

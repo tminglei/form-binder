@@ -59,36 +59,6 @@ trait Processors {
       }
     }
 
-  ////////////////////////////////// pre-defined touch list extractor //////////////////////////////
-
-  def mergeJson4sTouched(json: JValue, destPrefix: String = "json"): TouchedExtractor =
-    (data: Map[String, String]) => {
-      touchedMapToSeq(json4sToMapData(destPrefix, json))
-    }
-
-  def expandJsonTouched(sourceKey: String, destPrefix: String): TouchedExtractor =
-    (data: Map[String, String]) => {
-      if (data.get(sourceKey).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
-        val json = JsonMethods.parse(data(sourceKey))
-        touchedMapToSeq(json4sToMapData(destPrefix, json))
-      } else Nil
-    }
-
-  def extractTouched(srcPrefix: String, destPrefix: String): TouchedExtractor =
-    (data: Map[String, String]) => {
-      val touched = data.filter {
-          case (key, value) => key.startsWith(srcPrefix)
-        }.map {
-          case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
-        }
-      touchedMapToSeq(touched)
-    }
-
-  private def touchedMapToSeq(touched: Map[String, String]): Seq[String] =
-    touched.filter {
-      case (key, value) => java.lang.Boolean.valueOf(value)
-    }.keys.toSeq
-
   //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
 

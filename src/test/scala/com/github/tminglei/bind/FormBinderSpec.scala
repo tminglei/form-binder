@@ -67,6 +67,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
     }
 
     describe("w/ options") {
+      implicit val formats = org.json4s.DefaultFormats
       val binder = expandJsonString(Some("body"), Some("json")) >-: FormBinder(messages)
 
       val mappings = tmapping(
@@ -134,7 +135,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "json.email" -> List("email is required")
         ))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true).copy(touched = List("json.email"))),
+        binder.bind(mappings.options(_.ignoreEmpty(true).copy(touched = Some(List("json.email")))),
             invalidData) { case (id, (email, price, count)) =>
           ("invalid - shouldn't occur!") should be ("")
         } should be (Map("json.email" -> List("email is required")))
@@ -144,11 +145,11 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
       }
 
       it("w/ ignore empty and touched (+)") {
-        val binder1 = FormBinder(messages).withTouched(expandJsonTouched("touched", "body"))
+        val binder1 = FormBinder(messages)
         //>>> group mapping with bulk pre-processor
         val mappings1 = tmapping(
           "id" -> long(),
-          "body" -> (expandJsonString() >-: tmapping(
+          "data" -> (expandJsonString() >-: tmapping(
             "email" -> text(maxlength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
             "price" -> (omitLeft("$") >-: float()),
             "count" -> number().verifying(min(3), max(10))
@@ -160,25 +161,26 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
         )
         val invalidData = Map(
           "id" -> "133",
-          "body" -> """{"email":null, "price":337.5, "count":5}""",
-          "touched" -> """{"email":true, "price":false}"""
+          "data" -> """{"email":null, "price":337.5, "count":5}""",
+          "touched" -> """["email", "price"]"""
         )
+        val touched = JsonMethods.parse(invalidData("touched")).extract[List[String]].map("data." + _)
 
-        binder1.validate(mappings1.options(_.ignoreEmpty(true)),
-          invalidData) should be (Map("body.email" -> List("email is required")))
+        binder1.validate(mappings1.options(_.ignoreEmpty(true)), invalidData,
+          touched = Some(touched)) should be (Map("data.email" -> List("email is required")))
       }
 
       it("w/ ignore empty and touched (combined)") {
         val expand = expandJsonString(Some("body"), Some("json"))
         val binder1 = expand >-: changePrefix("json.data", "json") >-: FormBinder(messages)
-          .withTouched((data) => extractTouched("json.touched", "json").apply(expand("", data, Options.apply())))
         val invalidData = Map(
           "id" -> "133",
-          "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": {"email":true, "price":false}}"""
+          "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": ["email", "price"]}"""
         )
+        val touched = (JsonMethods.parse(invalidData("body")) \ "touched").extract[List[String]].map("json." + _)
 
-        binder1.validate(mappings.options(_.ignoreEmpty(true)),
-          invalidData) should be (Map("json.email" -> List("email is required")))
+        binder1.validate(mappings.options(_.ignoreEmpty(true)), invalidData,
+          touched = Some(touched)) should be (Map("json.email" -> List("email is required")))
       }
 
       it("w/ i18n and label") {

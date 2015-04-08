@@ -178,13 +178,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, dummyMessages, Options.apply(touched = List("email"))) match {
+        mappingx.validate("", emptyData, dummyMessages, Options.apply(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
         mappingx.options(_.ignoreEmpty(true))
-            .validate("", emptyData, dummyMessages, Options.apply(touched = List("email"))) match {
+            .validate("", emptyData, dummyMessages, Options.apply(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
@@ -250,13 +250,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, dummyMessages, Options.apply(touched = List("email"))) match {
+        mappingx.validate("", emptyData, dummyMessages, Options.apply(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
         mappingx.options(_.ignoreEmpty(true))
-          .validate("", emptyData, dummyMessages, Options.apply(touched = List("email"))) match {
+          .validate("", emptyData, dummyMessages, Options.apply(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
@@ -322,13 +322,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, dummyMessages, Options(touched = List("email"))) match {
+        mappingx.validate("", emptyData, dummyMessages, Options(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
         mappingx.options(_.ignoreEmpty(true))
-          .validate("", emptyData, dummyMessages, Options(touched = List("email"))) match {
+          .validate("", emptyData, dummyMessages, Options(touched = Some(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
