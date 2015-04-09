@@ -3,14 +3,14 @@ form-binder
 [![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
 
 
-Form-binder is a micro data binding and validating framework, simple and powerful, easy to use and hack.
+Form-binder is a micro data binding and validating framework, easy to use and hack.
 
 > _It was initially created for my [`Scalatra`](https://github.com/scalatra/scalatra)-based project, but it's for general purpose. You can easily integrate and use it with other frameworks._
 
 
 Features
 -------------
-- very lightweight, only ~900 lines (framework + built-in extensions)
+- very lightweight, only ~900 lines codes (framework + built-in extensions)
 - easy use, no verbose codes, and what you see is what you get
 - high customizable, you can extend almost every executing point
 - easily extensible, every extension interface is an alias of `FunctionN`
@@ -26,14 +26,14 @@ Usage
 3. prepare your data
 4. bind and consume the results
 
-_p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it, more dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
+> _p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it, more dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
 
 
 Install & Integrate
 --------------------
 To use `form-binder`, pls add the dependency to your [sbt](http://www.scala-sbt.org/ "slick-sbt") project file:
 ```scala
-libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.8.0"
+libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.8.1"
 ```
 
 Then you can integrate it with your framework to simplify normal usage. 
