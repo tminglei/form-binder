@@ -15,22 +15,22 @@ The core of `form-binder` is `Mapping`, **tree structure** mappings. With **dept
 
 > _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala) for framework details._
 
-binder **bind** method signature:
+binder **bind** method signature (consume result directly if validation passed):
 ```scala
-//if validation passed, consume will be executed, and return `R2`; 
-//if validation failed, return (maybe user transformed) errors
+//if validation passed, consume and return `R2`; 
+//if validation failed, return (maybe processed) errors
 def bind[T, R2, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String])(consume: T => R2)
 ```
 
-binder **bindE** method signature:
+binder **bindE** method signature (return an `Either` and let user to continue processing):
 ```scala
 //bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
 def bindE[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T]
 ```
 
-binder **validate**, _validate only_ and not consume converted data, method signature:
+binder **validate** method signature (_validate only_ and not consume converted data):
 ```scala
-//return errors map or user transformed errors
+//return (maybe processed) errors
 def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[Seq[String]] = None)
 ```
 
@@ -38,12 +38,12 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 
 #### Extension Types:  
 (1) **PreProcessor**: used to pre-process data, like omitting `$` from `$3,013`  
-(2) **PostErrProcessor**: used to process error seq, like converting it to json  
+(2) **ErrProcessor**: used to process error seq, like converting it to json  
 (3) **Constraint**: used to validate raw string data  
 (4) **ExtraConstraint**: used to valdate converted value  
 
-> _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`TouchedExtractor`/`PostErrProcessor`._  
-> _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`._
+> _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`ErrProcessor`._  
+> _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`/`ExtraConstraint`._
 
 #### Options/Features:  
 1) **label**: `feature`, readable name for current group/field  
