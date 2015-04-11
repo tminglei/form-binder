@@ -8,10 +8,12 @@ The core of `form-binder` is `Mapping`, **tree structure** mappings. With **dept
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
 #### Major Components:  
-[1] **binder**: facade, two major methods: `bind`, `validate`  
-[2] **messages**: `(String) => Option[String]`, *(messageKey) => [message]*  
-[3] **mapping**: validate/convert data, two types of mappings: `FieldMapping` and `GroupMapping`  
-[4] **data**: `Map[String, String]`  
+[1] **binder**: facade, used to bind and trigger processing, two major methods: `bind`, `validate`  
+[2] **messages**: used to provide error messages  
+[3] **mapping**: holding constraints, processors, and maybe child mapping, etc. used to validate/convert data, two types of mappings: `field` and `group`  
+[4] **data**: inputting data map  
+
+> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala) for framework details._
 
 binder **bind** method signature:
 ```scala
@@ -34,17 +36,16 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 
 > _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Mappings.scala) for built-in **mapping**s._  
 
-#### Extension Points:  
-(1) **PreProcessor**: `(String, Map[String, String], Options) => Map[String, String]`, *(prefix, data, options) => data*  
-(2) **PostErrProcessor**: `(Seq[(String, String)]) => R`, *errors => R*  
-(3) **TouchedExtractor**: `(Map[String, String]) => Seq[String]`, *data => touched items*  
-(4) **Constraint**: `(String, Map[String, String], Messages, Options) => Seq[(String, String)]`, *(name, data, messages, options) => errors*  
-(5) **ExtraConstraint**: `(String, T, Messages) => Seq[(String, String)]`, *(label, vObject, messages) => errors*  
+#### Extension Types:  
+(1) **PreProcessor**: used to pre-process data, like omitting `$` from `$3,013`  
+(2) **PostErrProcessor**: used to process error seq, like converting it to json  
+(3) **Constraint**: used to validate raw string data  
+(4) **ExtraConstraint**: used to valdate converted value  
 
 > _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`TouchedExtractor`/`PostErrProcessor`._  
 > _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`._
 
-#### Options & Others:  
+#### Options/Features:  
 1) **label**: `feature`, readable name for current group/field  
 2) **mapTo**: `feature`, map converted value to another type  
 3) **i18n**: `option`, let label value can be used as a message key to fetch a i18n value from `messages`   
@@ -54,3 +55,6 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 
 > _* By default, form-binder would return right after encountered a validation error._  
 > _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._
+
+#### Others:
+1) **InputMode** - logically, some constraints/processors can only process single input, and some can only process multiple input. To help user not to wrongly use them, `InputMode` was introduced. Extension developers can mix them to the constraint/processor definitions, and `Scala` compiler will help do the checking.
