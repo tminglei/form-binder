@@ -24,7 +24,7 @@ Usage
 1. define your binder
 2. define your mappings
 3. prepare your data
-4. bind and consume the results
+4. bind and consume
 
 > _p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it, more dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
 
@@ -97,8 +97,8 @@ To run the tests, pls execute:
 
 Acknowledgements
 -----------------
-- `Play!` development team, for the original idea and implementation;
-- [Naoki Takezoe](https://github.com/takezoe) and his [scalatra-forms](https://github.com/takezoe/scalatra-forms), a `play-data` implementation for scalatra.
+- [`Play!`](https://github.com/playframework/playframework) framework development team, for the original idea and implementation;
+- [Naoki Takezoe](https://github.com/takezoe) and his [`scalatra-forms`](https://github.com/takezoe/scalatra-forms), a `play-data` implementation for scalatra.
 
 
 License
