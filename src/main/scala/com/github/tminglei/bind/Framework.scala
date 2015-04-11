@@ -8,11 +8,11 @@ import FrameworkUtils._
 case class FormBinder[R](messages: Messages,
                constraints: List[Constraint] = Nil,
                processors: List[PreProcessor] = Nil,
-               errProcessor: Option[PostErrProcessor[R]] = None) {
+               errProcessor: ErrProcessor[R] = identity[Seq[(String, String)]] _) {
 
   def >-:(newProcessors: (PreProcessor with BulkInput)*) = copy(processors = newProcessors ++: processors)
   def >+:(newConstraints: (Constraint with BulkInput)*) = copy(constraints = newConstraints ++: constraints)
-  def withErr[R1](errProcessor: PostErrProcessor[R1]) = copy(errProcessor = Some(errProcessor))
+  def withErr[R1](errProcessor: ErrProcessor[R1]) = copy(errProcessor = errProcessor)
 
   /**
    * bind mappings to data, if validation passed, consume it
@@ -24,9 +24,23 @@ case class FormBinder[R](messages: Messages,
     if (errors.isEmpty) {
       mapping.validate("", data1, messages, mapping.options) match {
         case Nil  => consume(mapping.convert("", data1))
-        case errs => errProcessor.getOrElse(Processors.errsToMapList).apply(errs)
+        case errs => errProcessor.apply(errs)
       }
-    } else errProcessor.getOrElse(Processors.errsToMapList).apply(errors)
+    } else errProcessor.apply(errors)
+  }
+
+  /**
+   * bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
+   */
+  def bindE[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T] = {
+    val data1  = processDataRec("", data, mapping.options, processors)
+    val errors = validateRec("", data1, messages, Options.apply(), constraints)
+    if (errors.isEmpty) {
+      mapping.validate("", data1, messages, mapping.options) match {
+        case Nil  => Right(mapping.convert("", data1))
+        case errs => Left(errProcessor.apply(errs))
+      }
+    } else Left(errProcessor.apply(errors))
   }
 
   /**
@@ -39,7 +53,7 @@ case class FormBinder[R](messages: Messages,
     val errs = if (errors.isEmpty)
         mapping.validate("", data1, messages, mapping.options.copy(touched = touched))
       else errors
-    errProcessor.getOrElse(Processors.errsToMapList).apply(errs)
+    errProcessor.apply(errs)
   }
 }
 

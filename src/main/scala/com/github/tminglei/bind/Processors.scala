@@ -62,14 +62,14 @@ trait Processors {
   //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
 
-  def errsToMapList(): PostErrProcessor[Map[String, List[String]]] =
+  def errsToMapList(): ErrProcessor[Map[String, List[String]]] =
     (errors: Seq[(String, String)]) => { Map.empty ++
       errors.groupBy(_._1).map {
         case (key, pairs) => (key, pairs.map(_._2).toList)
       }
     }
 
-  def errsToJson4s(): PostErrProcessor[JValue] =
+  def errsToJson4s(): ErrProcessor[JValue] =
     (errs: Seq[(String, String)]) => {
       val root = HashMap[String, Any]()
       val workList = HashMap[String, Any]("" -> root)

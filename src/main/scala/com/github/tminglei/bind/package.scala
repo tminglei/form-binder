@@ -15,7 +15,7 @@ package object bind {
   type PreProcessor = (String, Map[String, String], Options) => Map[String, String]
 
   // (errors) => R (ps: all inputs parameter WON'T BE NULL/EMPTY)
-  type PostErrProcessor[R] = (Seq[(String, String)]) => R
+  type ErrProcessor[R] = (Seq[(String, String)]) => R
 
   /**
    * A helper object, used to simplify `form-binder` usage
