@@ -15,17 +15,10 @@ The core of `form-binder` is `Mapping`, **tree structure** mappings. With **dept
 
 > _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala) for framework details._
 
-binder **bind** method signature (consume result directly if validation passed):
-```scala
-//if validation passed, consume and return `R2`; 
-//if validation failed, return (maybe processed) errors
-def bind[T, R2, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String])(consume: T => R2)
-```
-
-binder **bindE** method signature (return an `Either` and let user to continue processing):
+binder **bind** method signature (return an `Either` and let user to continue processing):
 ```scala
 //bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
-def bindE[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T]
+def bind[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T]
 ```
 
 binder **validate** method signature (_validate only_ and not consume converted data):

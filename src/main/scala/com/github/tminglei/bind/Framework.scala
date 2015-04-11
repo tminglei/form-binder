@@ -15,24 +15,9 @@ case class FormBinder[R](messages: Messages,
   def withErr[R1](errProcessor: ErrProcessor[R1]) = copy(errProcessor = errProcessor)
 
   /**
-   * bind mappings to data, if validation passed, consume it
-   * @return `consume` produced result, if validation passed; (transformed) errors, if validation failed
-   */
-  def bind[T, R2, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String])(consume: T => R2) = {
-    val data1  = processDataRec("", data, mapping.options, processors)
-    val errors = validateRec("", data1, messages, Options.apply(), constraints)
-    if (errors.isEmpty) {
-      mapping.validate("", data1, messages, mapping.options) match {
-        case Nil  => consume(mapping.convert("", data1))
-        case errs => errProcessor.apply(errs)
-      }
-    } else errProcessor.apply(errors)
-  }
-
-  /**
    * bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
    */
-  def bindE[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T] = {
+  def bind[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T] = {
     val data1  = processDataRec("", data, mapping.options, processors)
     val errors = validateRec("", data1, messages, Options.apply(), constraints)
     if (errors.isEmpty) {
@@ -44,8 +29,7 @@ case class FormBinder[R](messages: Messages,
   }
 
   /**
-   * bind and validate only data, not consume it
-   * @return (transformed) errors
+   * bind and validate data, return (processed) errors
    */
   def validate[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String], touched: Option[Seq[String]] = None) = {
     val data1 = processDataRec("", data, mapping.options, processors)

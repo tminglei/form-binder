@@ -29,12 +29,15 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "id" -> "133",
           "body" -> """{"price":"$137.5", "count":5}"""
         )
-        binder.bind(mappings, validData) { case (id, (price, count)) =>
+        binder.bind(mappings, validData).fold(
+        errors => "shouldn't happen!!!",
+        { case (id, (price, count)) =>
           id should be (133L)
           price should be (137.5f)
           count should be (5)
           (">> bind successful!")
-        } should be (">> bind successful!")
+        }
+        ) should be (">> bind successful!")
       }
 
       it("w/ invalid data") {
@@ -42,9 +45,12 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "id" -> "133",
           "body" -> """{"price":337.5, "count":5}"""
         )
-        binder.bind(mappings, invalidData) { case (id, (price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
+        binder.bind(mappings, invalidData).fold(
+          errors => errors,
+          { case (id, (price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
       }
 
       it("w/ invalid data + errors processor") {
@@ -53,9 +59,12 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"price":337.5, "count":5}"""
         )
         binder.withErr(errsToJson4s())
-          .bind(mappings, invalidData) { case (id, (price, count)) =>
-          ("invalid - shouldn't occur!") should be("")
-        } should be(JsonMethods.parse(
+          .bind(mappings, invalidData).fold(
+            errors => errors,
+            { case (id, (price, count)) =>
+              ("invalid - shouldn't occur!") should be("")
+            }
+          )  should be(JsonMethods.parse(
           """
           {
             "json": {
@@ -64,35 +73,6 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           }
           """
         ))
-      }
-
-      it("bindE w/ valid data") {
-        val validData = Map(
-          "id" -> "133",
-          "body" -> """{"price":"$137.5", "count":5}"""
-        )
-        binder.bindE(mappings, validData).fold(
-          errors => "shouldn't happen!!!",
-          { case (id, (price, count)) =>
-            id should be (133L)
-            price should be (137.5f)
-            count should be (5)
-            (">> bind successful!")
-          }
-        ) should be (">> bind successful!")
-      }
-
-      it("bindE w/ invalid data") {
-        val invalidData = Map(
-          "id" -> "133",
-          "body" -> """{"price":337.5, "count":5}"""
-        )
-        binder.bindE(mappings, invalidData).fold(
-          errors => errors,
-          { case (id, (price, count)) =>
-            ("invalid - shouldn't occur!") should be ("")
-          }
-        ) should be (List("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
       }
     }
 
@@ -119,13 +99,19 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"email":"etttt.att#example-1111111.com", "price":337.5, "count":5}"""
         )
 
-        binder.bind(mappings, invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json.email" -> "etttt.att#example-1111111.com: length > 20"))
+        binder.bind(mappings, invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json.email" -> "etttt.att#example-1111111.com: length > 20"))
         ///
-        binder.bind(mappings.options(_.eagerCheck(true)), invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List(
+        binder.bind(mappings.options(_.eagerCheck(true)), invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List(
           "json.email" -> "etttt.att#example-1111111.com: length > 20",
           "json.email" -> "etttt.att#example-1111111.com: invalid email"
         ))
@@ -142,13 +128,19 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"email":null, "price":337.5, "count":5}"""
         )
 
-        binder.bind(mappings, invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json.email" -> "email is required"))
+        binder.bind(mappings, invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true)), invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
+        binder.bind(mappings.options(_.ignoreEmpty(true)), invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json" -> "xx: 337.5 * 5 = 1687.5, too much"))
       }
 
       it("w/ ignore empty and touched") {
@@ -157,14 +149,19 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"email":null, "price":337.5, "count":5}"""
         )
 
-        binder.bind(mappings, invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json.email" -> "email is required"))
+        binder.bind(mappings, invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true).copy(touched = Some(List("json.email")))),
-            invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json.email" -> "email is required"))
+        binder.bind(mappings.options(_.ignoreEmpty(true).copy(touched = Some(List("json.email")))), invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json.email" -> "email is required"))
         ///
         binder.validate(mappings.options(_.ignoreEmpty(true)), invalidData,
           touched = Some(List("json.email"))) should be (List("json.email" -> "email is required"))
@@ -218,9 +215,12 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"email":"example@123.com", "price":337.5, "count":5}"""
         )
 
-        binder1.bind(mappings.options(_.i18n(true)), invalidData) { case (id, (email, price, count)) =>
-          ("invalid - shouldn't occur!") should be ("")
-        } should be (List("json" -> "haha: 337.5 * 5 = 1687.5, too much"))
+        binder1.bind(mappings.options(_.i18n(true)), invalidData).fold(
+          errors => errors,
+          { case (id, (email, price, count)) =>
+            ("invalid - shouldn't occur!") should be ("")
+          }
+        ) should be (List("json" -> "haha: 337.5 * 5 = 1687.5, too much"))
       }
     }
   }
