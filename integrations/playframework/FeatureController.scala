@@ -7,8 +7,11 @@ object FeatureController extends Controller with MyFormBindSupport {
     val mappings = tmapping(
       "cond" -> text()
     )
-    binder.bind(mappings, params) { case (cond) =>
-      repos.features.find(cond)
-    }
+    binder.bind(mappings, params).fold(
+      errors => status(400, errors),
+      { case (cond) =>
+        ok(repos.features.find(cond))
+      }
+    )
   }
 }
