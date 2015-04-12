@@ -33,7 +33,7 @@ Install & Integrate
 --------------------
 To use `form-binder`, pls add the dependency to your [sbt](http://www.scala-sbt.org/ "slick-sbt") project file:
 ```scala
-libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.8.1"
+libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.9.0"
 ```
 
 Then you can integrate it with your framework to simplify normal usage. 
