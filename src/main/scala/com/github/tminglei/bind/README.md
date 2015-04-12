@@ -43,8 +43,8 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 2) **mapTo**: `feature`, map converted value to another type  
 3) **i18n**: `option`, let label value can be used as a message key to fetch a i18n value from `messages`   
 4) **eagerCheck**: `option`, check errors as more as possible  
-5) **ignoreEmpty**: `option`, not check empty field/values  
-6) **touched**: `parameter`, a name list, which were touched by user  
+5) **ignoreEmpty**: `option`, not check empty field/values, especially they're not touched by user  
+6) **touched**: `parameter`, a name list touched by user; for these fields, they can't be empty if they're required  
 
 > _* By default, form-binder would return right after encountered a validation error._  
 > _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._
