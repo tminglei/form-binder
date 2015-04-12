@@ -15,7 +15,7 @@ case class FormBinder[R](messages: Messages,
   def withErr[R1](errProcessor: ErrProcessor[R1]) = copy(errProcessor = errProcessor)
 
   /**
-   * bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
+   * bind mappings to data, and return an either, holding validation errors (left) or converted value (right)
    */
   def bind[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T] = {
     val data1  = processDataRec("", data, mapping.options, processors)

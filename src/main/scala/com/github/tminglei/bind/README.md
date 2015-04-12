@@ -17,7 +17,7 @@ The core of `form-binder` is `Mapping`, **tree structure** mappings. With **dept
 
 binder **bind** method signature (return an `Either` and let user to continue processing):
 ```scala
-//bind mappings to data, and return an either, which holds validation errors (left) or produced result (right)
+//bind mappings to data, and return an either, holding validation errors (left) or converted value (right)
 def bind[T, M <: InputMode](mapping: Mapping[T, M], data: Map[String, String]): Either[R, T]
 ```
 
