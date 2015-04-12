@@ -42,7 +42,7 @@ Here's the way in my `Scalatra` project:
 
 First, I defined a `FormBindSupport` trait,
 ```scala
-trait MyFormBindSupport extends I18nSupport { this: ScalatraBase =>
+trait MyFormBindSupport extends I18nSupport { self: ScalatraBase =>
   import MyFormBindSupport._
 
   before() {
@@ -70,9 +70,12 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
     val mappings = tmapping(
       "id" -> long()
     )
-    binder.bind(mappings, params) { case (id) =>
-      repos.features.get(id)
-    }
+    binder.bind(mappings, params).fold(
+      errors => holt(400, errors),
+      { case (id) =>
+        Ok(toJson(repos.features.get(id)))
+      }
+    )
   }
 }
 ```
