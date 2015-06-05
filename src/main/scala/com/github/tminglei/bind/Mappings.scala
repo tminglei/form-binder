@@ -169,7 +169,7 @@ trait Mappings {
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////
 
   // tuple version
-  def tmapping[P1, _](f1: (String, Mapping[P1, _])) = mapping[(P1), P1](f1)(identity)
+  def tmapping[P1](f1: (String, Mapping[P1, _])) = mapping[(P1), P1](f1)(identity)
   // normal version
   def mapping[T, P1](f1: (String, Mapping[P1, _]))(factory: (P1) => T): GroupMapping[T] =
     new GroupMapping[T](Seq(f1),
