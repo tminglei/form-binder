@@ -47,7 +47,8 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], touched: Option[
 6) **touched**: `parameter`, a name list touched by user; for these fields, they can't be empty if they're required  
 
 > _* By default, form-binder would return right after encountered a validation error._  
-> _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._
+> _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._  
+> _*** if i18n is on, the label you input should be a message key instead of a value._
 
 #### Others:
 1) **InputMode** - logically, some constraints/processors can only process single input, and some can only process multiple input. To help user not to wrongly use them, `InputMode` was introduced. Extension developers can mix them to the constraint/processor definitions, and `Scala` compiler will help do the checking.

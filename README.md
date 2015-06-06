@@ -26,7 +26,9 @@ Usage
 3. prepare your data
 4. bind and consume
 
-> _p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it, more dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
+> _p.s. every points above (1)/(2)/(3)/(4)/(5) are extendable and you can easily customize it._  
+
+For how it works you can check [here](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind). More dev and usage details pls check [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind).
 
 
 Install & Integrate
