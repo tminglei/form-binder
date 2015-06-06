@@ -14,8 +14,7 @@ object FrameworkUtils {
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
 
   //////////////////////////////////////////////////////////////////////////////////
-  val PassValidating: (String, Map[String, String], Messages, Options) => Seq[(String, String)] =
-    (name, data, messages, parentOptions) => Nil
+  val PassValidating: Constraint = (name, data, messages, parentOptions) => Nil
 
   def isEmptyInput(name: String, data: Map[String, String], inputMode: InputMode): Boolean =
     inputMode match {
