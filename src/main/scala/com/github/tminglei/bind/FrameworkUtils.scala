@@ -191,8 +191,8 @@ object FrameworkUtils {
   }
 
   // split a dot separated path name to parent part and self part, with indicating whether it's an array path
-  private val OBJECT_ELEM_NAME = "^(.*)\\.([^\\.]*)$".r
-  private val ARRAY_ELEM_NAME  = "^(.*)\\[([^\\.\\]]*)\\]$".r
+  private val OBJECT_ELEM_NAME = "^(.*)\\.([^\\.]+)$".r
+  private val ARRAY_ELEM_NAME  = "^(.*)\\[([\\d]+)\\]$".r
   def splitName(name: String): (String, String, Boolean) = name match {
     case ARRAY_ELEM_NAME (name, index)  => (name, index, true)
     case OBJECT_ELEM_NAME(parent, name) => (parent, name, false)
