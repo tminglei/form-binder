@@ -480,7 +480,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
 
     describe("date") {
       val formatter = new java.text.SimpleDateFormat("yyyy-MM-dd")
-      val date = Mappings.date("yyyy-MM-dd").verifying(min(formatter.parse("2000-1-1")), max(formatter.parse("2015-1-1")))
+      val date = Mappings.date("yyyy-MM-dd").verifying(min(formatter.parse("2000-1-1"), "min failed"), max(formatter.parse("2015-1-1"), "max failed"))
 
       it("invalid data") {
         val date1 = Mappings.date("yyyy-MM-dd").label("xx")
@@ -495,7 +495,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val outScopeData = Map("date" -> "1998-7-1")
         date.validate("date", outScopeData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("date" -> "'Wed Jul 01 00:00:00 CST 1998' cannot be lower than Sat Jan 01 00:00:00 CST 2000."))
+          case err => err should be (Seq("date" -> "min failed"))
         }
       }
 
