@@ -1,20 +1,22 @@
 package com.github.tminglei.bind
 
 import org.scalatest._
+import java.util.ResourceBundle
 
 class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
+  val bundle: ResourceBundle = ResourceBundle.getBundle("bind-messages")
+  val messages: Messages = (key) => Option(bundle.getString(key))
 
   case class TestBean(id: Long, name: String, desc: Option[String] = None)
 
   describe("test pre-defined general usage mappings") {
-    val dummyMessages: Messages = (key) => Some("dummy")
 
     describe("ignored-simple") {
       val ignored = Mappings.ignored(35)
 
       it("invalid data") {
         val invalidData = Map("number" -> "t135")
-        ignored.validate("number", invalidData, dummyMessages, Options.apply()) match {
+        ignored.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ignored.convert("number", invalidData) should be (35)
           case err => err should be (Nil)
         }
@@ -22,7 +24,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("valid data") {
         val validData = Map("number" -> "135")
-        ignored.validate("number", validData, dummyMessages, Options.apply()) match {
+        ignored.validate("number", validData, messages, Options.apply()) match {
           case Nil => ignored.convert("number", validData) should be (35)
           case err => err should be (Nil)
         }
@@ -30,7 +32,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        ignored.validate("number", nullData, dummyMessages, Options.apply()) match {
+        ignored.validate("number", nullData, messages, Options.apply()) match {
           case Nil => ignored.convert("number", nullData) should be (35)
           case err => err should be (Nil)
         }
@@ -38,7 +40,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("empty data") {
         val emptyData = Map("number" -> "")
-        ignored.validate("number", emptyData, dummyMessages, Options.apply()) match {
+        ignored.validate("number", emptyData, messages, Options.apply()) match {
           case Nil => ignored.convert("number", emptyData) should be (35)
           case err => err should be (Nil)
         }
@@ -51,20 +53,20 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("invalid data") {
         val invalidData = Map("number" -> "t122345")
-        optional.validate("number", invalidData, dummyMessages, Options.apply()) match {
+        optional.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            err should be (Seq("number" -> "dummy"))
-            base.validate("number", invalidData, dummyMessages, Options.apply()) should be (Seq("number" -> "dummy"))
+            err should be (Seq("number" -> "'t122345' must be a number."))
+            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number."))
           }
         }
       }
 
       it("valid data") {
         val validData = Map("number" -> "122345")
-        optional.validate("number", validData, dummyMessages, Options.apply()) match {
+        optional.validate("number", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", validData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", validData, messages, Options.apply()) should be (Nil)
             optional.convert("number", validData) should be (Some(122345))
           }
           case err => err should be (Nil)
@@ -73,9 +75,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        optional.validate("number", nullData, dummyMessages, Options.apply()) match {
+        optional.validate("number", nullData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", nullData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", nullData, messages, Options.apply()) should be (Nil)
             optional.convert("number", nullData) should be (None)
           }
           case err => err should be (Nil)
@@ -84,9 +86,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("empty data") {
         val emptyData = Map("number" -> "")
-        optional.validate("number", emptyData, dummyMessages, Options.apply()) match {
+        optional.validate("number", emptyData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", emptyData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", emptyData, messages, Options.apply()) should be (Nil)
             optional.convert("number", emptyData) should be (None)
           }
           case err => err should be (Nil)
@@ -96,9 +98,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
       it("delegate pre-processors") {
         val optional1 = Processors.omitLeft("$") >-: optional
         val validData = Map("number" -> "$12453")
-        optional1.validate("number", validData, dummyMessages, Options.apply()) match {
+        optional1.validate("number", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", validData, dummyMessages, Options.apply()) should be (Seq("number" -> "dummy"))
+            base.validate("number", validData, messages, Options.apply()) should be (Seq("number" -> "'$12453' must be a number."))
             optional1.convert("number", validData) should be (Some(12453))
           }
           case err => err should be (Nil)
@@ -106,13 +108,13 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
       }
 
       it("delegate constraints") {
-        val optional1 = Constraints.maxlength(8) >+: optional
+        val optional1 = Constraints.maxLength(8) >+: optional
         val invalidData = Map("number" -> "146896540")
-        optional1.validate("number", invalidData, dummyMessages, Options.apply()) match {
+        optional1.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            base.validate("number", invalidData, dummyMessages, Options.apply()) should be (Nil)
-            err should be (Seq("number" -> "dummy"))
+            base.validate("number", invalidData, messages, Options.apply()) should be (Nil)
+            err should be (Seq("number" -> "'146896540' cannot be longer than 8 characters."))
           }
         }
       }
@@ -124,20 +126,20 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("invalid data") {
         val invalidData = Map("number" -> "t122345")
-        default.validate("number", invalidData, dummyMessages, Options.apply()) match {
+        default.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            err should be (Seq("number" -> "dummy"))
-            base.validate("number", invalidData, dummyMessages, Options.apply()) should be (Seq("number" -> "dummy"))
+            err should be (Seq("number" -> "'t122345' must be a number."))
+            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number."))
           }
         }
       }
 
       it("valid data") {
         val validData = Map("number" -> "122345")
-        default.validate("number", validData, dummyMessages, Options.apply()) match {
+        default.validate("number", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", validData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", validData, messages, Options.apply()) should be (Nil)
             default.convert("number", validData) should be (122345)
           }
           case err => err should be (Nil)
@@ -146,9 +148,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        default.validate("number", nullData, dummyMessages, Options.apply()) match {
+        default.validate("number", nullData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", nullData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", nullData, messages, Options.apply()) should be (Nil)
             default.convert("number", nullData) should be (101)
           }
           case err => err should be (Nil)
@@ -157,9 +159,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("empty data") {
         val emptyData = Map("number" -> "")
-        default.validate("number", emptyData, dummyMessages, Options.apply()) match {
+        default.validate("number", emptyData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", emptyData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number", emptyData, messages, Options.apply()) should be (Nil)
             default.convert("number", emptyData) should be (101)
           }
           case err => err should be (Nil)
@@ -173,22 +175,22 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("invalid data") {
         val invalidData = Map("number[0]" -> "t122345", "number[1]" -> "t11345")
-        list.validate("number", invalidData, dummyMessages, Options.apply()) match {
+        list.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            base.validate("number[0]", invalidData, dummyMessages, Options.apply()) should be (Seq("number[0]" -> "dummy"))
-            base.validate("number[1]", invalidData, dummyMessages, Options.apply()) should be (Seq("number[1]" -> "dummy"))
-            err should be (Seq("number[0]" -> "dummy", "number[1]" -> "dummy"))
+            base.validate("number[0]", invalidData, messages, Options.apply()) should be (Seq("number[0]" -> "'t122345' must be a number."))
+            base.validate("number[1]", invalidData, messages, Options.apply()) should be (Seq("number[1]" -> "'t11345' must be a number."))
+            err should be (Seq("number[0]" -> "'t122345' must be a number.", "number[1]" -> "'t11345' must be a number."))
           }
         }
       }
 
       it("valid data") {
         val validData = Map("number[0]" -> "122345", "number[1]" -> "754")
-        list.validate("number", validData, dummyMessages, Options.apply()) match {
+        list.validate("number", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number[0]", validData, dummyMessages, Options.apply()) should be (Nil)
-            base.validate("number[1]", validData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number[0]", validData, messages, Options.apply()) should be (Nil)
+            base.validate("number[1]", validData, messages, Options.apply()) should be (Nil)
             list.convert("number", validData) should be (List(122345, 754))
           }
           case err => err should be (Nil)
@@ -207,8 +209,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val emptyData = Map("number[0]" -> "", "number[1]" -> "133")
         list.validate("number", emptyData, (key) => Some("%s is required"), Options.apply()) match {
           case Nil => {
-            base.validate("number[0]", emptyData, dummyMessages, Options.apply()) should be (Nil)
-            base.validate("number[1]", emptyData, dummyMessages, Options.apply()) should be (Nil)
+            base.validate("number[0]", emptyData, messages, Options.apply()) should be (Nil)
+            base.validate("number[1]", emptyData, messages, Options.apply()) should be (Nil)
             list.convert("number", emptyData) should be (List(0, 133))
           }
           case err => err should be (Nil)
@@ -222,23 +224,23 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("invalid data") {
         val invalidData = Map("map.aa" -> "t122345", "map.\"b-1\"" -> "t11345")
-        map.validate("map", invalidData, dummyMessages, Options.apply()) match {
+        map.validate("map", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            base.validate("map.aa", invalidData, dummyMessages, Options.apply()) should be (Seq("map.aa" -> "dummy"))
-            base.validate("map.\"b-1\"", invalidData, dummyMessages, Options.apply()) should be (Seq("map.\"b-1\"" -> "dummy"))
-            err should be (Seq("map.aa" -> "dummy", "map.\"b-1\"" -> "dummy"))
+            base.validate("map.aa", invalidData, messages, Options.apply()) should be (Seq("map.aa" -> "'t122345' must be a number."))
+            base.validate("map.\"b-1\"", invalidData, messages, Options.apply()) should be (Seq("map.\"b-1\"" -> "'t11345' must be a number."))
+            err should be (Seq("map.aa" -> "'t122345' must be a number.", "map.\"b-1\"" -> "'t11345' must be a number."))
           }
         }
       }
 
       it("valid data") {
         val validData = Map("map.aa" -> "122345", "map.\"b-1\"" -> "754")
-        map.validate("map", validData, dummyMessages, Options.apply()) match {
+        map.validate("map", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("map.aa", validData, dummyMessages, Options.apply()) should be (Nil)
-            base.validate("map.\"b-1\"", validData, dummyMessages, Options.apply()) should be (Nil)
-            map.convert("map", validData) should be (Map("aa" -> 122345, "b-1" -> 754))
+            base.validate("map.aa", validData, messages, Options.apply()) should be (Nil)
+            base.validate("map.\"b-1\"", validData, messages, Options.apply()) should be (Nil)
+            map.convert("map", validData) should be (Map("aa" -> 122345, "\"b-1\"" -> 754))
           }
           case err => err should be (Nil)
         }
@@ -256,9 +258,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val emptyData = Map("map.aa" -> "", "map.\"b-1\"" -> "133")
         map.validate("map", emptyData, (key) => Some("%s is required"), Options.apply()) match {
           case Nil => {
-            base.validate("map.aa", emptyData, dummyMessages, Options.apply()) should be (Nil)
-            base.validate("map.\"b-1\"", emptyData, dummyMessages, Options.apply()) should be (Nil)
-            map.convert("map", emptyData) should be (Map("aa" -> 0, "b-1" -> 133))
+            base.validate("map.aa", emptyData, messages, Options.apply()) should be (Nil)
+            base.validate("map.\"b-1\"", emptyData, messages, Options.apply()) should be (Nil)
+            map.convert("map", emptyData) should be (Map("aa" -> 0, "\"b-1\"" -> 133))
           }
           case err => err should be (Nil)
         }
@@ -275,7 +277,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           "test.name" -> "test",
           "test.desc" -> ""
         )
-        ignored.validate("", invalidData, dummyMessages, Options.apply()) match {
+        ignored.validate("", invalidData, messages, Options.apply()) match {
           case Nil => ignored.convert("", invalidData) should be (testBean)
           case err => err should be (Nil)
         }
@@ -287,7 +289,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           "test.name" -> "test",
           "test.desc" -> ""
         )
-        ignored.validate("", validData, dummyMessages, Options.apply()) match {
+        ignored.validate("", validData, messages, Options.apply()) match {
           case Nil => ignored.convert("", validData) should be (testBean)
           case err => err should be (Nil)
         }
@@ -295,7 +297,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("null data") {
         val nullData = Map[String, String]()
-        ignored.validate("", nullData, dummyMessages, Options.apply()) match {
+        ignored.validate("", nullData, messages, Options.apply()) match {
           case Nil => ignored.convert("", nullData) should be (testBean)
           case err => err should be (Nil)
         }
@@ -303,7 +305,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("empty data (wrong way)") {
         val emptyData = Map("test" -> "")
-        ignored.validate("", emptyData, dummyMessages, Options.apply()) match {
+        ignored.validate("", emptyData, messages, Options.apply()) match {
           case Nil => ignored.convert("", emptyData) should be (testBean)
           case err => err should be (Nil)
         }
@@ -311,7 +313,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
 
       it("empty data") {
         val emptyData = Map("test" -> null)
-        ignored.validate("", emptyData, dummyMessages, Options.apply()) match {
+        ignored.validate("", emptyData, messages, Options.apply()) match {
           case Nil => ignored.convert("", emptyData) should be (testBean)
           case err => err should be (Nil)
         }
@@ -656,11 +658,11 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           "test[1].desc" -> "tt"
         )
 
-        list.validate("test", data, dummyMessages, Options.apply()) match {
+        list.validate("test", data, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err.toList should be (List("test[0].id" -> "id is required"))
         }
-        list.validate("test", data, dummyMessages, Options().ignoreEmpty(true)) match {
+        list.validate("test", data, messages, Options().ignoreEmpty(true)) match {
           case Nil => list.convert("test", data) should be (
             List(TestBean(0, "test"), TestBean(137, "test1", Some("tt"))))
           case err => err should be (Nil)

@@ -1,7 +1,7 @@
 import org.scalatra.ScalatraServlet
 import com.github.tminglei.bind.simple._
 
-class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
+class SampleServlet extends ScalatraServlet with MyFormBindSupport {
 
   get("/:id") {
     val mappings = tmapping(

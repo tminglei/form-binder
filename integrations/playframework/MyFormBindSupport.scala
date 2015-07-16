@@ -26,8 +26,7 @@ trait MyFormBindSupport { self =>
       }
   }
 
-  def binder(implicit request: Request) =
-    expandJsonString(Some("json")) >-: FormBinder(getMessages()).withErr(errsToJson4s)
+  def binder(implicit request: Request) = FormBinder(getMessages(), errsTree())
 
   ///TODO prepare your i18n Messages
   private def getMessages(implicit request: Request): Messages = ???

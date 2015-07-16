@@ -1,87 +1,116 @@
 package com.github.tminglei.bind
 
 import java.util.regex.Pattern
+import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import org.json4s.jackson.JsonMethods
 import org.json4s._
 
 trait Processors {
   import FrameworkUtils._
+
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.trim
-  }
+  def trim(): PreProcessor =
+    (prefix, data, options) => {
+      data.map { case (k, v) =>
+        if (!k.startsWith(prefix)) (k, v)
+        else (k, Option(v).map(_.trim).orNull)
+      }
+    }
 
-  def omit(str: String): PreProcessor with SoloInput = mkSimplePreProcessor { (input: String) =>
-    if (input == null) null else input.replaceAll(str, "")
-  }
+  def omit(str: String): PreProcessor = omitMatched(Pattern.quote(str).r, "")
 
-  def omitLeft(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll("^"+Pattern.quote(str), "")
-  }
+  def omitLeft(str: String): PreProcessor = omitMatched(("^"+Pattern.quote(str)).r, "")
 
-  def omitRight(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll(Pattern.quote(str)+"$", "")
-  }
+  def omitRight(str: String): PreProcessor = omitMatched((Pattern.quote(str)+"$").r, "")
 
-  def omitRedundant(str: String): PreProcessor with SoloInput = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else input.replaceAll("["+str+"]+", str)
-  }
+  def omitRedundant(str: String): PreProcessor = omitMatched(("["+Pattern.quote(str)+"]+").r, str)
 
-  def omitMatched(regex: Regex, replacement: String = "") = mkSimplePreProcessor {(input: String) =>
-    if (input == null) null else regex.replaceAllIn(input, replacement)
-  }
+  def omitMatched(regex: Regex, replacement: String = ""): PreProcessor =
+    (prefix, data, options) => {
+      data.map { case (k, v) =>
+        if (!k.startsWith(prefix)) (k, v)
+        else (k, Option(v).map(regex.replaceAllIn(_, replacement)).orNull)
+      }
+    }
 
-  def changePrefix(srcPrefix: String, destPrefix: String) =
-    new PreProcessor with SoloInput with BulkInput {
-      def apply(prefix: String, data: Map[String, String], options: Options) =
-        data.map {
-          case (key, value) => (key.replaceFirst("^"+srcPrefix, destPrefix), value)
+  def changePrefix(from: String, to: String): PreProcessor =
+    (prefix, data, options) => {
+      data.map { case (k, v) =>
+        if (!k.startsWith(prefix)) (k, v)
+        else {
+          val tail = k.substring(prefix.length).replaceFirst("^[\\.]?" + Pattern.quote(from), to)
+            .replaceFirst("^\\.", "")
+          val newKey = if (isEmptyStr(tail)) prefix else (prefix + "." + tail)
+            .replaceFirst("^\\.", "")
+          (newKey, v)
         }
+      }
     }
 
-  def mergeJson4sData(json: JValue, destPrefix: String = "json") =
-    new PreProcessor with SoloInput with BulkInput {
-      def apply(prefix: String, data: Map[String, String], options: Options) =
-        (data - destPrefix) ++ json4sToMapData(destPrefix, json)
+  def expandJson(prefix: Option[String] = None): PreProcessor =
+    (prefix1, data, options) => {
+      val thePrefix = prefix.getOrElse(prefix1)
+      if (!isEmptyStr(data.get(thePrefix).orNull)) {
+        val json = JsonMethods.parse(data(thePrefix))
+        (data - thePrefix) ++ json2map(thePrefix, json)
+      } else data
+    }
+  
+  def expandJsonKeys(prefix: Option[String] = None): PreProcessor =
+    (prefix1, data, options) => {
+      val data1 = expandJson(prefix).apply(prefix1, data, options)
+      val data2 = expandListKeys(prefix).apply(prefix1, data1, options)
+      data2
     }
 
-  def expandJsonString(sourceKey: Option[String] = None, destPrefix: Option[String] = None) =
-    new PreProcessor with SoloInput with BulkInput {
-      def apply(prefix: String, data: Map[String, String], options: Options) = {
-        val sourceKey1 = sourceKey.getOrElse(prefix)
-        if (data.get(sourceKey1).filterNot {v => (v == null || v.isEmpty)}.isDefined) {
-          val destPrefix1 = destPrefix.getOrElse(sourceKey1)
-          val json = JsonMethods.parse(data(sourceKey1))
-          (data - destPrefix1) ++ json4sToMapData(destPrefix1, json)
-        } else data
+  def expandListKeys(prefix: Option[String] = None): PreProcessor =
+    (prefix1, data, options) => {
+      val thePrefix = prefix.getOrElse(prefix1)
+      val p = Pattern.compile("^" + Pattern.quote(thePrefix) + "\\[[\\d]+\\].*")
+      data.map { case (k, v) =>
+        if (p.matcher(k).matches()) {
+          val newKey = if (isEmptyStr(thePrefix)) v else thePrefix + "." + v
+          (newKey, "true")
+        } else (k, v)
       }
     }
 
   //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
 
-  def errsToMapList(): ErrProcessor[Map[String, List[String]]] =
-    (errors: Seq[(String, String)]) => { Map.empty ++
-      errors.groupBy(_._1).map {
+  def foldErrs(): ErrProcessor[Map[String, List[String]]] =
+    (errors: Seq[(String, String)]) => {
+      Map.empty ++ errors.groupBy(_._1).map {
         case (key, pairs) => (key, pairs.map(_._2).toList)
       }
     }
 
-  def errsToJson4s(): ErrProcessor[JValue] =
-    (errs: Seq[(String, String)]) => {
+  def errsTree(): ErrProcessor[Map[String, Any]] =
+    (errors: Seq[(String, String)]) => {
       val root = HashMap[String, Any]()
       val workList = HashMap[String, Any]("" -> root)
-      var index = 0
-      errs.map { case (name, err) =>
-        index += 1
-        val name1 = name.replaceAll("\\[", ".").replaceAll("\\]", "") //convert array format to object format
-        val (parent, self, isArray) = splitName(name1 + "._errors[" + index + "]")
-        val workObj = workObject(workList, parent, isArray)
-        workObj += (self -> err)
+      errors.map { case (name, error) =>
+        val name1 = name.replaceAll("\\[", ".").replaceAll("\\]", "")
+        val workObj = workObject(workList, name1 + "._errors", true)
+          .asInstanceOf[ListBuffer[String]]
+        workObj += (error)
       }
-      mapTreeToJson4s(root)
+      root.toMap
+    }
+
+  //////////////////////////////////// pre-defined touched checkers ////////////////////////////////
+
+  def listTouched(touched: List[String]): TouchedChecker =
+    (prefix, data) => {
+      touched.find(_.startsWith(prefix)).isDefined
+    }
+
+  def prefixTouched(dataPrefix: String, touchedPrefix: String): TouchedChecker =
+    (prefix, data) => {
+      val prefixBeChecked = prefix.replaceAll("^" + Pattern.quote(dataPrefix), touchedPrefix)
+      data.keys.find(_.startsWith(prefixBeChecked)).isDefined
     }
 }
 

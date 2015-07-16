@@ -1,7 +1,7 @@
 package com.github.tminglei.bind
 
-import org.json4s.jackson.JsonMethods
 import org.scalatest._
+import scala.collection.mutable.ListBuffer
 
 class ProcessorsSpec extends FunSpec with ShouldMatchers {
 
@@ -81,10 +81,10 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       }
     }
 
-    describe("expandJsonData") {
+    describe("expandJson") {
 
       it("simple") {
-        val expandJsonData = Processors.expandJsonString(Some("json"))
+        val expandJson = Processors.expandJson(Some("json"))
         val data = Map(
           "aa" -> "wett",
           "json" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
@@ -97,11 +97,11 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "json.dr-1[1]" -> "45"
         )
 
-        expandJsonData("", data, Options.apply()) should be (expected)
+        expandJson("", data, Options.apply()) should be (expected)
       }
 
       it("null or empty") {
-        val expandJsonData = Processors.expandJsonString(Some("json"))
+        val expandJsonData = Processors.expandJson(Some("json"))
 
         val nullData = Map("aa" -> "wett")
         expandJsonData("", nullData, Options.apply()) should be (nullData)
@@ -114,28 +114,55 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
       }
 
       it("with dest prefix") {
-        val expandJsonData = Processors.expandJsonString(Some("body"), Some("json"))
+        val expandJson = Processors.expandJson(Some("body"))
         val data = Map(
           "aa" -> "wett",
           "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}"""
         )
         val expected = Map(
           "aa" -> "wett",
-          "body" -> """{"id":123, "name":"tewd", "dr-1":[33,45]}""",
-          "json.id" -> "123",
-          "json.name" -> "tewd",
-          "json.dr-1[0]" -> "33",
-          "json.dr-1[1]" -> "45"
+          "body.id" -> "123",
+          "body.name" -> "tewd",
+          "body.dr-1[0]" -> "33",
+          "body.dr-1[1]" -> "45"
         )
 
-        expandJsonData("", data, Options.apply()) should be (expected)
+        expandJson("", data, Options.apply()) should be (expected)
       }
     }
   }
 
   describe("test pre-defined post err-processors") {
 
-    describe("errsToJson4s") {
+    describe("foldErrs") {
+      it("simple") {
+        val errs = Seq(
+          "" -> "top error1",
+          "aa" -> "error aa",
+          "aa.ty" -> "error aa.ty",
+          "aa" -> "error aa 1",
+          "aa.tl[3]" -> "ewty",
+          "aa.tl[3]" -> "ewyu7",
+          "br-1[t0]" -> "key: eeor",
+          "br-1[t0]" -> "tert",
+          "br-1[1]" -> "tetty",
+          "" -> "top error2"
+        )
+
+        val expected = Map(
+          "" -> List("top error1", "top error2"),
+          "aa" -> List("error aa", "error aa 1"),
+          "aa.ty" -> List("error aa.ty"),
+          "aa.tl[3]" -> List("ewty", "ewyu7"),
+          "br-1[t0]" -> List("key: eeor", "tert"),
+          "br-1[1]" -> List("tetty")
+        )
+
+        Processors.foldErrs()(errs) should be (expected)
+      }
+    }
+
+    describe("errsTree") {
 
       it("simple") {
         val errs = Seq(
@@ -151,33 +178,29 @@ class ProcessorsSpec extends FunSpec with ShouldMatchers {
           "" -> "top error2"
         )
 
-        val expected = JsonMethods.parse(
-          """
-            {
-              "_errors": ["top error1", "top error2"],
-              "br-1": {
-                "t0": {
-                  "_errors": ["key: eeor", "tert"]
-                },
-                "1": {
-                  "_errors": ["tetty"]
-                }
-              },
-              "aa": {
-                "ty": {
-                  "_errors": ["error aa.ty"]
-                },
-                "tl": {
-                  "3": {
-                    "_errors": ["ewty", "ewyu7"]
-                  }
-                },
-                "_errors": ["error aa", "error aa 1"]
-              }
-            }
-          """)
+        val expected = Map(
+          "_errors" -> ListBuffer("top error1", "top error2"),
+          "br-1" -> Map(
+            "t0" -> Map(
+              "_errors" -> ListBuffer("key: eeor", "tert")
+            ),
+            "1" -> Map(
+              "_errors" -> ListBuffer("tetty")
+            )
+          ),
+          "aa" -> Map(
+            "ty" -> Map(
+              "_errors" -> ListBuffer("error aa.ty")
+            ),
+            "tl" -> Map(
+              "3" -> Map(
+                "_errors" -> ListBuffer("ewty", "ewyu7")
+              )
+            ),
+            "_errors" -> ListBuffer("error aa", "error aa 1")
+          ))
 
-        Processors.errsToJson4s()(errs) should be (expected)
+        Processors.errsTree()(errs) should be (expected)
       }
     }
   }

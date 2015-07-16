@@ -9,13 +9,16 @@ package object bind {
   type Constraint = (String, Map[String, String], Messages, Options) => Seq[(String, String)]
 
   // (label, vObject, messages) => errors (ps: all input parameters WON'T BE NULL/EMPTY)
-  type ExtraConstraint[T] = (String, T, Messages) => Seq[(String, String)]
+  type ExtraConstraint[T] = (String, T, Messages) => Seq[String]
 
   // (prefix, data, options) => data (ps: all input parameters WON'T BE NULL/EMPTY)
   type PreProcessor = (String, Map[String, String], Options) => Map[String, String]
 
   // (errors) => R (ps: all inputs parameter WON'T BE NULL/EMPTY)
   type ErrProcessor[R] = (Seq[(String, String)]) => R
+
+  // (prefix, data) => true/false (ps: all input parameters WON'T BE NULL/EMPTY)
+  type TouchedChecker = (String, Map[String, String]) => Boolean
 
   /**
    * A helper object, used to simplify `form-binder` usage
