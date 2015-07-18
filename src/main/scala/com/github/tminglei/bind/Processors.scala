@@ -34,7 +34,7 @@ trait Processors {
 
   def omitMatched(regex: Regex, replacement: String = ""): PreProcessor =
     (prefix, data, options) => {
-      logger.debug(s"replacing '${regex.regex}' with '$replacement'")
+      logger.debug(s"replacing '$regex' with '$replacement'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else (k, Option(v).map(regex.replaceAllIn(_, replacement)).orNull)

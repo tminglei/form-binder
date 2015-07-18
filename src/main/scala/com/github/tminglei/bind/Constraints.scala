@@ -78,7 +78,7 @@ trait Constraints {
 
   def pattern(regex: Regex, message: String = "") = mkSimpleConstraint(
     (label, vString, messages) => {
-      logger.debug(s"checking pattern '${regex.regex}' for '$vString'")
+      logger.debug(s"checking pattern '$regex' for '$vString'")
 
       if (vString != null && regex.findFirstIn(vString).isEmpty) {
         Some( (if (message.isEmpty) messages("error.pattern") else Some(message))
@@ -88,7 +88,7 @@ trait Constraints {
 
   def patternNot(regex: Regex, message: String = "") = mkSimpleConstraint(
     (label, vString, messages) => {
-      logger.debug(s"checking pattern-not '${regex.regex}' for '$vString'")
+      logger.debug(s"checking pattern-not '$regex' for '$vString'")
 
       if (vString != null && regex.findFirstIn(vString).isDefined) {
         Some( (if (message.isEmpty) messages("error.patternnot") else Some(message))
