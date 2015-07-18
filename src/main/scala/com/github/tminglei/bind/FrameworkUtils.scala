@@ -1,6 +1,8 @@
 package com.github.tminglei.bind
 
 import java.util.regex.Pattern
+import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.{ListBuffer, HashMap}
 import org.json4s._
 
@@ -8,6 +10,8 @@ import org.json4s._
  * Framework internal used util methods (!!!NOTE: be careful if using it externally)
  */
 object FrameworkUtils {
+  private val logger = LoggerFactory.getLogger(FrameworkUtils.getClass)
+
   val ILLEGAL_ARRAY_INDEX = """.*\[(\d*[^\d\[\]]+\d*)+\].*""".r
   /** copied from Play! form/mapping */
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
@@ -19,6 +23,8 @@ object FrameworkUtils {
     str == null || (str.trim == "") || str.equalsIgnoreCase("null")
 
   def isEmptyInput(name: String, data: Map[String, String], inputMode: InputMode): Boolean = {
+    logger.trace(s"checking empty input for $name")
+    
     val prefix1 = if (isEmptyStr(name)) "" else name + "."
     val prefix2 = if (isEmptyStr(name)) "" else name + "["
 
@@ -37,10 +43,31 @@ object FrameworkUtils {
   // with indicating whether it's an array path
   private val OBJECT_ELEM_NAME = "^(.*)\\.([^\\.]+)$".r
   private val ARRAY_ELEM_NAME  = "^(.*)\\[([\\d]+)\\]$".r
-  def splitName(name: String): (String, String, Boolean) = name match {
-    case ARRAY_ELEM_NAME (name, index)  => (name, index, true)
-    case OBJECT_ELEM_NAME(parent, name) => (parent, name, false)
-    case _  => ("", name, false)
+  def splitName(name: String): (String, String, Boolean) = {
+    logger.trace(s"splitting name: '$name'")
+
+    name match {
+      case ARRAY_ELEM_NAME (name, index)  => (name, index, true)
+      case OBJECT_ELEM_NAME(parent, name) => (parent, name, false)
+      case _  => ("", name, false)
+    }
+  }
+
+  // Find a workObject from map tree workList; create one if not exist
+  def workObject(workList: HashMap[String, Any], name: String, isArray: Boolean): Any = {
+    logger.trace(s"get working object for $name")
+    
+    workList.get(name) match {
+      case Some(theObj) => theObj
+      case None => {
+        val (parent, self, isArray1) = splitName(name)
+        val parentObj = workObject(workList, parent, isArray1).asInstanceOf[HashMap[String, Any]]
+        val theObj = if (isArray) ListBuffer[String]() else HashMap[String, Any]()
+        parentObj += (self -> theObj)
+        workList  += (name -> theObj)
+        theObj
+      }
+    }
   }
 
   //-----------------------------------------------------------------------------
@@ -96,11 +123,13 @@ object FrameworkUtils {
       case _ => Nil
     }
 
-  //////////////////////////// normal processing related //////////////////////////////
+  ///---
 
   // i18n on: use i18n label, if exists; else use label; else use last field name from full name
   // i18n off: use label; else use last field name from full name
   def getLabel(fullName: String, messages: Messages, options: Options): String = {
+    logger.trace(s"getting label for '$fullName' with options (i18n: ${options.i18n}}, _label: ${options._label})")
+
     val (parent, name, isArray) = splitName(fullName)
     val default = if (isArray) (splitName(parent)._2 + "[" + name + "]") else name
     if (options.i18n.getOrElse(false)) {
@@ -110,14 +139,18 @@ object FrameworkUtils {
 
   // make a Constraint which will try to check and collect errors
   def checking[T](check: String => T, messageOrKey: Either[String, String], extraMessageArgs: String*): Constraint =
-    mkSimpleConstraint((label, value, messages) => value match {
-      case null|"" => None
-      case x => {
-        try { check(x); None }
-        catch {
-          case e: Exception => {
-            val msgTemplate = messageOrKey.fold(s => s, messages(_).get);
-            Some(msgTemplate.format((value +: extraMessageArgs): _*))
+    mkSimpleConstraint((label, vString, messages) => {
+      logger.debug(s"checking for '$vString'")
+      
+      vString match {
+        case null|"" => None
+        case x => {
+          try { check(x); None }
+          catch {
+            case e: Exception => {
+              val msgTemplate = messageOrKey.fold(s => s, messages(_).get);
+              Some(msgTemplate.format((vString +: extraMessageArgs): _*))
+            }
           }
         }
       }
@@ -126,12 +159,15 @@ object FrameworkUtils {
   // make a compound Constraint, which checks whether any inputting constraints passed
   def anyPassed(constraints: Constraint*): Constraint =
     (name, data, messages, options) => {
+      logger.debug(s"checking any passed for $name")
+      
       var errErrors: List[(String, String)] = Nil
       val found = constraints.find(c => {
         val errors = c.apply(name, data, messages, options)
         errErrors ++= errors
         errors.isEmpty
       })
+
       if (found.isDefined) Nil
       else {
         val label = getLabel(name, messages, options)
@@ -141,27 +177,32 @@ object FrameworkUtils {
     }
 
   // Computes the available indexes for the given key in this set of data.
-  def indexes(key: String, data: Map[String, String]): Seq[Int] = {
-    val KeyPattern = ("^" + Pattern.quote(key) + """\[(\d+)\].*$""").r
+  def indexes(name: String, data: Map[String, String]): Seq[Int] = {
+    logger.debug(s"get indexes for $name")
+
+    val KeyPattern = ("^" + Pattern.quote(name) + """\[(\d+)\].*$""").r
     data.toSeq.collect { case (KeyPattern(index), _) => index.toInt }.sorted.distinct
   }
 
   // Computes the available keys for the given prefix in this set of data.
   def keys(prefix: String, data: Map[String, String]): Seq[String] = {
+    logger.debug(s"get keys for $prefix")
+
     val KeyPattern = ("^" + Pattern.quote(prefix) + """\.("?[^."]+"?).*$""").r
     data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
   }
-  
-  /////////////////////////// json processing related /////////////////////////////////
 
-  def json2map(prefix: String, json: JValue): Map[String, String] =
+  // Construct data map from inputting jackson json object
+  def json2map(prefix: String, json: JValue): Map[String, String] = {
+    logger.trace(s"json to map - prefix: $prefix")
+
     json match {
       case JArray(values) => values.zipWithIndex.map {
-          case (value, i) => json2map(prefix + "[" + i + "]", value)
-        }.foldLeft(Map.empty[String, String])(_ ++ _)
+        case (value, i) => json2map(prefix + "[" + i + "]", value)
+      }.foldLeft(Map.empty[String, String])(_ ++ _)
       case JObject(fields) => fields.map { case (key, value) =>
-          json2map((if (prefix.isEmpty) "" else prefix + ".") + key, value)
-        }.foldLeft(Map.empty[String, String])(_ ++ _)
+        json2map((if (prefix.isEmpty) "" else prefix + ".") + key, value)
+      }.foldLeft(Map.empty[String, String])(_ ++ _)
       case JNull => Map.empty
       case JNothing => Map.empty
       case JBool(value) => Map(prefix -> value.toString)
@@ -169,20 +210,6 @@ object FrameworkUtils {
       case JDecimal(value) => Map(prefix -> value.toString)
       case JInt(value) => Map(prefix -> value.toString)
       case JString(value) => Map(prefix -> value.toString)
-    }
-  
-  // Find a workObject from map tree workList; create one if not exist
-  def workObject(workList: HashMap[String, Any], name: String, isArray: Boolean): Any = {
-    workList.get(name) match {
-      case Some(theObj) => theObj
-      case None => {
-        val (parent, self, isArray1) = splitName(name)
-        val parentObj = workObject(workList, parent, isArray1).asInstanceOf[HashMap[String, Any]]
-        val theObj = if (isArray) ListBuffer[String]() else HashMap[String, Any]()
-        parentObj += (self -> theObj)
-        workList  += (name -> theObj)
-        theObj
-      }
     }
   }
 }

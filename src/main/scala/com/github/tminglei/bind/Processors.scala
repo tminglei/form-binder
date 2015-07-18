@@ -1,6 +1,8 @@
 package com.github.tminglei.bind
 
 import java.util.regex.Pattern
+import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 import org.json4s.jackson.JsonMethods
@@ -9,10 +11,13 @@ import org.json4s._
 trait Processors {
   import FrameworkUtils._
 
+  private val logger = LoggerFactory.getLogger(Processors.getClass)
+
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
   def trim(): PreProcessor =
     (prefix, data, options) => {
+      logger.debug(s"trimming '$prefix'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else (k, Option(v).map(_.trim).orNull)
@@ -29,6 +34,7 @@ trait Processors {
 
   def omitMatched(regex: Regex, replacement: String = ""): PreProcessor =
     (prefix, data, options) => {
+      logger.debug(s"replacing '${regex.regex}' with '$replacement'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else (k, Option(v).map(regex.replaceAllIn(_, replacement)).orNull)
@@ -37,6 +43,7 @@ trait Processors {
 
   def changePrefix(from: String, to: String): PreProcessor =
     (prefix, data, options) => {
+      logger.debug(s"changing prefix at '$prefix' from '$from' to '$to'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else {
@@ -51,6 +58,7 @@ trait Processors {
 
   def expandJson(prefix: Option[String] = None): PreProcessor =
     (prefix1, data, options) => {
+      logger.debug(s"expanding json at '${prefix.getOrElse(prefix1)}'")
       val thePrefix = prefix.getOrElse(prefix1)
       if (!isEmptyStr(data.get(thePrefix).orNull)) {
         val json = JsonMethods.parse(data(thePrefix))
@@ -60,6 +68,7 @@ trait Processors {
   
   def expandJsonKeys(prefix: Option[String] = None): PreProcessor =
     (prefix1, data, options) => {
+      logger.debug(s"expanding json keys at '${prefix.getOrElse(prefix1)}'")
       val data1 = expandJson(prefix).apply(prefix1, data, options)
       val data2 = expandListKeys(prefix).apply(prefix1, data1, options)
       data2
@@ -67,6 +76,7 @@ trait Processors {
 
   def expandListKeys(prefix: Option[String] = None): PreProcessor =
     (prefix1, data, options) => {
+      logger.debug(s"expanding list keys at '${prefix.getOrElse(prefix1)}'")
       val thePrefix = prefix.getOrElse(prefix1)
       val p = Pattern.compile("^" + Pattern.quote(thePrefix) + "\\[[\\d]+\\].*")
       data.map { case (k, v) =>
@@ -82,6 +92,7 @@ trait Processors {
 
   def foldErrs(): ErrProcessor[Map[String, List[String]]] =
     (errors: Seq[(String, String)]) => {
+      logger.debug("folding errors")
       Map.empty ++ errors.groupBy(_._1).map {
         case (key, pairs) => (key, pairs.map(_._2).toList)
       }
@@ -89,6 +100,8 @@ trait Processors {
 
   def errsTree(): ErrProcessor[Map[String, Any]] =
     (errors: Seq[(String, String)]) => {
+      logger.debug("converting errors list to errors tree")
+
       val root = HashMap[String, Any]()
       val workList = HashMap[String, Any]("" -> root)
       errors.map { case (name, error) =>
@@ -104,11 +117,13 @@ trait Processors {
 
   def listTouched(touched: List[String]): TouchedChecker =
     (prefix, data) => {
+      logger.debug(s"checking touched in list for '$prefix'")
       touched.find(_.startsWith(prefix)).isDefined
     }
 
   def prefixTouched(dataPrefix: String, touchedPrefix: String): TouchedChecker =
     (prefix, data) => {
+      logger.debug(s"checking touched with data prefix '$dataPrefix' and touched prefix '$touchedPrefix' for '$prefix'")
       val prefixBeChecked = prefix.replaceAll("^" + Pattern.quote(dataPrefix), touchedPrefix)
       data.keys.find(_.startsWith(prefixBeChecked)).isDefined
     }

@@ -1,6 +1,6 @@
 name := "form-binder"
 
-version := "0.9.0"
+version := "0.10.0"
 
 scalaVersion := "2.11.6"
 
@@ -11,6 +11,8 @@ organizationName := "form-binder"
 organization := "com.github.tminglei"
 
 libraryDependencies ++= Seq(
+  "org.slf4j" % "slf4j-api" % "1.7.12",
+  "org.slf4j" % "slf4j-simple" % "1.7.12" % "provided",
   "org.json4s" %% "json4s-jackson" % "3.2.10" % "provided",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )

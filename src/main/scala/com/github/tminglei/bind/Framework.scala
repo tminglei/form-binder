@@ -1,29 +1,36 @@
 package com.github.tminglei.bind
 
 import FrameworkUtils._
+import org.slf4j.LoggerFactory
 
 /**
  * The Facade class
  */
 case class FormBinder[R](messages: Messages,
-  errProcessor: ErrProcessor[R] = identity[Seq[(String, String)]] _) {
+                errProcessor: ErrProcessor[R] = identity[Seq[(String, String)]] _) {
+
+  private val logger = LoggerFactory.getLogger(FormBinder.getClass)
 
   /**
    * bind mappings to data, and return an either, holding validation errors (left) or converted value (right)
    */
-  def bind[T](mapping: Mapping[T], data: Map[String, String], root: String = ""): Either[R, T] =
+  def bind[T](mapping: Mapping[T], data: Map[String, String], root: String = ""): Either[R, T] = {
+    logger.debug(s"start binding ... from '$root'")
     mapping.validate(root, data, messages, Options.apply()) match {
       case Nil  => Right(mapping.convert(root, data))
       case errs => Left(errProcessor.apply(errs))
     }
+  }
 
   /**
    * bind and validate data, return (processed) errors
    */
-  def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = ""): R =
+  def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = ""): R = {
+    logger.debug(s"start validating ... from '$root'")
     errProcessor.apply(
       mapping.validate(root, data, messages, Options.apply())
     )
+  }
 }
 
 ///////////////////////////////////////// core interfaces and classes //////////////////////////////////
@@ -83,12 +90,18 @@ trait Mapping[T] {
  * A wrapper mapping, used to transform converted value to another
  */
 private
-case class TransformMapping[T, R](base: Mapping[T], transform: T => R, extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R] {
+case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
+                extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R] {
+  private val logger = LoggerFactory.getLogger(TransformMapping.getClass)
+
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
   override def verifying(validates: ExtraConstraint[R]*) = copy(extraConstraints = extraConstraints ++ validates)
 
-  def convert(name: String, data: Map[String, String]): R = transform(base.convert(name, data))
+  def convert(name: String, data: Map[String, String]): R = {
+    logger.debug(s"transforming $name")
+    transform(base.convert(name, data))
+  }
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
     val errors = base.validate(name, data, messages, parentOptions)
@@ -106,16 +119,20 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R, extraCons
 case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String, Map[String, String]) => T,
                 moreValidate: Constraint = PassValidating, extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply()) extends Mapping[T] {
+  private val logger = LoggerFactory.getLogger(FieldMapping.getClass)
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
+    logger.debug(s"converting $name")
     val newData = processDataRec(name, data, options.copy(_inputMode = inputMode), options._processors)
     doConvert(name, newData)
   }
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
+    logger.debug(s"validating $name")
+
     val theOptions = options.merge(parentOptions).copy(_inputMode = inputMode)
     val newData = processDataRec(name, data, theOptions, theOptions._processors)
 
@@ -142,17 +159,22 @@ case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String,
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String, Map[String, String]) => T,
                 extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T] {
+  private val logger = LoggerFactory.getLogger(GroupMapping.getClass)
 
   override def options(setting: Options => Options) = copy(options = setting(options))
   override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
+    logger.debug(s"converting $name")
+
     val newData = processDataRec(name, data, options, options._processors)
     if (isEmptyInput(name, newData, options._inputMode)) null.asInstanceOf[T]
     else doConvert(name, newData)
   }
 
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)] = {
+    logger.debug(s"validating $name")
+
     val theOptions = options.merge(parentOptions)
     val newData  = processDataRec(name, data, theOptions, theOptions._processors)
 

@@ -1,9 +1,12 @@
 package com.github.tminglei.bind
 
 import java.util.{Date, UUID}
+import org.slf4j.LoggerFactory
 
 trait Mappings {
   import FrameworkUtils._
+
+  private val logger = LoggerFactory.getLogger(Mappings.getClass)
 
   /////////////////////////////////////////  pre-defined field mappings  //////////////////////////////
 
@@ -105,10 +108,12 @@ trait Mappings {
     FieldMapping[Option[T]](
       inputMode = base.options._inputMode,
       doConvert = (name, data) => {
+        logger.debug(s"optional - converting $name")
         if (isEmptyInput(name, data, base.options._inputMode)) None
         else Some(base.convert(name, data))
       },
       moreValidate = (name, data, messages, options) => {
+        logger.debug(s"optional - validating $name")
         if (isEmptyInput(name, data, base.options._inputMode)) Nil
         else { // merge the optional's constraints/label to base mapping then do validating
           base.options(_.copy(_constraints = options._constraints ++ base.options._constraints))
@@ -125,11 +130,13 @@ trait Mappings {
     FieldMapping[Seq[T]](
       inputMode = BulkInput,
       doConvert = (name, data) => {
+        logger.debug(s"list - converting $name")
         indexes(name, data).map { i =>
           base.convert(name + "[" + i + "]", data)
         }
       },
       moreValidate = (name, data, messages, theOptions) => {
+        logger.debug(s"list - validating $name")
         indexes(name, data).map { i =>
           base.validate(name + "[" + i + "]", data, messages, theOptions)
         }.flatten
@@ -144,12 +151,14 @@ trait Mappings {
     FieldMapping[Map[K, V]](
       inputMode = BulkInput,
       doConvert = (name, data) => {
+        logger.debug(s"map - converting $name")
         Map.empty ++ keys(name, data).map { key =>
           val keyName = if (isEmptyStr(name)) key else name + "." + key
           (keyBinding.convert(key, Map(key -> key)), valueBinding.convert(keyName, data))
         }
       },
       moreValidate = (name, data, messages, theOptions) => {
+        logger.debug(s"map - validating $name")
         keys(name, data).map { key =>
           val keyName = if (isEmptyStr(name)) key else name + "." + key
           keyBinding.validate(key, Map(key -> key), messages, theOptions).map {
