@@ -22,7 +22,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("count" -> "t5")
         mapping1.validate("", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("count" -> "'t5' must be a number."))
+          case err => err should be (Seq("count" -> "'t5' must be a number"))
         }
       }
 
@@ -73,7 +73,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("price" -> "23.5f", "count" -> "t5")
         mapping2.validate("", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("count" -> "'t5' must be a number."))
+          case err => err should be (Seq("count" -> "'t5' must be a number"))
         }
       }
 
@@ -81,7 +81,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val invalidData = Map("price" -> "23.5f", "count" -> "15")
         mapping2.validate("", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("count" -> "'15' cannot be greater than 10."))
+          case err => err should be (Seq("count" -> "'15' cannot be greater than 10"))
         }
       }
 

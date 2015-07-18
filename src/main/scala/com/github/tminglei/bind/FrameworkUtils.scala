@@ -108,17 +108,37 @@ object FrameworkUtils {
     } else options._label.getOrElse(default)
   }
 
-  // make a Constraint which will try to parse and collect errors
-  def parsing[T](parse: String => T, messageKey: String, pattern: String = ""): Constraint =
+  // make a Constraint which will try to check and collect errors
+  def checking[T](check: String => T, messageOrKey: Either[String, String], extraMessageArgs: String*): Constraint =
     mkSimpleConstraint((label, value, messages) => value match {
       case null|"" => None
       case x => {
-        try { parse(x); None }
+        try { check(x); None }
         catch {
-          case e: Exception => Some(messages(messageKey).get.format(value, pattern))
+          case e: Exception => {
+            val msgTemplate = messageOrKey.fold(s => s, messages(_).get);
+            Some(msgTemplate.format((value +: extraMessageArgs): _*))
+          }
         }
       }
     })
+
+  // make a compound Constraint, which checks whether any inputting constraints passed
+  def anyPassed(constraints: Constraint*): Constraint =
+    (name, data, messages, options) => {
+      var errErrors: List[(String, String)] = Nil
+      val found = constraints.find(c => {
+        val errors = c.apply(name, data, messages, options)
+        errErrors ++= errors
+        errors.isEmpty
+      })
+      if (found.isDefined) Nil
+      else {
+        val label = getLabel(name, messages, options)
+        val errStr = errErrors.map(_._2).mkString("[", ", ", "]")
+        Seq(name -> messages("error.anypassed").get.format(label, errStr))
+      }
+    }
 
   // Computes the available indexes for the given key in this set of data.
   def indexes(key: String, data: Map[String, String]): Seq[Int] = {

@@ -1,6 +1,6 @@
 package com.github.tminglei.bind
 
-import java.util.UUID
+import java.util.{Date, UUID}
 
 trait Mappings {
   import FrameworkUtils._
@@ -17,64 +17,77 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => false
         case x => x.toBoolean
-      }).>+:((parsing(_.toBoolean, "error.boolean") +: constraints): _*)
+      }).>+:(checking(_.toBoolean, Right("error.boolean")))
+        .>+:(constraints: _*)
 
   def number(constraints: Constraint*): Mapping[Int] =
     new FieldMapping[Int](
       doConvert = mkSimpleConverter {
         case null|"" => 0
         case x => x.toInt
-      }).>+:((parsing(_.toInt, "error.number") +: constraints): _*)
+      }).>+:(checking(_.toInt, Right("error.number")))
+        .>+:(constraints: _*)
 
   def double(constraints: Constraint*): Mapping[Double] =
     new FieldMapping[Double](
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => x.toDouble
-      }).>+:((parsing(_.toDouble, "error.double") +: constraints): _*)
+      }).>+:(checking(_.toDouble, Right("error.double")))
+        .>+:(constraints: _*)
 
   def float(constraints: Constraint*): Mapping[Float] =
     new FieldMapping[Float](
       doConvert = mkSimpleConverter {
         case null|"" => 0f
         case x => x.toFloat
-      }).>+:((parsing(_.toFloat, "error.float") +: constraints): _*)
+      }).>+:(checking(_.toFloat, Right("error.float")))
+        .>+:(constraints: _*)
 
   def long(constraints: Constraint*): Mapping[Long] =
     new FieldMapping[Long](
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => x.toLong
-      }).>+:((parsing(_.toLong, "error.long") +: constraints): _*)
+      }).>+:(checking(_.toLong, Right("error.long")))
+        .>+:(constraints: _*)
 
   def bigDecimal(constraints: Constraint*): Mapping[BigDecimal] =
     new FieldMapping[BigDecimal](
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
-      }).>+:((parsing(BigDecimal.apply, "error.bigdecimal") +: constraints): _*)
+      }).>+:(checking(BigDecimal.apply, Right("error.bigdecimal")))
+        .>+:(constraints: _*)
 
   def bigInt(constraints: Constraint*): Mapping[BigInt] =
     new FieldMapping[BigInt](
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => BigInt(x)
-      }).>+:((parsing(BigInt.apply, "error.bigint") +: constraints): _*)
+      }).>+:(checking(BigInt.apply, Right("error.bigint")))
+        .>+:(constraints: _*)
 
   def uuid(constraints: Constraint*): Mapping[UUID] =
     new FieldMapping[UUID](
       doConvert = mkSimpleConverter {
         case null|"" => null
         case x => UUID.fromString(x)
-      }).>+:((parsing(UUID.fromString, "error.uuid") +: constraints): _*)
+      }).>+:(checking(UUID.fromString, Right("error.uuid")))
+        .>+:(constraints: _*)
 
+  def date(constraints: Constraint*): Mapping[java.util.Date] =
+    date("yyyy-MM-dd HH:mm:ss.SSS", constraints: _*)
   def date(pattern: String, constraints: Constraint*): Mapping[java.util.Date] = {
     val dateFormatter = new java.text.SimpleDateFormat(pattern)
     new FieldMapping[java.util.Date](
       doConvert = mkSimpleConverter {
         case null|"" => null
-        case x => dateFormatter.parse(x)
-      }).>+:((parsing(dateFormatter.parse, "error.pattern", pattern) +: constraints): _*)
+        case x => if (x.matches("^[\\d]+$")) new Date(x.toLong) else dateFormatter.parse(x)
+      }).>+:(anyPassed(
+          checking(s => new Date(s.toLong), Left("'%s' not a date long")),
+          checking(dateFormatter.parse, Right("error.pattern"), pattern)
+        )).>+:(constraints: _*)
   }
 
   ///////////////////////////////////////// pre-defined general usage mappings  ///////////////////////////////

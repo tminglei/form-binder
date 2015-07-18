@@ -56,8 +56,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         optional.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            err should be (Seq("number" -> "'t122345' must be a number."))
-            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number."))
+            err should be (Seq("number" -> "'t122345' must be a number"))
+            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number"))
           }
         }
       }
@@ -100,7 +100,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         val validData = Map("number" -> "$12453")
         optional1.validate("number", validData, messages, Options.apply()) match {
           case Nil => {
-            base.validate("number", validData, messages, Options.apply()) should be (Seq("number" -> "'$12453' must be a number."))
+            base.validate("number", validData, messages, Options.apply()) should be (Seq("number" -> "'$12453' must be a number"))
             optional1.convert("number", validData) should be (Some(12453))
           }
           case err => err should be (Nil)
@@ -114,7 +114,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
             base.validate("number", invalidData, messages, Options.apply()) should be (Nil)
-            err should be (Seq("number" -> "'146896540' cannot be longer than 8 characters."))
+            err should be (Seq("number" -> "'146896540' cannot be longer than 8 characters"))
           }
         }
       }
@@ -129,8 +129,8 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         default.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            err should be (Seq("number" -> "'t122345' must be a number."))
-            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number."))
+            err should be (Seq("number" -> "'t122345' must be a number"))
+            base.validate("number", invalidData, messages, Options.apply()) should be (Seq("number" -> "'t122345' must be a number"))
           }
         }
       }
@@ -178,9 +178,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         list.validate("number", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            base.validate("number[0]", invalidData, messages, Options.apply()) should be (Seq("number[0]" -> "'t122345' must be a number."))
-            base.validate("number[1]", invalidData, messages, Options.apply()) should be (Seq("number[1]" -> "'t11345' must be a number."))
-            err should be (Seq("number[0]" -> "'t122345' must be a number.", "number[1]" -> "'t11345' must be a number."))
+            base.validate("number[0]", invalidData, messages, Options.apply()) should be (Seq("number[0]" -> "'t122345' must be a number"))
+            base.validate("number[1]", invalidData, messages, Options.apply()) should be (Seq("number[1]" -> "'t11345' must be a number"))
+            err should be (Seq("number[0]" -> "'t122345' must be a number", "number[1]" -> "'t11345' must be a number"))
           }
         }
       }
@@ -227,9 +227,9 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
         map.validate("map", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => {
-            base.validate("map.aa", invalidData, messages, Options.apply()) should be (Seq("map.aa" -> "'t122345' must be a number."))
-            base.validate("map.\"b-1\"", invalidData, messages, Options.apply()) should be (Seq("map.\"b-1\"" -> "'t11345' must be a number."))
-            err should be (Seq("map.aa" -> "'t122345' must be a number.", "map.\"b-1\"" -> "'t11345' must be a number."))
+            base.validate("map.aa", invalidData, messages, Options.apply()) should be (Seq("map.aa" -> "'t122345' must be a number"))
+            base.validate("map.\"b-1\"", invalidData, messages, Options.apply()) should be (Seq("map.\"b-1\"" -> "'t11345' must be a number"))
+            err should be (Seq("map.aa" -> "'t122345' must be a number", "map.\"b-1\"" -> "'t11345' must be a number"))
           }
         }
       }

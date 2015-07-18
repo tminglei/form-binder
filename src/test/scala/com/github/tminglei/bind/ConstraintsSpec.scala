@@ -12,8 +12,8 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("required") {
       it("single input") {
         val required = Constraints.required()
-        required("", Map("" -> null), messages, Options(_inputMode = SoloInput)).toList should be (List("" -> "'' is required."))
-        required("", Map("" -> ""), messages, Options(_label = Some(""))).toList should be (List("" -> "'' is required."))
+        required("", Map("" -> null), messages, Options(_inputMode = SoloInput)).toList should be (List("" -> "'' is required"))
+        required("", Map("" -> ""), messages, Options(_label = Some(""))).toList should be (List("" -> "'' is required"))
         required("", Map("" -> "test"), messages, Options(_label = Some(""))).toList should be (Nil)
       }
 
@@ -38,7 +38,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
       it("simple use") {
         val maxlength = Constraints.maxLength(10)
         maxlength("", Map("" -> "wetyyuu"), messages, Options(_label = Some(""))).toList should be (Nil)
-        maxlength("", Map("" -> "wetyettyiiie"), messages, Options(_label = Some(""))).toList should be (List("" -> "'wetyettyiiie' cannot be longer than 10 characters."))
+        maxlength("", Map("" -> "wetyettyiiie"), messages, Options(_label = Some(""))).toList should be (List("" -> "'wetyettyiiie' cannot be longer than 10 characters"))
         maxlength("", Map("" -> "tuewerri97"), messages, Options(_label = Some(""))).toList should be (Nil)
       }
 
@@ -51,7 +51,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
     describe("minlength") {
       it("simple use") {
         val minlength = Constraints.minLength(3)
-        minlength("", Map("" -> "er"), messages, Options(_label = Some(""))).toList should be (List("" -> "'er' cannot be shorter than 3 characters."))
+        minlength("", Map("" -> "er"), messages, Options(_label = Some(""))).toList should be (List("" -> "'er' cannot be shorter than 3 characters"))
         minlength("", Map("" -> "ert6"), messages, Options(_label = Some(""))).toList should be (Nil)
         minlength("", Map("" -> "tee"), messages, Options(_label = Some(""))).toList should be (Nil)
       }
@@ -66,8 +66,8 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
       it("simple use") {
         val length = Constraints.length(9)
         length("", Map("" -> "123456789"), messages, Options(_label = Some(""))).toList should be (Nil)
-        length("", Map("" -> "123"), messages, Options(_label = Some(""))).toList should be (List("" -> "'123' must be 9 characters."))
-        length("", Map("" -> "1234567890"), messages, Options(_label = Some(""))).toList should be (List("" -> "'1234567890' must be 9 characters."))
+        length("", Map("" -> "123"), messages, Options(_label = Some(""))).toList should be (List("" -> "'123' must be 9 characters"))
+        length("", Map("" -> "1234567890"), messages, Options(_label = Some(""))).toList should be (List("" -> "'1234567890' must be 9 characters"))
       }
 
       it("with custom message") {
@@ -80,8 +80,8 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
       it("simple use") {
         val oneof = Constraints.oneOf(Seq("a","b","c"))
         oneof("", Map("" -> "a"), messages, Options(_label = Some(""))).toList should be (Nil)
-        oneof("", Map("" -> "t"), messages, Options(_label = Some(""))).toList should be (List("" -> "'t' must be one of 'a', 'b', 'c'."))
-        oneof("", Map("" -> null), messages, Options(_label = Some(""))).toList should be (List("" -> "'null' must be one of 'a', 'b', 'c'."))
+        oneof("", Map("" -> "t"), messages, Options(_label = Some(""))).toList should be (List("" -> "'t' must be one of 'a', 'b', 'c'"))
+        oneof("", Map("" -> null), messages, Options(_label = Some(""))).toList should be (List("" -> "'null' must be one of 'a', 'b', 'c'"))
       }
 
       it("with custom message") {
@@ -95,9 +95,9 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
         val pattern = Constraints.pattern("^(\\d+)$".r)
         pattern("", Map("" -> "1234657"), messages, Options(_label = Some(""))).toList should be (Nil)
         pattern("", Map("" -> "32566y"), messages, Options(_label = Some("")))
-          .toList should be (List("" -> "'32566y' must be '^(\\d+)$'."))
+          .toList should be (List("" -> "'32566y' must be '^(\\d+)$'"))
         pattern("", Map("" -> "123,567"), messages, Options(_label = Some("")))
-          .toList should be (List("" -> "'123,567' must be '^(\\d+)$'."))
+          .toList should be (List("" -> "'123,567' must be '^(\\d+)$'"))
       }
 
       it("with custom message") {
@@ -111,7 +111,7 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
         val pattern = Constraints.patternNot(""".*\[(\d*[^\d\[\]]+\d*)+\].*""".r)
         pattern("", Map("" -> "eree.[1234657].eee"), messages, Options(_label = Some(""))).toList should be (Nil)
         pattern("", Map("" -> "errr.[32566y].ereee"), messages, Options(_label = Some("")))
-          .toList should be (List("" -> "'errr.[32566y].ereee' mustn't be '.*\\[(\\d*[^\\d\\[\\]]+\\d*)+\\].*'."))
+          .toList should be (List("" -> "'errr.[32566y].ereee' mustn't be '.*\\[(\\d*[^\\d\\[\\]]+\\d*)+\\].*'"))
       }
 
       it("with custom message") {
@@ -168,9 +168,9 @@ class ConstraintsSpec extends FunSpec with ShouldMatchers {
         val numArrayIndex = Constraints.indexInKeys()
         numArrayIndex("a", Map("a[0]" -> "aaa"), messages, Options(_label = Some("xx"), _inputMode = BulkInput)).toList should be (Nil)
         numArrayIndex("a", Map("a[t0]" -> "aaa", "a[3]" -> "tew"), messages, Options(_label = Some(""), _inputMode = BulkInput))
-          .toList should be (List("a[t0]" -> "'a[t0]' contains illegal array index."))
+          .toList should be (List("a[t0]" -> "'a[t0]' contains illegal array index"))
         numArrayIndex("a", Map("a[t1]" -> "aewr", "a[t4]" -> "ewre"), messages, Options(_label = Some("xx"), _inputMode = BulkInput))
-          .toList should be (List("a[t1]" -> "'a[t1]' contains illegal array index.", "a[t4]" -> "'a[t4]' contains illegal array index."))
+          .toList should be (List("a[t1]" -> "'a[t1]' contains illegal array index", "a[t4]" -> "'a[t4]' contains illegal array index"))
       }
 
       it("w/ custom message") {
