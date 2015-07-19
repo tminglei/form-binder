@@ -88,6 +88,21 @@ _p.s. you can check more integration sample codes under  [/integrations](https:/
 
 
 
+Build & Test
+-------------------
+To hack it and make your contribution, you can setup it like this:
+```bash
+ $ git clone https://github.com/tminglei/form-binder.git
+ $ cd form-binder
+ $ sbt
+...
+```
+To run the tests, pls execute:
+```bash
+ $ sbt test
+```
+
+
 How it works
 --------------------
 ### Principle
@@ -146,21 +161,6 @@ How to
 --------------------
 //todo
 
-
-
-Build & Test
--------------------
-To hack it and make your contribution, you can setup it like this:
-```bash
- $ git clone https://github.com/tminglei/form-binder.git
- $ cd form-binder
- $ sbt
-...
-```
-To run the tests, pls execute:
-```bash
- $ sbt test
-```
 
 
 Acknowledgements
