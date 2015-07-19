@@ -87,22 +87,6 @@ class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
 _p.s. you can check more integration sample codes under  [/integrations](https://github.com/tminglei/form-binder/tree/master/integrations)._
 
 
-
-Build & Test
--------------------
-To hack it and make your contribution, you can setup it like this:
-```bash
- $ git clone https://github.com/tminglei/form-binder.git
- $ cd form-binder
- $ sbt
-...
-```
-To run the tests, pls execute:
-```bash
- $ sbt test
-```
-
-
 How it works
 --------------------
 ### Principle
@@ -162,7 +146,23 @@ _p.s. for more dev and usage details, pls check the [source codes](https://githu
 
 How to
 --------------------
-//todo
+[TODO]
+
+
+
+Build & Test
+-------------------
+To hack it and make your contribution, you can setup it like this:
+```bash
+ $ git clone https://github.com/tminglei/form-binder.git
+ $ cd form-binder
+ $ sbt
+...
+```
+To run the tests, pls execute:
+```bash
+ $ sbt test
+```
 
 
 
