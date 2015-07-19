@@ -156,6 +156,9 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = "
 > _*** if i18n is on, the label you input should be a message key instead of a value._
 
 
+_p.s. for more dev and usage details, pls check the [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._
+
+
 
 How to
 --------------------
