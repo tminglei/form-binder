@@ -37,7 +37,7 @@ Install & Integrate
 --------------------
 To use `form-binder`, pls add the dependency to your [sbt](http://www.scala-sbt.org/ "slick-sbt") project file:
 ```scala
-libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.9.0"
+libraryDependencies += "com.github.tminglei" %% "form-binder" % "0.10.0"
 ```
 
 Then you can integrate it with your framework to simplify normal usage. 
@@ -50,11 +50,10 @@ trait MyFormBindSupport extends I18nSupport { self: ScalatraBase =>
   import MyFormBindSupport._
 
   before() {
-    request(BindMessagesKey) = Messages(locale, bundlePath = "i18n/bind-messages")
+    request(BindMessagesKey) = Messages(locale, bundlePath = "bind-messages")
   }
 
-  def binder(implicit request: HttpServletRequest) =
-    expandJsonString(Some("json")) >-: FormBinder(bindMessages.get).withErr(errsToJson4s)
+  def binder(implicit request: HttpServletRequest) = FormBinder(bindMessages.get, errsTree())
 
   ///
   private def bindMessages(implicit request: HttpServletRequest): Messages = if (request == null) {
@@ -68,7 +67,7 @@ Then mix it to my xxxServlet, and use it like this,
 ```scala
 import com.github.tminglei.bind.simple._
 
-class FeatureServlet extends ScalatraServlet with MyFormBindSupport {
+class SampleServlet extends ScalatraServlet with MyFormBindSupport {
 
   get("/:id") {
     val mappings = tmapping(

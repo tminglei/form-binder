@@ -14,7 +14,7 @@ trait MyFormBindSupport extends I18nSupport { self: ScalatraBase =>
   import MyFormBindSupport._
 
   before() {
-    request(BindMessagesKey) = Messages(locale, bundlePath = "i18n/bind-messages")
+    request(BindMessagesKey) = Messages(locale, bundlePath = "bind-messages")
   }
 
   def binder(implicit request: HttpServletRequest) = FormBinder(bindMessages.get, errsTree())
