@@ -522,7 +522,10 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         val dateObj = new java.sql.Timestamp(System.currentTimeMillis())
         val validData = Map("date" -> dateObj.toString)
         dateMapping.validate("date", validData, messages, Options.apply()) match {
-          case Nil => dateMapping.convert("date", validData) should be (dateObj)
+          case Nil => {
+            val utilDate = dateMapping.convert("date", validData)
+            new java.sql.Timestamp(utilDate.getTime) should be (dateObj)
+          }
           case err => err should be (Nil)
         }
       }
