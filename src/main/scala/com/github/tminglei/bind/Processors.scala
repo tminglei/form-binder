@@ -43,7 +43,7 @@ trait Processors {
 
   def changePrefix(from: String, to: String): PreProcessor =
     (prefix, data, options) => {
-      logger.debug(s"changing prefix at '$prefix' from '$from' to '$to'")
+      logger.debug(s"changing prefix from '$from' to '$to' at '$prefix'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else {
