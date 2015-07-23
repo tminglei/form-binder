@@ -87,6 +87,11 @@ object FrameworkUtils {
           .map { error => Seq(name -> error) }.getOrElse(Nil)
       }
     }
+  
+  def isUntouchedEmpty(name: String, data: Map[String, String], options: Options) = 
+    isEmptyInput(name, data, options._inputMode) && 
+       options.ignoreEmpty.getOrElse(false) && 
+      (options.touched.isEmpty || ! options.touched.get.apply(name, data))
 
   @scala.annotation.tailrec
   def processDataRec(prefix: String, data: Map[String,String], options: Options,
@@ -100,28 +105,37 @@ object FrameworkUtils {
     }
 
   def validateRec(name: String, data: Map[String, String], messages: Messages, options: Options,
-            validates: List[Constraint]): Seq[(String, String)] = validates match {
-        case (validate :: rest) => {
-          val errors = validate(name, data, messages, options)
-          if (errors.isEmpty) validateRec(name, data, messages, options, rest)
-          else errors ++ (if (options.eagerCheck.getOrElse(false))
-            validateRec(name, data, messages, options, rest) else Nil)
-        }
+            constraints: List[Constraint]): Seq[(String, String)] = {
+    if (options.eagerCheck.getOrElse(false))
+      constraints.flatMap(_.apply(name, data, messages, options))
+    else {
+      constraints match {
+        case (constraint :: rest) => 
+          constraint.apply(name, data, messages, options) match {
+            case Nil    => validateRec(name, data, messages, options, rest)
+            case errors => errors
+          }
         case _ => Nil
       }
+    }
+  }    
 
   def extraValidateRec[T](name: String, value: => T, messages: Messages, options: Options,
-            validates: List[ExtraConstraint[T]]): Seq[(String, String)] =
-    validates match {
-      case (validate :: rest) => validate(getLabel(name, messages, options), value, messages) match {
-        case Nil    => extraValidateRec(name, value, messages, options, rest)
-        case errors => errors.map { case (message) => (name, message) } ++ (
-          if (options.eagerCheck.getOrElse(false))
-            extraValidateRec(name, value, messages, options, rest)
-          else Nil)
+            constraints: List[ExtraConstraint[T]]): Seq[(String, String)] = {
+    val label = getLabel(name, messages, options)
+    if (options.eagerCheck.getOrElse(false))
+      constraints.flatMap(_.apply(label, value, messages).map((name, _)))
+    else {
+      constraints match {
+        case (constraint :: rest) =>
+          constraint.apply(label, value, messages) match {
+            case Nil    => extraValidateRec(name, value, messages, options, rest)
+            case errors => errors.map { case (message) => (name, message) }
+          }
+        case _ => Nil
       }
-      case _ => Nil
     }
+  }    
 
   ///---
 

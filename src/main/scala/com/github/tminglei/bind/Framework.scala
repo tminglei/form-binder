@@ -136,10 +136,7 @@ case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String,
     val theOptions = options.merge(parentOptions).copy(_inputMode = inputMode)
     val newData = processDataRec(name, data, theOptions, theOptions._processors)
 
-    if (isEmptyInput(name, newData, theOptions._inputMode)
-        && theOptions.ignoreEmpty.getOrElse(false)
-        && (theOptions.touched.isEmpty || ! theOptions.touched.get.apply(name, newData))
-      ) Nil
+    if (isUntouchedEmpty(name, newData, theOptions)) Nil
     else {
       val validates = (if (theOptions._ignoreConstraints) Nil else theOptions._constraints) :+
         moreValidate
@@ -178,10 +175,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
     val theOptions = options.merge(parentOptions)
     val newData  = processDataRec(name, data, theOptions, theOptions._processors)
 
-    if (isEmptyInput(name, newData, theOptions._inputMode)
-        && theOptions.ignoreEmpty.getOrElse(false)
-        && (theOptions.touched.isEmpty || ! theOptions.touched.get.apply(name, newData))
-      ) Nil
+    if (isUntouchedEmpty(name, newData, theOptions)) Nil
     else {
       val validates = theOptions._constraints :+
         { (name: String, data: Map[String, String], messages: Messages, options: Options) =>
