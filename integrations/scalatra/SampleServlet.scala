@@ -7,7 +7,7 @@ class SampleServlet extends ScalatraServlet with MyFormBindSupport {
     val mappings = tmapping(
       "id" -> long()
     )
-    binder.bind(mappings, params).fold(
+    binder.bind(mappings, data(multiParams)).fold(
       errors => holt(400, errors),
       { case (id) =>
         Ok(toJson(repos.features.get(id)))
