@@ -193,7 +193,7 @@ object FrameworkUtils {
   // Computes the available indexes for the given key in this set of data.
   def indexes(name: String, data: Map[String, String]): Seq[Int] = {
     logger.debug(s"get indexes for $name")
-
+    // matches: 'prefix[index]...'
     val KeyPattern = ("^" + Pattern.quote(name) + """\[(\d+)\].*$""").r
     data.toSeq.collect { case (KeyPattern(index), _) => index.toInt }.sorted.distinct
   }
@@ -201,8 +201,8 @@ object FrameworkUtils {
   // Computes the available keys for the given prefix in this set of data.
   def keys(prefix: String, data: Map[String, String]): Seq[String] = {
     logger.debug(s"get keys for $prefix")
-
-    val KeyPattern = ("^" + Pattern.quote(prefix) + """\.("?[^."]+"?).*$""").r
+    // matches: 'prefix.xxx...' | 'prefix."xxx.t"...'
+    val KeyPattern = ("^" + Pattern.quote(prefix) + """\.("[^"]+"|[^.]+).*$""").r
     data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
   }
 

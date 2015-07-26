@@ -240,7 +240,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           case Nil => {
             base.validate("map.aa", validData, messages, Options.apply()) should be (Nil)
             base.validate("map.\"b-1\"", validData, messages, Options.apply()) should be (Nil)
-            map.convert("map", validData) should be (Map("aa" -> 122345, "\"b-1\"" -> 754))
+            map.convert("map", validData) should be (Map("aa" -> 122345, "b-1" -> 754))
           }
           case err => err should be (Nil)
         }
@@ -260,7 +260,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           case Nil => {
             base.validate("map.aa", emptyData, messages, Options.apply()) should be (Nil)
             base.validate("map.\"b-1\"", emptyData, messages, Options.apply()) should be (Nil)
-            map.convert("map", emptyData) should be (Map("aa" -> 0, "\"b-1\"" -> 133))
+            map.convert("map", emptyData) should be (Map("aa" -> 0, "b-1" -> 133))
           }
           case err => err should be (Nil)
         }
