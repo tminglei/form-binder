@@ -31,7 +31,7 @@ package object bind {
     val  FormBinder = com.github.tminglei.bind.FormBinder
 
     ///--
-    def data(params: Map[String, Seq[String]]): Map[String, String] = {
+    def data(params: Map[String, Seq[String]], others: (String, String)*): Map[String, String] = {
       params.map { case (key, values) =>
         if (values == null || values.length == 0) Nil
         else if (values.length == 1 && ! key.endsWith("[]")) Seq((key, values(0)))
@@ -41,7 +41,7 @@ package object bind {
             (s"$cleanKey[$i]", values(i))
           }
         }
-      }.flatten.toMap
+      }.flatten.toMap ++ others
     }
   }
 }
