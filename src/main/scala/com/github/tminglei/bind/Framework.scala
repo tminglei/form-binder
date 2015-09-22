@@ -53,6 +53,7 @@ case class Options(
   // internal options, only applied to current mapping
   _label: Option[String] = None,
   _constraints: List[Constraint] = Nil,
+  _extraConstraints: List[ExtraConstraint[_]] = Nil,
   _processors: List[PreProcessor] = Nil,
   _ignoreConstraints: Boolean = false,
   _inputMode: InputMode = SoloInput
@@ -61,6 +62,8 @@ case class Options(
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
   def touched(touched: TouchedChecker): Options = copy(touched = Some(touched))
+
+  def $extraConstraints[T] = _extraConstraints.map(_.asInstanceOf[ExtraConstraint[T]])
 
   def merge(parent: Options): Options = copy(
     i18n = i18n.orElse(parent.i18n),
@@ -78,7 +81,7 @@ trait Mapping[T] {
   def label(label: String) = options(_.copy(_label = Option(label)))
   def >-:(newProcessors: PreProcessor*) = options(_.copy(_processors = newProcessors ++: options._processors))
   def >+:(newConstraints: Constraint*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
-  def verifying(validates: ExtraConstraint[T]*) = this
+  def verifying(validates: ExtraConstraint[T]*) = options(_.copy(_extraConstraints = options._extraConstraints ++ validates))
 
   def convert(name: String, data: Map[String, String]): T
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)]
@@ -117,12 +120,10 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
  * A field mapping is an atomic mapping, which doesn't contain other mappings
  */
 case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String, Map[String, String]) => T,
-                moreValidate: Constraint = PassValidating, extraConstraints: List[ExtraConstraint[T]] = Nil,
-                override val options: Options = Options.apply()) extends Mapping[T] {
+                moreValidate: Constraint = PassValidating, override val options: Options = Options.apply()) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(FieldMapping.getClass)
 
   override def options(setting: Options => Options) = copy(options = setting(options))
-  override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
     logger.debug(s"converting $name")
@@ -143,7 +144,7 @@ case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String,
       val errors = validateRec(name, newData, messages, theOptions, validates)
       if (errors.isEmpty) {
         Option(doConvert(name, newData)).map { v =>
-          extraValidateRec(name, v, messages, theOptions, extraConstraints)
+          extraValidateRec(name, v, messages, theOptions, theOptions.$extraConstraints)
         }.getOrElse(Nil)
       } else errors
     }
@@ -154,12 +155,10 @@ case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String,
  * A group mapping is a compound mapping, and is used to construct a complex/nested mapping
  */
 case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String, Map[String, String]) => T,
-                extraConstraints: List[ExtraConstraint[T]] = Nil,
                 override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(GroupMapping.getClass)
 
   override def options(setting: Options => Options) = copy(options = setting(options))
-  override def verifying(validates: ExtraConstraint[T]*) = copy(extraConstraints = extraConstraints ++ validates)
 
   def convert(name: String, data: Map[String, String]): T = {
     logger.debug(s"converting $name")
@@ -192,7 +191,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
       if (errors.isEmpty) {
         if (isEmptyInput(name, newData, options._inputMode)) Nil
         else {
-          extraValidateRec(name, doConvert(name, newData), messages, theOptions, extraConstraints)
+          extraValidateRec(name, doConvert(name, newData), messages, theOptions, theOptions.$extraConstraints)
         }
       } else errors
     }
