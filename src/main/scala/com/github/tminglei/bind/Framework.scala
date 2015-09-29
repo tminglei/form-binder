@@ -43,6 +43,11 @@ object BulkInput extends InputMode
 object PolyInput extends InputMode
 
 /**
+ * A mark trait, to help distinguish ext object from other normals
+ */
+trait Extensible extends Cloneable
+
+/**
  * Used to transfer config info in the data processing flow
  */
 case class Options(
@@ -56,7 +61,8 @@ case class Options(
   _extraConstraints: List[ExtraConstraint[_]] = Nil,
   _processors: List[PreProcessor] = Nil,
   _ignoreConstraints: Boolean = false,
-  _inputMode: InputMode = SoloInput
+  _inputMode: InputMode = SoloInput,
+  _ext: Option[Extensible] = None
  ) {
   def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
@@ -79,6 +85,7 @@ trait Mapping[T] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
   def label(label: String) = options(_.copy(_label = Option(label)))
+  def $ext(setting: Extensible => Extensible) = options(_.copy(_ext = Option(setting(options._ext.orNull))))
   def >-:(newProcessors: PreProcessor*) = options(_.copy(_processors = newProcessors ++: options._processors))
   def >+:(newConstraints: Constraint*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
   def verifying(validates: ExtraConstraint[T]*) = options(_.copy(_extraConstraints = options._extraConstraints ++ validates))
