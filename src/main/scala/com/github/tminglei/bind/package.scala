@@ -27,10 +27,15 @@ package object bind {
    *   you can use form binder's built-in mappings/constraints/processors directly
    */
   object simple extends Mappings with Constraints with Processors {
+    import collection.convert.wrapAsScala._
+
     type FormBinder[R] = com.github.tminglei.bind.FormBinder[R]
     val  FormBinder = com.github.tminglei.bind.FormBinder
 
     ///--
+    def data(params: java.util.Map[String, Array[String]], others: (String, String)*): Map[String, String] =
+      data(params.map { case (k, v) => (k, v.toSeq) }.toMap, others: _*)
+
     def data(params: Map[String, Seq[String]], others: (String, String)*): Map[String, String] = {
       params.map { case (key, values) =>
         if (values == null || values.length == 0) Nil
