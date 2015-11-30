@@ -71,6 +71,11 @@ object FrameworkUtils {
   }
 
   //-----------------------------------------------------------------------------
+  def mkExtensionMeta(name: String, params: Any*): ExtensionMeta = {
+    val paramsStr = params.map(Option(_).map(_.toString).getOrElse("")).mkString(", ")
+    ExtensionMeta(name, s"$name($paramsStr)", params.toList)
+  }
+
   // make an internal converter from `(vString) => value`
   def mkSimpleConverter[T](convert: String => T) =
     (name: String, data: Map[String, String]) => {
@@ -78,14 +83,34 @@ object FrameworkUtils {
     }
   
   // make a constraint from `(label, vString, messages) => [error]` (ps: vString may be NULL/EMPTY)
-  def mkSimpleConstraint(validate: (String, String, Messages) => Option[String]): Constraint =
-    (name, data, messages, options) => {
-      if (options._inputMode != SoloInput) {
-        throw new IllegalArgumentException("The constraint should only be used to SINGLE INPUT mapping!")
-      } else {
-        validate(getLabel(name, messages, options), data.get(name).orNull, messages)
-          .map { error => Seq(name -> error) }.getOrElse(Nil)
-      }
+  def mkSimpleConstraint(validate: (String, String, Messages) => Option[String], meta: ExtensionMeta): Constraint with Metable[ExtensionMeta] =
+    mkConstraintWithMeta(
+      (name, data, messages, options) => {
+        if (options._inputMode != SoloInput) {
+          throw new IllegalArgumentException("The constraint should only be used to SINGLE INPUT mapping!")
+        } else {
+          validate(getLabel(name, messages, options), data.get(name).orNull, messages)
+            .map { error => Seq(name -> error) }.getOrElse(Nil)
+        }
+      }, meta)
+
+  def mkConstraintWithMeta(validate: (String, Map[String, String], Messages, Options) => Seq[(String, String)], meta: ExtensionMeta) =
+    new Constraint with Metable[ExtensionMeta] {
+      def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
+        validate.apply(name, data, messages, options)
+      override def meta: ExtensionMeta = meta
+    }
+
+  def mkExtraConstraintWithMeta[T](validate: (String, T, Messages) => Seq[String], meta: ExtensionMeta) =
+    new ExtraConstraint[T] with Metable[ExtensionMeta] {
+      def apply(label: String, vObj: T, messages: Messages) = validate.apply(label, vObj, messages)
+      override def meta: ExtensionMeta = meta
+    }
+
+  def mkPreProcessorWithMeta(process: (String, Map[String, String], Options) => Map[String, String], meta: ExtensionMeta) =
+    new PreProcessor with Metable[ExtensionMeta] {
+      def apply(prefix: String, data: Map[String, String], options: Options) = process.apply(prefix, data, options)
+      override def meta: ExtensionMeta = meta
     }
   
   def isUntouchedEmpty(name: String, data: Map[String, String], options: Options) = 
@@ -153,25 +178,26 @@ object FrameworkUtils {
 
   // make a Constraint which will try to check and collect errors
   def checking[T](check: String => T, messageOrKey: Either[String, String], extraMessageArgs: String*): Constraint =
-    mkSimpleConstraint((label, vString, messages) => {
-      logger.debug(s"checking for '$vString'")
-      
-      vString match {
-        case null|"" => None
-        case x => {
-          try { check(x); None }
-          catch {
-            case e: Exception => {
-              val msgTemplate = messageOrKey.fold(s => s, messages(_).get);
-              Some(msgTemplate.format((vString +: extraMessageArgs): _*))
+    mkSimpleConstraint(
+      (label, vString, messages) => {
+        logger.debug(s"checking for '$vString'")
+
+        vString match {
+          case null|"" => None
+          case x => {
+            try { check(x); None }
+            catch {
+              case e: Exception => {
+                val msgTemplate = messageOrKey.fold(s => s, messages(_).get)
+                Some(msgTemplate.format((vString +: extraMessageArgs): _*))
+              }
             }
           }
         }
-      }
-    })
+      }, mkExtensionMeta("checking"))
 
   // make a compound Constraint, which checks whether any inputting constraints passed
-  def anyPassed(constraints: Constraint*): Constraint =
+  def anyPassed(constraints: Constraint*): Constraint with Metable[ExtensionMeta] = mkConstraintWithMeta(
     (name, data, messages, options) => {
       logger.debug(s"checking any passed for $name")
       
@@ -188,7 +214,7 @@ object FrameworkUtils {
         val errStr = errErrors.map(_._2).mkString("[", ", ", "]")
         Seq(name -> messages("error.anypassed").get.format(label, errStr))
       }
-    }
+    }, meta = mkExtensionMeta("anyPassed"))
 
   // Computes the available indexes for the given key in this set of data.
   def indexes(name: String, data: Map[String, String]): Seq[Int] = {

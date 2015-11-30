@@ -3,6 +3,8 @@ package com.github.tminglei.bind
 import FrameworkUtils._
 import org.slf4j.LoggerFactory
 
+import scala.reflect._
+
 /**
  * The Facade class
  */
@@ -48,6 +50,18 @@ object PolyInput extends InputMode
 trait Extensible extends Cloneable
 
 /**
+ * Trait/classes for meta support
+ */
+trait Metable[M] {
+  def meta: M
+}
+
+case class MappingMeta(targetType: ClassTag[_], baseMappings: List[Mapping[_]] = Nil)
+case class ExtensionMeta(name: String, desc: String, params: List[_] = Nil)
+
+final class Ignored[T]
+
+/**
  * Used to transfer config info in the data processing flow
  */
 case class Options(
@@ -81,7 +95,7 @@ case class Options(
 /**
  * A mapping, w/ constraints/processors/options, was used to validate/convert input data
  */
-trait Mapping[T] {
+trait Mapping[T] extends Metable[MappingMeta] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
   def label(label: String) = options(_.copy(_label = Option(label)))
@@ -104,6 +118,7 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
                 extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R] {
   private val logger = LoggerFactory.getLogger(TransformMapping.getClass)
 
+  override def meta = base.meta
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
   override def verifying(validates: ExtraConstraint[R]*) = copy(extraConstraints = extraConstraints ++ validates)
@@ -127,7 +142,8 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
  * A field mapping is an atomic mapping, which doesn't contain other mappings
  */
 case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String, Map[String, String]) => T,
-                moreValidate: Constraint = PassValidating, override val options: Options = Options.apply()) extends Mapping[T] {
+                moreValidate: Constraint = PassValidating, override val meta: MappingMeta,
+                override val options: Options = Options.apply()) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(FieldMapping.getClass)
 
   override def options(setting: Options => Options) = copy(options = setting(options))
@@ -165,6 +181,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
                 override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(GroupMapping.getClass)
 
+  override val meta = MappingMeta(classTag[Product], Nil)
   override def options(setting: Options => Options) = copy(options = setting(options))
 
   def convert(name: String, data: Map[String, String]): T = {
