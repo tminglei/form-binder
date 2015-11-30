@@ -336,5 +336,37 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         }
       }
     }
+
+    ///
+    case class A(id: Long, name: String)
+    case class B(id: Long, desc: String, children: List[A])
+
+    describe("case classes") {
+      val mapping1 = mapping(
+        "id" -> long(),
+        "desc" -> text(),
+        "children" -> list(
+          mapping(
+            "id" -> long(),
+            "name" -> text()
+          )(A.apply _)
+        )
+      )(B)
+
+      it("simple test") {
+        val data = Map(
+          "id" -> "101",
+          "desc" -> "test",
+          "children[0].id" -> "201",
+          "children[0].name" -> "ch1",
+          "children[1].id" -> "202",
+          "children[1].name" -> "ch2"
+        )
+        mapping1.validate("", data, messages, Options.apply()) match {
+          case Nil => mapping1.convert("", data) should be (B(101, "test", List(A(201, "ch1"), A(202, "ch2"))))
+          case err => err should be (Nil)
+        }
+      }
+    }
   }
 }
