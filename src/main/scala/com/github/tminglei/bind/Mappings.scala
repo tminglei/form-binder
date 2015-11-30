@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 
 trait Mappings {
   import FrameworkUtils._
+  import scala.reflect._
 
   private val logger = LoggerFactory.getLogger(Mappings.getClass)
 
@@ -12,7 +13,8 @@ trait Mappings {
 
   def text(constraints: Constraint*): Mapping[String] =
     new FieldMapping[String](
-      doConvert = mkSimpleConverter(identity)
+      doConvert = mkSimpleConverter(identity),
+      meta = MappingMeta(classTag[String])
     ).>+:(constraints: _*)
 
   def boolean(constraints: Constraint*): Mapping[Boolean] =
@@ -20,7 +22,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => false
         case x => x.toBoolean
-      }).>+:(checking(_.toBoolean, Right("error.boolean")))
+      }, meta = MappingMeta(classTag[Boolean])
+    ).>+:(checking(_.toBoolean, Right("error.boolean")))
         .>+:(constraints: _*)
 
   def number(constraints: Constraint*): Mapping[Int] =
@@ -28,7 +31,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0
         case x => x.toInt
-      }).>+:(checking(_.toInt, Right("error.number")))
+      }, meta = MappingMeta(classTag[Int])
+    ).>+:(checking(_.toInt, Right("error.number")))
         .>+:(constraints: _*)
 
   def double(constraints: Constraint*): Mapping[Double] =
@@ -36,7 +40,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => x.toDouble
-      }).>+:(checking(_.toDouble, Right("error.double")))
+      }, meta = MappingMeta(classTag[Double])
+    ).>+:(checking(_.toDouble, Right("error.double")))
         .>+:(constraints: _*)
 
   def float(constraints: Constraint*): Mapping[Float] =
@@ -44,7 +49,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0f
         case x => x.toFloat
-      }).>+:(checking(_.toFloat, Right("error.float")))
+      }, meta = MappingMeta(classTag[Float])
+    ).>+:(checking(_.toFloat, Right("error.float")))
         .>+:(constraints: _*)
 
   def long(constraints: Constraint*): Mapping[Long] =
@@ -52,7 +58,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => x.toLong
-      }).>+:(checking(_.toLong, Right("error.long")))
+      }, meta = MappingMeta(classTag[Long])
+    ).>+:(checking(_.toLong, Right("error.long")))
         .>+:(constraints: _*)
 
   def bigDecimal(constraints: Constraint*): Mapping[BigDecimal] =
@@ -60,7 +67,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
-      }).>+:(checking(BigDecimal.apply, Right("error.bigdecimal")))
+      }, meta = MappingMeta(classTag[BigDecimal])
+    ).>+:(checking(BigDecimal.apply, Right("error.bigdecimal")))
         .>+:(constraints: _*)
 
   def bigInt(constraints: Constraint*): Mapping[BigInt] =
@@ -68,7 +76,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => BigInt(x)
-      }).>+:(checking(BigInt.apply, Right("error.bigint")))
+      }, meta = MappingMeta(classTag[BigInt])
+    ).>+:(checking(BigInt.apply, Right("error.bigint")))
         .>+:(constraints: _*)
 
   def uuid(constraints: Constraint*): Mapping[UUID] =
@@ -76,7 +85,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => null
         case x => UUID.fromString(x)
-      }).>+:(checking(UUID.fromString, Right("error.uuid")))
+      }, meta = MappingMeta(classTag[UUID])
+    ).>+:(checking(UUID.fromString, Right("error.uuid")))
         .>+:(constraints: _*)
 
   def date(constraints: Constraint*): Mapping[java.util.Date] =
@@ -87,7 +97,8 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => null
         case x => if (x.matches("^[\\d]+$")) new Date(x.toLong) else dateFormatter.parse(x)
-      }).>+:(anyPassed(
+      }, meta = MappingMeta(classTag[java.util.Date])
+    ).>+:(anyPassed(
           checking(s => new Date(s.toLong), Left("'%s' not a date long")),
           checking(dateFormatter.parse, Right("error.pattern"), pattern)
         )).>+:(constraints: _*)
@@ -99,10 +110,12 @@ trait Mappings {
     FieldMapping[T](
       inputMode = PolyInput,
       doConvert = (name, data) => instead,
-      moreValidate = PassValidating
+      moreValidate = PassValidating,
+      meta = MappingMeta(classTag[Ignored[T]])
     ).options(_.copy(_ignoreConstraints = true))
 
-  def default[T](base: Mapping[T], value: T): Mapping[T] = optional(base).mapTo(_.getOrElse(value))
+  def default[T](base: Mapping[T], value: T): Mapping[T] =
+    optional(base).mapTo(_.getOrElse(value))
 
   def optional[T](base: Mapping[T]): Mapping[Option[T]] =
     FieldMapping[Option[T]](
@@ -120,7 +133,8 @@ trait Mappings {
             .options(o => o.copy(_label = o._label.orElse(options._label)))
             .validate(name, data, messages, options)
         }
-      }
+      },
+      meta = MappingMeta(classTag[Option[T]], List(base))
     ).options(_.copy(_ignoreConstraints = true))
 
   def list[T](base: Mapping[T], constraints: Constraint*): Mapping[List[T]] =
@@ -140,7 +154,8 @@ trait Mappings {
         indexes(name, data).map { i =>
           base.validate(name + "[" + i + "]", data, messages, theOptions)
         }.flatten
-      }
+      },
+      meta = MappingMeta(classTag[Seq[T]], List(base))
     ).>+:(constraints: _*)
 
   def map[V](valueBinding: Mapping[V], constraints: Constraint*): Mapping[Map[String, V]] =
@@ -167,7 +182,8 @@ trait Mappings {
             case (name, err) => (name, err)
           } ++ valueBinding.validate(keyName, data, messages, theOptions)
         }.flatten
-      }
+      },
+      meta = MappingMeta(classTag[Map[K,V]], List(keyBinding, valueBinding))
     ).>+:(constraints: _*)
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////

@@ -15,34 +15,36 @@ trait Processors {
 
   ////////////////////////////////////  pre-defined pre-processors  ////////////////////////////////
 
-  def trim(): PreProcessor =
-    (prefix, data, options) => {
+  def trim(): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix, data, options) => {
       logger.debug(s"trimming '$prefix'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else (k, Option(v).map(_.trim).orNull)
       }
-    }
+    }, meta = mkExtensionMeta("trim"))
 
-  def omit(str: String): PreProcessor = omitMatched(Pattern.quote(str).r, "")
+  def omit(str: String) = replacing(Pattern.quote(str).r, "", mkExtensionMeta("omit", str))
 
-  def omitLeft(str: String): PreProcessor = omitMatched(("^"+Pattern.quote(str)).r, "")
+  def omitLeft(str: String) = replacing(("^"+Pattern.quote(str)).r, "", mkExtensionMeta("omitLeft", str))
 
-  def omitRight(str: String): PreProcessor = omitMatched((Pattern.quote(str)+"$").r, "")
+  def omitRight(str: String) = replacing((Pattern.quote(str)+"$").r, "", mkExtensionMeta("omitRight", str))
 
-  def omitRedundant(str: String): PreProcessor = omitMatched(("["+Pattern.quote(str)+"]+").r, str)
+  def omitRedundant(str: String) = replacing(("["+Pattern.quote(str)+"]+").r, str, mkExtensionMeta("omitRedundant", str))
 
-  def omitMatched(regex: Regex, replacement: String = ""): PreProcessor =
-    (prefix, data, options) => {
+  def omitMatched(regex: Regex, replacement: String = "") = replacing(regex, replacement, mkExtensionMeta("omitMatched", regex, replacement))
+
+  protected def replacing(regex: Regex, replacement: String, meta: ExtensionMeta): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix, data, options) => {
       logger.debug(s"replacing '$regex' with '$replacement'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
         else (k, Option(v).map(regex.replaceAllIn(_, replacement)).orNull)
       }
-    }
+    }, meta = meta)
 
-  def changePrefix(from: String, to: String): PreProcessor =
-    (prefix, data, options) => {
+  def changePrefix(from: String, to: String): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix, data, options) => {
       logger.debug(s"changing prefix from '$from' to '$to' at '$prefix'")
       data.map { case (k, v) =>
         if (!k.startsWith(prefix)) (k, v)
@@ -54,28 +56,28 @@ trait Processors {
           (newKey, v)
         }
       }
-    }
+    }, meta = ExtensionMeta("changePrefix", s"changePrefix(from '$from' to '$to')", List(from, to)))
 
-  def expandJson(prefix: Option[String] = None): PreProcessor =
-    (prefix1, data, options) => {
+  def expandJson(prefix: Option[String] = None): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix1, data, options) => {
       logger.debug(s"expanding json at '${prefix.getOrElse(prefix1)}'")
       val thePrefix = prefix.getOrElse(prefix1)
       if (!isEmptyStr(data.get(thePrefix).orNull)) {
         val json = JsonMethods.parse(data(thePrefix))
         (data - thePrefix) ++ json2map(thePrefix, json)
       } else data
-    }
+    }, meta = mkExtensionMeta("expandJson", prefix))
   
-  def expandJsonKeys(prefix: Option[String] = None): PreProcessor =
-    (prefix1, data, options) => {
+  def expandJsonKeys(prefix: Option[String] = None): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix1, data, options) => {
       logger.debug(s"expanding json keys at '${prefix.getOrElse(prefix1)}'")
       val data1 = expandJson(prefix).apply(prefix1, data, options)
       val data2 = expandListKeys(prefix).apply(prefix1, data1, options)
       data2
-    }
+    }, meta = mkExtensionMeta("expandJsonKeys", prefix))
 
-  def expandListKeys(prefix: Option[String] = None): PreProcessor =
-    (prefix1, data, options) => {
+  def expandListKeys(prefix: Option[String] = None): PreProcessor with Metable[ExtensionMeta] =
+    mkPreProcessorWithMeta((prefix1, data, options) => {
       logger.debug(s"expanding list keys at '${prefix.getOrElse(prefix1)}'")
       val thePrefix = prefix.getOrElse(prefix1)
       val p = Pattern.compile("^" + Pattern.quote(thePrefix) + "\\[[\\d]+\\].*")
@@ -85,7 +87,7 @@ trait Processors {
           (newKey, "true")
         } else (k, v)
       }
-    }
+    }, meta = mkExtensionMeta("expandListKeys", prefix))
 
   //////////////////////////////////// pre-defined post err-processors /////////////////////////////
   import scala.collection.mutable.HashMap
