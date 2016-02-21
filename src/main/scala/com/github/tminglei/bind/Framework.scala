@@ -53,7 +53,7 @@ trait Extensible extends Cloneable
  * Trait/classes for meta support
  */
 trait Metable[M] {
-  def meta: M
+  def _meta: M
 }
 
 case class MappingMeta(targetType: ClassTag[_], baseMappings: List[Mapping[_]] = Nil)
@@ -118,7 +118,7 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
                 extraConstraints: List[ExtraConstraint[R]] = Nil) extends Mapping[R] {
   private val logger = LoggerFactory.getLogger(TransformMapping.getClass)
 
-  override def meta = base.meta
+  override def _meta = base._meta
   override def options = base.options
   override def options(setting: Options => Options) = copy(base = base.options(setting))
   override def verifying(validates: ExtraConstraint[R]*) = copy(extraConstraints = extraConstraints ++ validates)
@@ -142,10 +142,11 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
  * A field mapping is an atomic mapping, which doesn't contain other mappings
  */
 case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String, Map[String, String]) => T,
-                moreValidate: Constraint = PassValidating, override val meta: MappingMeta,
+                moreValidate: Constraint = PassValidating, meta: MappingMeta,
                 override val options: Options = Options.apply()) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(FieldMapping.getClass)
 
+  override val _meta = meta
   override def options(setting: Options => Options) = copy(options = setting(options))
 
   def convert(name: String, data: Map[String, String]): T = {
@@ -181,7 +182,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
                 override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(GroupMapping.getClass)
 
-  override val meta = MappingMeta(classTag[Product], Nil)
+  override val _meta = MappingMeta(classTag[Product], Nil)
   override def options(setting: Options => Options) = copy(options = setting(options))
 
   def convert(name: String, data: Map[String, String]): T = {

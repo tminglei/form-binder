@@ -98,19 +98,19 @@ object FrameworkUtils {
     new Constraint with Metable[ExtensionMeta] {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
         validate.apply(name, data, messages, options)
-      override def meta: ExtensionMeta = meta
+      override def _meta: ExtensionMeta = meta
     }
 
   def mkExtraConstraintWithMeta[T](validate: (String, T, Messages) => Seq[String], meta: ExtensionMeta) =
     new ExtraConstraint[T] with Metable[ExtensionMeta] {
       def apply(label: String, vObj: T, messages: Messages) = validate.apply(label, vObj, messages)
-      override def meta: ExtensionMeta = meta
+      override def _meta: ExtensionMeta = meta
     }
 
   def mkPreProcessorWithMeta(process: (String, Map[String, String], Options) => Map[String, String], meta: ExtensionMeta) =
     new PreProcessor with Metable[ExtensionMeta] {
       def apply(prefix: String, data: Map[String, String], options: Options) = process.apply(prefix, data, options)
-      override def meta: ExtensionMeta = meta
+      override def _meta: ExtensionMeta = meta
     }
   
   def isUntouchedEmpty(name: String, data: Map[String, String], options: Options) = 
@@ -249,6 +249,7 @@ object FrameworkUtils {
       case JDouble(value) => Map(prefix -> value.toString)
       case JDecimal(value) => Map(prefix -> value.toString)
       case JInt(value) => Map(prefix -> value.toString)
+      case JLong(value) => Map(prefix -> value.toString)
       case JString(value) => Map(prefix -> value.toString)
     }
   }
