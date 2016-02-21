@@ -1,10 +1,10 @@
 name := "form-binder"
 
-version := "0.11.0-SNAPSHOT"
+version := "0.11.0"
 
 scalaVersion := "2.11.7"
 
-crossScalaVersions := Seq("2.11.7", "2.10.5")
+crossScalaVersions := Seq("2.11.7", "2.10.6")
 
 organizationName := "form-binder"
 
