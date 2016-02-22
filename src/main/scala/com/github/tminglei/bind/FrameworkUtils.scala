@@ -164,16 +164,15 @@ object FrameworkUtils {
 
   ///---
 
-  // i18n on: use i18n label, if exists; else use label; else use last field name from full name
-  // i18n off: use label; else use last field name from full name
+  // if label starts with '@', use it as key; else use label; else use last field name from full name
   def getLabel(fullName: String, messages: Messages, options: Options): String = {
-    logger.trace(s"getting label for '$fullName' with options (i18n: ${options.i18n}}, _label: ${options._label})")
+    logger.trace(s"getting label for '$fullName' with label: ${options._label})")
 
     val (parent, name, isArray) = splitName(fullName)
     val default = if (isArray) (splitName(parent)._2 + "[" + name + "]") else name
-    if (options.i18n.getOrElse(false)) {
-      options._label.flatMap(messages(_).orElse(options._label)).getOrElse(default)
-    } else options._label.getOrElse(default)
+    options._label.map {
+      l => if (l.startsWith("@")) messages(l.substring(1)).get else l
+    }.getOrElse(default)
   }
 
   // make a Constraint which will try to check and collect errors

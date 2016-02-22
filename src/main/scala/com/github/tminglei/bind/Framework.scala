@@ -65,7 +65,6 @@ final class Ignored[T]
  * Used to transfer config info in the data processing flow
  */
 case class Options(
-  i18n: Option[Boolean] = None,
   eagerCheck: Option[Boolean] = None,
   ignoreEmpty: Option[Boolean] = None,
   touched: Option[TouchedChecker] = None,
@@ -78,7 +77,6 @@ case class Options(
   _inputMode: InputMode = SoloInput,
   _ext: Option[Extensible] = None
  ) {
-  def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
   def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
   def touched(touched: TouchedChecker): Options = copy(touched = Some(touched))
@@ -86,7 +84,6 @@ case class Options(
   def $extraConstraints[T] = _extraConstraints.map(_.asInstanceOf[ExtraConstraint[T]])
 
   def merge(parent: Options): Options = copy(
-    i18n = i18n.orElse(parent.i18n),
     eagerCheck  = eagerCheck.orElse(parent.eagerCheck),
     ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
     touched = touched.orElse(parent.touched))
