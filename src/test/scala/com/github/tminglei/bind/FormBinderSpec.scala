@@ -132,7 +132,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true)), invalidData).fold(
+        binder.bind(mappings.options(_.skipUntouched(true)), invalidData).fold(
           errors => errors,
           { case (id, (email, price, count)) =>
             ("invalid - shouldn't occur!") should be ("")
@@ -154,14 +154,14 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true).touched(listTouched(List("body.email")))), invalidData).fold(
+        binder.bind(mappings.options(_.skipUntouched(true).touchedChecker(listTouched(List("body.email")))), invalidData).fold(
           errors => errors,
           { case (id, (email, price, count)) =>
             ("invalid - shouldn't occur!") should be ("")
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.validate(mappings.options(_.ignoreEmpty(true).touched(listTouched(List("body.email")))), invalidData)
+        binder.validate(mappings.options(_.skipUntouched(true).touchedChecker(listTouched(List("body.email")))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("body.email" -> "email is required"))
       }
 
@@ -186,7 +186,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "touched" -> """["email", "price"]"""
         )
 
-        binder1.validate(mappings1.options(_.ignoreEmpty(true).touched(prefixTouched("data", "touched"))), invalidData)
+        binder1.validate(mappings1.options(_.skipUntouched(true).touchedChecker(prefixTouched("data", "touched"))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("data.email" -> "email is required"))
       }
 
@@ -199,7 +199,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": ["email", "price"]}"""
         )
 
-        binder.validate(mappingx.options(_.ignoreEmpty(true).touched(prefixTouched("body", "touched"))), invalidData)
+        binder.validate(mappingx.options(_.skipUntouched(true).touchedChecker(prefixTouched("body", "touched"))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("body.email" -> "email is required"))
       }
 

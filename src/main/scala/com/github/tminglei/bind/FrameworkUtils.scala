@@ -115,8 +115,8 @@ object FrameworkUtils {
   
   def isUntouchedEmpty(name: String, data: Map[String, String], options: Options) = 
     isEmptyInput(name, data, options._inputMode) && 
-       options.ignoreEmpty.getOrElse(false) && 
-      (options.touched.isEmpty || ! options.touched.get.apply(name, data))
+       options.skipUntouched.getOrElse(false) &&
+      (options.touchedChecker.isEmpty || ! options.touchedChecker.get.apply(name, data))
 
   @scala.annotation.tailrec
   def processDataRec(prefix: String, data: Map[String,String], options: Options,
