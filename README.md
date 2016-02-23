@@ -131,7 +131,7 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = "
 2) **mapTo**: `feature`, map converted value to another type  
 3) **i18n**: `feature`, label started with `@` will be used as a message key to fetch a i18n value from `messages`  
 4) **eagerCheck**: `option`, check errors as more as possible; default `false`, return right after a validation error found  
-5) **skipUntouched**: `option`, skip checking untouched empty field/values  
+5) **skipUntouched**: `option`, skip checking untouched empty field/values; default `false`, not skip untouched  
 6) **touchedChecker**: `function`, check whether a field was touched by user; if yes, required fields can't be empty
 
 
