@@ -132,7 +132,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true)), invalidData).fold(
+        binder.bind(mappings.options(_.skipUntouched(true)), invalidData).fold(
           errors => errors,
           { case (id, (email, price, count)) =>
             ("invalid - shouldn't occur!") should be ("")
@@ -154,14 +154,14 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.bind(mappings.options(_.ignoreEmpty(true).touched(listTouched(List("body.email")))), invalidData).fold(
+        binder.bind(mappings.options(_.skipUntouched(true).touchedChecker(listTouched(List("body.email")))), invalidData).fold(
           errors => errors,
           { case (id, (email, price, count)) =>
             ("invalid - shouldn't occur!") should be ("")
           }
         ) should be (List("body.email" -> "email is required"))
         ///
-        binder.validate(mappings.options(_.ignoreEmpty(true).touched(listTouched(List("body.email")))), invalidData)
+        binder.validate(mappings.options(_.skipUntouched(true).touchedChecker(listTouched(List("body.email")))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("body.email" -> "email is required"))
       }
 
@@ -186,7 +186,7 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "touched" -> """["email", "price"]"""
         )
 
-        binder1.validate(mappings1.options(_.ignoreEmpty(true).touched(prefixTouched("data", "touched"))), invalidData)
+        binder1.validate(mappings1.options(_.skipUntouched(true).touchedChecker(prefixTouched("data", "touched"))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("data.email" -> "email is required"))
       }
 
@@ -199,21 +199,32 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
           "body" -> """{"data": {"email":null, "price":337.5, "count":5}, "touched": ["email", "price"]}"""
         )
 
-        binder.validate(mappingx.options(_.ignoreEmpty(true).touched(prefixTouched("body", "touched"))), invalidData)
+        binder.validate(mappingx.options(_.skipUntouched(true).touchedChecker(prefixTouched("body", "touched"))), invalidData)
           .asInstanceOf[Seq[(String, String)]] should be (List("body.email" -> "email is required"))
       }
 
       it("w/ i18n and label") {
         val messages1 = (key: String) => if (key == "xx") Some("haha") else Some("dummy")
         val binder = FormBinder(messages1)
-        val mappingx = expandJson(Some("body")) >-: mappings
+        val mappings = tmapping(
+          "id" -> long(),
+          "body" -> (expandJson() >-: tmapping(
+            "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
+            "price" -> (omitLeft("$") >-: float()),
+            "count" -> number().verifying(min(3), max(10))
+          ).label("@xx").verifying { case (label, (email, price, count), messages) =>
+            if (price * count > 1000) {
+              Seq(s"$label: $price * $count = ${price * count}, too much")
+            } else Nil
+          })
+        )
 
         val invalidData = Map(
           "id" -> "133",
           "body" -> """{"email":"example@123.com", "price":337.5, "count":5}"""
         )
 
-        binder.bind(mappingx.options(_.i18n(true)), invalidData).fold(
+        binder.bind(mappings, invalidData).fold(
           errors => errors,
           { case (id, (email, price, count)) =>
             ("invalid - shouldn't occur!") should be ("")

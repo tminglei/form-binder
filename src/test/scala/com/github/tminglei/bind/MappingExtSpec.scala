@@ -22,8 +22,8 @@ class MappingExtSpec extends FunSpec with ShouldMatchers {
         "id" -> long().$ext(_.$.in("path").desc("pet id")),
         "name" -> text().$ext(_.$.in("query").desc("pet name"))
       ).fields.map {
-        case ("id", id) => id.options._ext.orNull should be (Ext(Some("path"), Some("pet id")))
-        case ("name", name) => name.options._ext.orNull should be (Ext(Some("query"), Some("pet name")))
+        case ("id", id) => id.options._extData.orNull should be (Ext(Some("path"), Some("pet id")))
+        case ("name", name) => name.options._extData.orNull should be (Ext(Some("query"), Some("pet name")))
       }
     }
   }

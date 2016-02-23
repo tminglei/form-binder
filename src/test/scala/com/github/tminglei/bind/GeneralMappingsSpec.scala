@@ -662,7 +662,7 @@ class GeneralMappingsSpec extends FunSpec with ShouldMatchers with Constraints {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err.toList should be (List("test[0].id" -> "id is required"))
         }
-        list.validate("test", data, messages, Options().ignoreEmpty(true)) match {
+        list.validate("test", data, messages, Options().skipUntouched(true)) match {
           case Nil => list.convert("test", data) should be (
             List(TestBean(0, "test"), TestBean(137, "test1", Some("tt"))))
           case err => err should be (Nil)

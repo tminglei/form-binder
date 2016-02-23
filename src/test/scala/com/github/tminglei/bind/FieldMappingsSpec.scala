@@ -50,7 +50,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required"))
-          .options(_.ignoreEmpty(true))
+          .options(_.skipUntouched(true))
         text2.validate("text", nullData, messages, Options.apply()) match {
           case Nil => text.convert("text", nullData) should be (null)
           case err => err should be (Nil)
@@ -67,8 +67,8 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required"))
-          .options(_.ignoreEmpty(true))
-        text2.validate("text", nullData, messages, Options().touched(Processors.listTouched(List("text")))) match {
+          .options(_.skipUntouched(true))
+        text2.validate("text", nullData, messages, Options().touchedChecker(Processors.listTouched(List("text")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("text" -> "text is required"))
         }
@@ -96,7 +96,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required")).verifying()
-          .options(_.ignoreEmpty(true))
+          .options(_.skipUntouched(true))
         text2.validate("text", nullData, messages, Options.apply()) match {
           case Nil => text.convert("text", nullData) should be (null)
           case err => err should be (Nil)
@@ -113,8 +113,8 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required")).verifying()
-          .options(_.ignoreEmpty(true))
-        text2.validate("text", nullData, messages, Options().touched(Processors.listTouched(List("text")))) match {
+          .options(_.skipUntouched(true))
+        text2.validate("text", nullData, messages, Options().touchedChecker(Processors.listTouched(List("text")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("text" -> "text is required"))
         }
@@ -142,7 +142,7 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required")).mapTo(identity)
-          .options(_.ignoreEmpty(true))
+          .options(_.skipUntouched(true))
         text2.validate("text", nullData, messages, Options.apply()) match {
           case Nil => text.convert("text", nullData) should be (null)
           case err => err should be (Nil)
@@ -159,8 +159,8 @@ class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints wit
         }
 
         val text2 = Mappings.text(required("%s is required")).mapTo(identity)
-          .options(_.ignoreEmpty(true))
-        text2.validate("text", nullData, messages, Options().touched(Processors.listTouched(List("text")))) match {
+          .options(_.skipUntouched(true))
+        text2.validate("text", nullData, messages, Options().touchedChecker(Processors.listTouched(List("text")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("text" -> "text is required"))
         }

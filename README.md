@@ -121,7 +121,7 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = "
 (1) **ErrProcessor**: used to process error seq, like converting it to json  
 (2) **PreProcessor**: used to pre-process data, like omitting `$` from `$3,013`  
 (3) **Constraint**: used to validate raw string data  
-(4) **ExtraConstraint**: used to valdate converted value  
+(4) **ExtraConstraint**: used to validate converted value
 
 > _* Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Processors.scala) for built-in `PreProcessor`/`ErrProcessor`._  
 > _**Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Constraints.scala) for built-in `Constraint`/`ExtraConstraint`._
@@ -129,14 +129,10 @@ def validate[T](mapping: Mapping[T], data: Map[String, String], root: String = "
 #### Options/Features:  
 1) **label**: `feature`, readable name for current group/field  
 2) **mapTo**: `feature`, map converted value to another type  
-3) **i18n**: `option`, let label value can be used as a message key to fetch a i18n value from `messages`   
-4) **eagerCheck**: `option`, check errors as more as possible  
-5) **ignoreEmpty**: `option`, not check empty field/values, especially they're not touched by user  
-6) **touched**: `function`, check whether a field was touched by user; if yes, they can't be empty if they're required  
-
-> _* By default, form-binder would return right after encountered a validation error._  
-> _** ignoreEmpty + touched, will let form-binder re-check touched empty field/values._  
-> _*** if i18n is on, the label you input should be a message key instead of a value._
+3) **i18n**: `feature`, label started with `@` will be used as a message key to fetch a i18n value from `messages`
+4) **eagerCheck**: `option`, check errors as more as possible; default `false`, it will return right after a validation error found
+5) **skipUntouched**: `option`, skip checking untouched empty field/values
+6) **touchedChecker**: `function`, check whether a field was touched by user; if yes, required fields can't be empty
 
 
 _p.s. for more dev and usage details, pls check the [source codes](https://github.com/tminglei/form-binder/tree/master/src/main/scala/com/github/tminglei/bind) and [test cases](https://github.com/tminglei/form-binder/tree/master/src/test/scala/com/github/tminglei/bind)._

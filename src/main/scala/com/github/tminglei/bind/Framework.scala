@@ -65,31 +65,31 @@ final class Ignored[T]
  * Used to transfer config info in the data processing flow
  */
 case class Options(
-  i18n: Option[Boolean] = None,
+  /** whether to check errors as more as possible */
   eagerCheck: Option[Boolean] = None,
-  ignoreEmpty: Option[Boolean] = None,
-  touched: Option[TouchedChecker] = None,
-  // internal options, only applied to current mapping
-  _label: Option[String] = None,
-  _constraints: List[Constraint] = Nil,
-  _extraConstraints: List[ExtraConstraint[_]] = Nil,
-  _processors: List[PreProcessor] = Nil,
-  _ignoreConstraints: Boolean = false,
-  _inputMode: InputMode = SoloInput,
-  _ext: Option[Extensible] = None
+  /** whether to skip checking untouched empty field/values */
+  skipUntouched: Option[Boolean] = None,
+  /** used to check whether a field was touched by user; if yes, required fields can't be empty */
+  touchedChecker: Option[TouchedChecker] = None,
+  // internal state, only applied to current mapping
+  private[bind] val _label: Option[String] = None,
+  private[bind] val _constraints: List[Constraint] = Nil,
+  private[bind] val _extraConstraints: List[ExtraConstraint[_]] = Nil,
+  private[bind] val _processors: List[PreProcessor] = Nil,
+  private[bind] val _ignoreConstraints: Boolean = false,
+  private[bind] val _inputMode: InputMode = SoloInput,
+  private[bind] val _extData: Option[Extensible] = None
  ) {
-  def i18n(i18n: Boolean): Options = copy(i18n = Some(i18n))
   def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
-  def ignoreEmpty(ignore: Boolean): Options = copy(ignoreEmpty = Some(ignore))
-  def touched(touched: TouchedChecker): Options = copy(touched = Some(touched))
+  def skipUntouched(skip: Boolean): Options = copy(skipUntouched = Some(skip))
+  def touchedChecker(touched: TouchedChecker): Options = copy(touchedChecker = Some(touched))
 
   def $extraConstraints[T] = _extraConstraints.map(_.asInstanceOf[ExtraConstraint[T]])
 
   def merge(parent: Options): Options = copy(
-    i18n = i18n.orElse(parent.i18n),
     eagerCheck  = eagerCheck.orElse(parent.eagerCheck),
-    ignoreEmpty = ignoreEmpty.orElse(parent.ignoreEmpty),
-    touched = touched.orElse(parent.touched))
+    skipUntouched = skipUntouched.orElse(parent.skipUntouched),
+    touchedChecker = touchedChecker.orElse(parent.touchedChecker))
 }
 
 /**
@@ -99,7 +99,7 @@ trait Mapping[T] extends Metable[MappingMeta] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
   def label(label: String) = options(_.copy(_label = Option(label)))
-  def $ext(setting: Extensible => Extensible) = options(_.copy(_ext = Option(setting(options._ext.orNull))))
+  def $ext(setting: Extensible => Extensible) = options(_.copy(_extData = Option(setting(options._extData.orNull))))
   def >-:(newProcessors: PreProcessor*) = options(_.copy(_processors = newProcessors ++: options._processors))
   def >+:(newConstraints: Constraint*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
   def verifying(validates: ExtraConstraint[T]*) = options(_.copy(_extraConstraints = options._extraConstraints ++ validates))

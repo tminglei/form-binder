@@ -153,7 +153,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Nil)
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
             .validate("", nullData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", nullData) should be (null.asInstanceOf[(String, Int)])
           case err => err should be (Nil)
@@ -165,7 +165,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
             .validate("", emptyData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", emptyData) should be ((null, 0))
           case err => err should be (Nil)
@@ -180,13 +180,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
-            .validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.options(_.skipUntouched(true))
+            .validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
@@ -225,7 +225,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Nil)
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
           .validate("", nullData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", nullData) should be (null.asInstanceOf[(String, Int)])
           case err => err should be (Nil)
@@ -237,7 +237,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
           .validate("", emptyData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", emptyData) should be ((null, 0))
           case err => err should be (Nil)
@@ -252,13 +252,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
-          .validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.options(_.skipUntouched(true))
+          .validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
@@ -297,7 +297,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Nil)
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
           .validate("", nullData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", nullData) should be (null.asInstanceOf[(String, Int)])
           case err => err should be (Nil)
@@ -309,7 +309,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
+        mappingx.options(_.skipUntouched(true))
           .validate("", emptyData, messages, Options.apply()) match {
           case Nil => mappingx.convert("", emptyData) should be ((null, 0))
           case err => err should be (Nil)
@@ -324,13 +324,13 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val emptyData = Map.empty + ("count" -> "")
 
         ///
-        mappingx.validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
 
-        mappingx.options(_.ignoreEmpty(true))
-          .validate("", emptyData, messages, Options().touched(Processors.listTouched(List("email")))) match {
+        mappingx.options(_.skipUntouched(true))
+          .validate("", emptyData, messages, Options().touchedChecker(Processors.listTouched(List("email")))) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("email" -> "email is required"))
         }
