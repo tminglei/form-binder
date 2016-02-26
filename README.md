@@ -5,7 +5,7 @@ form-binder
 
 Form-binder is a micro data binding and validating framework, easy to use and hack.
 
-> _It was initially created for my [`Scalatra`](https://github.com/scalatra/scalatra)-based project, but it's for general purpose. You can easily integrate and use it with other frameworks._
+> _It was initially created for my [`Scalatra`](https://github.com/scalatra/scalatra)-based project, but you can easily integrate it with other frameworks._
 
 
 
