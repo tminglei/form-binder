@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
-import org.json4s.jackson.JsonMethods
-import org.json4s._
 
 trait Processors {
   import FrameworkUtils._
@@ -63,7 +61,7 @@ trait Processors {
       logger.debug(s"expanding json at '${prefix.getOrElse(prefix1)}'")
       val thePrefix = prefix.getOrElse(prefix1)
       if (!isEmptyStr(data.get(thePrefix).orNull)) {
-        val json = JsonMethods.parse(data(thePrefix))
+        val json = spray.json.JsonParser(data(thePrefix))
         (data - thePrefix) ++ json2map(thePrefix, json)
       } else data
     }, meta = mkExtensionMeta("expandJson", prefix))

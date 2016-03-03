@@ -73,7 +73,6 @@ class FormBinderSpec extends FunSpec with ShouldMatchers {
     }
 
     describe("w/ options") {
-      implicit val formats = org.json4s.DefaultFormats
       val mappings = expandJson(Some("body")) >-: tmapping(
         "id" -> long(),
         "body" -> tmapping(

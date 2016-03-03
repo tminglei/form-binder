@@ -11,9 +11,9 @@ organizationName := "form-binder"
 organization := "com.github.tminglei"
 
 libraryDependencies ++= Seq(
+  "io.spray" %% "spray-json" % "1.3.2",
   "org.slf4j" % "slf4j-api" % "1.7.12",
   "org.slf4j" % "slf4j-simple" % "1.7.12" % "provided",
-  "org.json4s" %% "json4s-jackson" % "3.3.0",
   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 )
 

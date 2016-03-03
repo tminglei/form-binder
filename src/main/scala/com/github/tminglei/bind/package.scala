@@ -36,13 +36,14 @@ package object bind {
     def data(params: java.util.Map[String, Array[String]], others: (String, String)*): Map[String, String] =
       data(params.map { case (k, v) => (k, v.toSeq) }.toMap, others: _*)
 
+    private val MAYBE_TAIL_BRACKETS = "([^\\[\\]]*)\\[\\]$".r
     def data(params: Map[String, Seq[String]], others: (String, String)*): Map[String, String] = {
       params.map { case (key, values) =>
         if (values == null || values.length == 0) Nil
         else if (values.length == 1 && ! key.endsWith("[]")) Seq((key, values(0)))
         else {
           for(i <- 0 until values.length) yield {
-            val cleanKey = key.replaceAll("\\[\\]$", "")
+            val cleanKey = MAYBE_TAIL_BRACKETS.replaceAllIn(key, "$1")
             (s"$cleanKey[$i]", values(i))
           }
         }

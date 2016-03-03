@@ -4,7 +4,7 @@ import java.util.regex.Pattern
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.{ListBuffer, HashMap}
-import org.json4s._
+import spray.json._
 
 /**
  * Framework internal used util methods (!!!NOTE: be careful if using it externally)
@@ -12,6 +12,7 @@ import org.json4s._
 object FrameworkUtils {
   private val logger = LoggerFactory.getLogger(FrameworkUtils.getClass)
 
+  val MAYBE_QUOTED_STRING = """^"?([^"]*)"?$""".r
   val ILLEGAL_ARRAY_INDEX = """.*\[(\d*[^\d\[\]]+\d*)+\].*""".r
   /** copied from Play! form/mapping */
   val EMAIL_REGEX = """^(?!\.)("([^"\r\\]|\\["\r\\])*"|([-a-zA-Z0-9!#$%&'*+/=?^_`{|}~]|(?<!\.)\.)*)(?<!\.)@[a-zA-Z0-9][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$""".r
@@ -231,25 +232,19 @@ object FrameworkUtils {
     data.toSeq.collect { case (KeyPattern(key), _) => key }.distinct
   }
 
-  // Construct data map from inputting jackson json object
-  def json2map(prefix: String, json: JValue): Map[String, String] = {
+  // Construct data map from inputting spray json object
+  def json2map(prefix: String, json: JsValue): Map[String, String] = {
     logger.trace(s"json to map - prefix: $prefix")
 
     json match {
-      case JArray(values) => values.zipWithIndex.map {
+      case JsArray(values) => values.zipWithIndex.map {
         case (value, i) => json2map(prefix + "[" + i + "]", value)
       }.foldLeft(Map.empty[String, String])(_ ++ _)
-      case JObject(fields) => fields.map { case (key, value) =>
+      case JsObject(fields) => fields.map { case (key, value) =>
         json2map((if (prefix.isEmpty) "" else prefix + ".") + key, value)
       }.foldLeft(Map.empty[String, String])(_ ++ _)
-      case JNull => Map.empty
-      case JNothing => Map.empty
-      case JBool(value) => Map(prefix -> value.toString)
-      case JDouble(value) => Map(prefix -> value.toString)
-      case JDecimal(value) => Map(prefix -> value.toString)
-      case JInt(value) => Map(prefix -> value.toString)
-      case JLong(value) => Map(prefix -> value.toString)
-      case JString(value) => Map(prefix -> value.toString)
+      case JsNull => Map.empty
+      case v => Map(prefix -> MAYBE_QUOTED_STRING.replaceAllIn(v.toString, "$1"))
     }
   }
 }

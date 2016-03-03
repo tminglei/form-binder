@@ -169,7 +169,7 @@ trait Mappings {
         logger.debug(s"map - converting $name")
         Map.empty ++ keys(name, data).map { key =>
           val keyName = if (isEmptyStr(name)) key else name + "." + key
-          val unquotedKey = key.replaceAll("^\"?([^\"]+)\"?$", "$1")
+          val unquotedKey = MAYBE_QUOTED_STRING.replaceAllIn(key, "$1")
           (keyBinding.convert(key, Map(key -> unquotedKey)), valueBinding.convert(keyName, data))
         }
       },
@@ -177,7 +177,7 @@ trait Mappings {
         logger.debug(s"map - validating $name")
         keys(name, data).map { key =>
           val keyName = if (isEmptyStr(name)) key else name + "." + key
-          val unquotedKey = key.replaceAll("^\"?([^\"]+)\"?$", "$1")
+          val unquotedKey = MAYBE_QUOTED_STRING.replaceAllIn(key, "$1")
           keyBinding.validate(key, Map(key -> unquotedKey), messages, theOptions).map {
             case (name, err) => (name, err)
           } ++ valueBinding.validate(keyName, data, messages, theOptions)
