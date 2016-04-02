@@ -10,7 +10,6 @@ trait Mapping[T] extends Metable[MappingMeta] {
   def options: Options = Options.apply()
   def options(setting: Options => Options) = this
   def label(label: String) = options(_.copy(_label = Option(label)))
-  def $ext(setting: Extensible => Extensible) = options(_.copy(_extData = Option(setting(options._extData.orNull))))
   def >-:(newProcessors: PreProcessor*) = options(_.copy(_processors = newProcessors ++: options._processors))
   def >+:(newConstraints: Constraint*) = options(_.copy(_constraints = newConstraints ++: options._constraints))
   def verifying(validates: ExtraConstraint[T]*) = options(_.copy(_extraConstraints = options._extraConstraints ++ validates))

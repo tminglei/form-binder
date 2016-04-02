@@ -96,11 +96,6 @@ package bind {
   object PolyInput extends InputMode
 
   /**
-    * A mark trait, to help distinguish ext object from other normals
-    */
-  trait Extensible extends Cloneable
-
-  /**
     * Trait/classes for meta support
     */
   trait Metable[M] {
@@ -129,7 +124,8 @@ package bind {
     private[bind] val _processors: List[PreProcessor] = Nil,
     private[bind] val _ignoreConstraints: Boolean = false,
     private[bind] val _inputMode: InputMode = SoloInput,
-    private[bind] val _extData: Option[Extensible] = None
+    // used to associate/hold application specific object
+    private[bind] val _attachment: Option[Any] = None
   ) {
     def eagerCheck(check: Boolean): Options = copy(eagerCheck = Some(check))
     def skipUntouched(skip: Boolean): Options = copy(skipUntouched = Some(skip))
