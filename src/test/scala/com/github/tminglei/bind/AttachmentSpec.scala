@@ -3,14 +3,14 @@ package com.github.tminglei.bind
 import org.scalatest._
 import simple._
 
-class MappingExtSpec extends FunSpec with ShouldMatchers {
+class AttachmentSpec extends FunSpec with ShouldMatchers {
 
   describe("test mapping extension support") {
     it("simple test") {
       tmapping(
         "id" -> long().$.in("path").$$.$.desc("pet id").$$,
         "name" -> text().$.in("query").desc("pet name").$$
-      ).fields.map {
+      ).fields.foreach {
         case ("id", id) => id.options._attachment.orNull should be (Attachment(Some("path"), Some("pet id")))
         case ("name", name) => name.options._attachment.orNull should be (Attachment(Some("query"), Some("pet name")))
       }
