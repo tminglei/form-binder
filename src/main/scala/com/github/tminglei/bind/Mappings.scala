@@ -115,7 +115,7 @@ trait Mappings {
     ).options(_.copy(_ignoreConstraints = true))
 
   def default[T](base: Mapping[T], value: T): Mapping[T] =
-    optional(base).mapTo(_.getOrElse(value))
+    optional(base).map(_.getOrElse(value))
 
   def optional[T](base: Mapping[T]): Mapping[Option[T]] =
     FieldMapping[Option[T]](
@@ -138,7 +138,7 @@ trait Mappings {
     ).options(_.copy(_ignoreConstraints = true))
 
   def list[T](base: Mapping[T], constraints: Constraint*): Mapping[List[T]] =
-    seq(base, constraints: _*).mapTo(_.toList)
+    seq(base, constraints: _*).map(_.toList)
   
   def seq[T](base: Mapping[T], constraints: Constraint*): Mapping[Seq[T]] =
     FieldMapping[Seq[T]](
@@ -151,9 +151,9 @@ trait Mappings {
       },
       moreValidate = (name, data, messages, theOptions) => {
         logger.debug(s"list - validating $name")
-        indexes(name, data).map { i =>
+        indexes(name, data).flatMap { i =>
           base.validate(name + "[" + i + "]", data, messages, theOptions)
-        }.flatten
+        }
       },
       meta = MappingMeta(classTag[Seq[T]], List(base))
     ).>+:(constraints: _*)
@@ -175,13 +175,12 @@ trait Mappings {
       },
       moreValidate = (name, data, messages, theOptions) => {
         logger.debug(s"map - validating $name")
-        keys(name, data).map { key =>
+        keys(name, data).flatMap { key =>
           val keyName = if (isEmptyStr(name)) key else name + "." + key
           val unquotedKey = MAYBE_QUOTED_STRING.replaceAllIn(key, "$1")
-          keyBinding.validate(key, Map(key -> unquotedKey), messages, theOptions).map {
-            case (name, err) => (name, err)
-          } ++ valueBinding.validate(keyName, data, messages, theOptions)
-        }.flatten
+          keyBinding.validate(key, Map(key -> unquotedKey), messages, theOptions) ++
+            valueBinding.validate(keyName, data, messages, theOptions)
+        }
       },
       meta = MappingMeta(classTag[Map[K,V]], List(keyBinding, valueBinding))
     ).>+:(constraints: _*)

@@ -268,7 +268,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email")),
           "count" -> number().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
-        ).mapTo(identity).options(_.eagerCheck(true))
+        ).map(identity).options(_.eagerCheck(true))
         val data = Map(
           "email" -> "etttt.att#example-1111111.com",
           "count" -> "20")
@@ -287,7 +287,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
           "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
-        ).mapTo(identity)
+        ).map(identity)
         val nullData = Map[String, String]()
         val emptyData = Map.empty + ("count" -> "")
 
@@ -320,7 +320,7 @@ class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with C
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
           "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
-        ).mapTo(identity)
+        ).map(identity)
         val emptyData = Map.empty + ("count" -> "")
 
         ///

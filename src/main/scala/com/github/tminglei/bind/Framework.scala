@@ -16,7 +16,7 @@ trait Mapping[T] extends Metable[MappingMeta] {
 
   def convert(name: String, data: Map[String, String]): T
   def validate(name: String, data: Map[String, String], messages: Messages, parentOptions: Options): Seq[(String, String)]
-  def mapTo[R](transform: T => R): Mapping[R] = new TransformMapping[T, R](this, transform)
+  def map[R](transform: T => R): Mapping[R] = new TransformMapping[T, R](this, transform)
 }
 
 ///////////////////////////////////////// core mapping implementations /////////////////////////////////
@@ -115,10 +115,10 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
         { (name: String, data: Map[String, String], messages: Messages, options: Options) =>
           if (isEmptyInput(name, data, options._inputMode)) Nil
           else {
-            fields.map { case (fieldName, binding) =>
+            fields.flatMap { case (fieldName, binding) =>
               val fullName = if (name.isEmpty) fieldName else name + "." + fieldName
               binding.validate(fullName, data, messages, options)
-            }.flatten
+            }
           }
         }
 
