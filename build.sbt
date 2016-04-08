@@ -1,6 +1,6 @@
 name := "form-binder"
 
-version := "0.12.1"
+version := "0.12.2"
 
 scalaVersion := "2.11.7"
 
@@ -34,7 +34,7 @@ pomIncludeRepository := { _ => false }
 
 makePomConfiguration ~= { _.copy(configurations = Some(Seq(Compile, Runtime, Optional))) }
 
-pomExtra := (
+pomExtra :=
   <url>https://github.com/tminglei/form-binder</url>
   <licenses>
     <license>
@@ -54,4 +54,3 @@ pomExtra := (
       <timezone>+8</timezone>
     </developer>
   </developers>
-)
