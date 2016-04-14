@@ -101,7 +101,7 @@ The core of `form-binder` is `Mapping`, **tree structure** mappings. With **dept
 [3] **mapping**: holding constraints, processors, and maybe child mapping, etc. used to validate/convert data, two types of mappings: `field` and `group`  
 [4] **data**: inputting data map  
 
-> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala) for framework details._
+> _Check [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/package.scala) and [here](https://github.com/tminglei/form-binder/blob/master/src/main/scala/com/github/tminglei/bind/Framework.scala) for framework details._
 
 binder **bind** method signature (return an `Either` and let user to continue processing):
 ```scala
