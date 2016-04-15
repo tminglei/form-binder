@@ -38,7 +38,7 @@ package object bind {
 
     private val MAYBE_TAIL_BRACKETS = "([^\\[\\]]*)\\[\\]$".r
     def data(params: Map[String, Seq[String]], others: (String, String)*): Map[String, String] = {
-      params.map { case (key, values) =>
+      params.flatMap { case (key, values) =>
         if (values == null || values.length == 0) Nil
         else if (values.length == 1 && ! key.endsWith("[]")) Seq((key, values(0)))
         else {
@@ -47,7 +47,7 @@ package object bind {
             (s"$cleanKey[$i]", values(i))
           }
         }
-      }.flatten.toMap ++ others
+      } ++ others
     }
   }
 }
