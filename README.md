@@ -3,7 +3,7 @@ form-binder
 [![Build Status](https://travis-ci.org/tminglei/form-binder.svg?branch=master)](https://travis-ci.org/tminglei/form-binder)
 
 
-Form-binder is a micro data binding and validating framework, easy to use and hack.
+Form-binder is a micro data binding and validating framework, very easy to use and hack.
 
 > _It was initially created for my [`Scalatra`](https://github.com/scalatra/scalatra)-based project, but you can easily integrate it with other frameworks._
 
