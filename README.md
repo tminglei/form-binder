@@ -23,10 +23,11 @@ Usage
 -------------
 ![form-binder description](https://github.com/tminglei/form-binder/raw/master/form-binder-desc.png)
 
-1. define your binder
-2. define your mappings
-3. prepare your data
-4. bind and consume
+Steps:  
+ 1. define your binder  
+ 2. define your mappings  
+ 3. prepare your data  
+ 4. bind and consume  
 
 
 > _p.s. every points above (1)/(2)/(3)/(4)/ are all extendable and you can easily customize it._  
