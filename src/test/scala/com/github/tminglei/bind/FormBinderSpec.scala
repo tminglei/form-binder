@@ -5,7 +5,7 @@ import java.util.ResourceBundle
 
 import scala.collection.mutable.ListBuffer
 
-class FormBinderSpec extends FunSpec with ShouldMatchers {
+class FormBinderSpec extends FunSpec with Matchers {
   import com.github.tminglei.bind.simple._
 
   val bundle: ResourceBundle = ResourceBundle.getBundle("bind-messages")

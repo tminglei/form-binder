@@ -3,7 +3,7 @@ package com.github.tminglei.bind
 import org.scalatest._
 import simple._
 
-class AttachmentSpec extends FunSpec with ShouldMatchers {
+class AttachmentSpec extends FunSpec with Matchers {
 
   describe("test mapping extension support") {
     it("simple test") {

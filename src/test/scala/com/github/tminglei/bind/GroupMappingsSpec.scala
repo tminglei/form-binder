@@ -3,7 +3,7 @@ package com.github.tminglei.bind
 import org.scalatest._
 import java.util.ResourceBundle
 
-class GroupMappingsSpec extends FunSpec with ShouldMatchers with Mappings with Constraints {
+class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constraints {
   val bundle: ResourceBundle = ResourceBundle.getBundle("bind-messages")
   val messages: Messages = (key) => Option(bundle.getString(key))
 

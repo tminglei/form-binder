@@ -3,7 +3,7 @@ package com.github.tminglei.bind
 import org.scalatest._
 import scala.collection.mutable.ListBuffer
 
-class ProcessorsSpec extends FunSpec with ShouldMatchers {
+class ProcessorsSpec extends FunSpec with Matchers {
 
   describe("test pre-defined pre-processors") {
 

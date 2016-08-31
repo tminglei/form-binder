@@ -3,7 +3,7 @@ package com.github.tminglei.bind
 import java.util.{ResourceBundle, UUID}
 import org.scalatest._
 
-class FieldMappingsSpec extends FunSpec with ShouldMatchers with Constraints with Processors {
+class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Processors {
   val bundle: ResourceBundle = ResourceBundle.getBundle("bind-messages")
   val messages: Messages = (key) => Option(bundle.getString(key))
 
