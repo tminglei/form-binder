@@ -11,7 +11,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
 
     describe("group-mapping1") {
       val mapping1 = tmapping(
-        "count" -> number()
+        "count" -> int()
       ).label("xx") verifying { (label, v, messages) =>
         if (v < 3) Seq(s"$v: cannot less than 3")
         else if (v > 10) Seq(s"$label: cannot greater than 10")
@@ -62,7 +62,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
     describe("group-mapping2") {
       val mapping2 = tmapping(
         "price" -> float(),
-        "count" -> number().verifying(min(3), max(10))
+        "count" -> int().verifying(min(3), max(10))
       ).label("xx") verifying { case (label, (price, count), messages) =>
         if (price * count > 1000) {
           Seq(s"$label: $price * $count = ${price * count}, too much")
@@ -123,7 +123,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ eager check") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email")),
-          "count" -> number().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
+          "count" -> int().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
         ).options(_.eagerCheck(true))
         val data = Map(
           "email" -> "etttt.att#example-1111111.com",
@@ -142,7 +142,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         )
         val nullData = Map[String, String]()
         val emptyData = Map.empty + ("count" -> "")
@@ -175,7 +175,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty and touched") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         )
         val emptyData = Map.empty + ("count" -> "")
 
@@ -195,7 +195,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ eager check thru verifying") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email")),
-          "count" -> number().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
+          "count" -> int().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
         ).verifying().options(_.eagerCheck(true))
         val data = Map(
           "email" -> "etttt.att#example-1111111.com",
@@ -214,7 +214,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty thru verifying") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         ).verifying()
         val nullData = Map[String, String]()
         val emptyData = Map.empty + ("count" -> "")
@@ -247,7 +247,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty and touched thru verifying") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         ).verifying()
         val emptyData = Map.empty + ("count" -> "")
 
@@ -267,7 +267,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ eager check + transform (mapTo)") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email")),
-          "count" -> number().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
+          "count" -> int().verifying(max(10, "%s > %s"), max(15, "%s > %s"))
         ).map(identity).options(_.eagerCheck(true))
         val data = Map(
           "email" -> "etttt.att#example-1111111.com",
@@ -286,7 +286,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty + transform (mapTo)") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         ).map(identity)
         val nullData = Map[String, String]()
         val emptyData = Map.empty + ("count" -> "")
@@ -319,7 +319,7 @@ class GroupMappingsSpec extends FunSpec with Matchers with Mappings with Constra
       it("w/ ignore empty and touched + transform (mapTo)") {
         val mappingx = tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
-          "count" -> number().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
+          "count" -> int().verifying(max(10, "%s: > %s"), max(15, "%s: > %s"))
         ).map(identity)
         val emptyData = Map.empty + ("count" -> "")
 

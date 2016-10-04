@@ -26,7 +26,7 @@ trait Mappings {
     ).>+:(checking(_.toBoolean, Right("error.boolean")))
         .>+:(constraints: _*)
 
-  def number(constraints: Constraint*): Mapping[Int] =
+  def int(constraints: Constraint*): Mapping[Int] =
     new FieldMapping[Int](
       doConvert = mkSimpleConverter {
         case null|"" => 0

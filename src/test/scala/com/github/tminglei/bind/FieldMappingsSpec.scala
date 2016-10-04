@@ -203,58 +203,58 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
       }
     }
 
-    describe("number") {
-      val number = (omit(",") >-: Mappings.number()).verifying(min(1000), max(10000))
+    describe("int") {
+      val int = (omit(",") >-: Mappings.int()).verifying(min(1000), max(10000))
 
       it("invalid data") {
-        val number1 = Mappings.number().label("xx")
-        val invalidData = Map("number" -> "t12345")
-        number1.validate("number", invalidData, messages, Options.apply()) match {
+        val int1 = Mappings.int().label("xx")
+        val invalidData = Map("int" -> "t12345")
+        int1.validate("int", invalidData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "'t12345' must be a number"))
+          case err => err should be (Seq("int" -> "'t12345' must be a number"))
         }
       }
 
       it("out-of-scope data") {
-        val outScopeData = Map("number" -> "345")
-        number.validate("number", outScopeData, messages, Options.apply()) match {
+        val outScopeData = Map("int" -> "345")
+        int.validate("int", outScopeData, messages, Options.apply()) match {
           case Nil => ("out of scope - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "'345' cannot be lower than 1000"))
+          case err => err should be (Seq("int" -> "'345' cannot be lower than 1000"))
         }
       }
 
       it("long number data") {
-        val number1 = Mappings.number()
-        val longNumberData = Map("number" -> "146894532240")
-        number1.validate("number", longNumberData, messages, Options.apply()) match {
+        val int1 = Mappings.int()
+        val longNumberData = Map("int" -> "146894532240")
+        int1.validate("int", longNumberData, messages, Options.apply()) match {
           case Nil => ("long number - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "'146894532240' must be a number"))
+          case err => err should be (Seq("int" -> "'146894532240' must be a number"))
         }
       }
 
       it("valid data with comma") {
-        val validData = Map("number" -> "3,549")
-        number.validate("number", validData, messages, Options.apply()) match {
-          case Nil => number.convert("number", validData) should be (3549)
+        val validData = Map("int" -> "3,549")
+        int.validate("int", validData, messages, Options.apply()) match {
+          case Nil => int.convert("int", validData) should be (3549)
           case err => err should be (Nil)
         }
       }
 
       it("null data") {
         val nullData = Map[String, String]()
-        number.convert("number", nullData) should be (0)
-        number.validate("number", nullData, messages, Options.apply()) match {
+        int.convert("int", nullData) should be (0)
+        int.validate("int", nullData, messages, Options.apply()) match {
           case Nil => ("(null->) 0 - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "'0' cannot be lower than 1000"))
+          case err => err should be (Seq("int" -> "'0' cannot be lower than 1000"))
         }
       }
 
       it("empty data") {
-        val emptyData = Map("number" -> "")
-        number.convert("number", emptyData) should be (0)
-        number.validate("number", emptyData, messages, Options.apply()) match {
+        val emptyData = Map("int" -> "")
+        int.convert("int", emptyData) should be (0)
+        int.validate("int", emptyData, messages, Options.apply()) match {
           case Nil => ("(empty->) 0 - shouldn't occur!") should be ("")
-          case err => err should be (Seq("number" -> "'0' cannot be lower than 1000"))
+          case err => err should be (Seq("int" -> "'0' cannot be lower than 1000"))
         }
       }
     }

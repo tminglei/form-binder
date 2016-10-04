@@ -18,7 +18,7 @@ class FormBinderSpec extends FunSpec with Matchers {
         "id" -> long(),
         "body" -> tmapping(
           "price" -> (omitLeft("$") >-: float()),
-          "count" -> number().verifying(min(3), max(10))
+          "count" -> int().verifying(min(3), max(10))
         ).label("xx").verifying { case (label, (price, count), messages) =>
           if (price * count > 1000) {
             Seq(s"$label: $price * $count = ${price * count}, too much")
@@ -78,7 +78,7 @@ class FormBinderSpec extends FunSpec with Matchers {
         "body" -> tmapping(
           "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
           "price" -> (omitLeft("$") >-: float()),
-          "count" -> number().verifying(min(3), max(10))
+          "count" -> int().verifying(min(3), max(10))
         ).label("xx").verifying { case (label, (email, price, count), messages) =>
           if (price * count > 1000) {
             Seq(s"$label: $price * $count = ${price * count}, too much")
@@ -172,7 +172,7 @@ class FormBinderSpec extends FunSpec with Matchers {
           "data" -> (expandJson() >-: tmapping(
             "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
             "price" -> (omitLeft("$") >-: float()),
-            "count" -> number().verifying(min(3), max(10))
+            "count" -> int().verifying(min(3), max(10))
           )).label("xx").verifying { case (label, (email, price, count), messages) =>
             if (price * count > 1000) {
               Seq(s"$label: $price * $count = ${price * count}, too much")
@@ -210,7 +210,7 @@ class FormBinderSpec extends FunSpec with Matchers {
           "body" -> (expandJson() >-: tmapping(
             "email" -> text(maxLength(20, "%s: length > %s"), email("%s: invalid email"), required("%s is required")),
             "price" -> (omitLeft("$") >-: float()),
-            "count" -> number().verifying(min(3), max(10))
+            "count" -> int().verifying(min(3), max(10))
           ).label("@xx").verifying { case (label, (email, price, count), messages) =>
             if (price * count > 1000) {
               Seq(s"$label: $price * $count = ${price * count}, too much")

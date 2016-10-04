@@ -48,7 +48,7 @@ class GeneralMappingsSpec extends FunSpec with Matchers with Constraints {
     }
 
     describe("optional-simple") {
-      val base = Mappings.number()
+      val base = Mappings.int()
       val optional = Mappings.optional(base)
 
       it("invalid data") {
@@ -121,7 +121,7 @@ class GeneralMappingsSpec extends FunSpec with Matchers with Constraints {
     }
 
     describe("default-simple") {
-      val base = Mappings.number()
+      val base = Mappings.int()
       val default = Mappings.default(base, 101)
 
       it("invalid data") {
@@ -170,7 +170,7 @@ class GeneralMappingsSpec extends FunSpec with Matchers with Constraints {
     }
 
     describe("list-simple") {
-      val base = Mappings.number()
+      val base = Mappings.int()
       val list = Constraints.required() >+: Mappings.list(base).label("xx")
 
       it("invalid data") {
@@ -219,7 +219,7 @@ class GeneralMappingsSpec extends FunSpec with Matchers with Constraints {
     }
 
     describe("map-simple") {
-      val base = Mappings.number()
+      val base = Mappings.int()
       val map  = Mappings.map(base, Constraints.required()).label("xx")
 
       it("invalid data") {
@@ -562,7 +562,7 @@ class GeneralMappingsSpec extends FunSpec with Matchers with Constraints {
         else Some("dummy")
       }
 
-      val key = Mappings.number()
+      val key = Mappings.int()
       val value = Mappings.mapping(
         "id" -> Mappings.long(),
         "name" -> Mappings.text(),
