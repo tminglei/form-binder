@@ -100,18 +100,21 @@ object FrameworkUtils {
       def apply(name: String, data: Map[String, String], messages: Messages, options: Options) =
         validate.apply(name, data, messages, options)
       override def _meta: ExtensionMeta = meta
+      override def toString = meta.desc
     }
 
   def mkExtraConstraintWithMeta[T](validate: (String, T, Messages) => Seq[String], meta: ExtensionMeta) =
     new ExtraConstraint[T] with Metable[ExtensionMeta] {
       def apply(label: String, vObj: T, messages: Messages) = validate.apply(label, vObj, messages)
       override def _meta: ExtensionMeta = meta
+      override def toString = meta.desc
     }
 
   def mkPreProcessorWithMeta(process: (String, Map[String, String], Options) => Map[String, String], meta: ExtensionMeta) =
     new PreProcessor with Metable[ExtensionMeta] {
       def apply(prefix: String, data: Map[String, String], options: Options) = process.apply(prefix, data, options)
       override def _meta: ExtensionMeta = meta
+      override def toString = meta.desc
     }
   
   def isUntouchedEmpty(name: String, data: Map[String, String], options: Options) = 

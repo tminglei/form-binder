@@ -98,6 +98,8 @@ case class TransformMapping[T, R](base: Mapping[T], transform: T => R,
       }.getOrElse(Nil)
     else errors
   }
+
+  override def toString = _meta.name
 }
 
 /**
@@ -135,6 +137,8 @@ case class FieldMapping[T](inputMode: InputMode = SoloInput, doConvert: (String,
       } else errors
     }
   }
+
+  override def toString = _meta.name
 }
 
 /**
@@ -144,7 +148,7 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
                 override val options: Options = Options.apply(_inputMode = BulkInput)) extends Mapping[T] {
   private val logger = LoggerFactory.getLogger(GroupMapping.getClass)
 
-  override val _meta = MappingMeta(reflect.classTag[Product], Nil)
+  override val _meta = MappingMeta("object", reflect.classTag[Product], Nil)
   override def options(setting: Options => Options) = copy(options = setting(options))
 
   def convert(name: String, data: Map[String, String]): T = {
@@ -183,4 +187,6 @@ case class GroupMapping[T](fields: Seq[(String, Mapping[_])], doConvert: (String
       } else errors
     }
   }
+
+  override def toString = _meta.name
 }

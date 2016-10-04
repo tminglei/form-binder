@@ -14,7 +14,7 @@ trait Mappings {
   def text(constraints: Constraint*): Mapping[String] =
     new FieldMapping[String](
       doConvert = mkSimpleConverter(identity),
-      meta = MappingMeta(classTag[String])
+      meta = MappingMeta("string", classTag[String])
     ).>+:(constraints: _*)
 
   def boolean(constraints: Constraint*): Mapping[Boolean] =
@@ -22,7 +22,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => false
         case x => x.toBoolean
-      }, meta = MappingMeta(classTag[Boolean])
+      }, meta = MappingMeta("boolean", classTag[Boolean])
     ).>+:(checking(_.toBoolean, Right("error.boolean")))
         .>+:(constraints: _*)
 
@@ -31,7 +31,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0
         case x => x.toInt
-      }, meta = MappingMeta(classTag[Int])
+      }, meta = MappingMeta("int", classTag[Int])
     ).>+:(checking(_.toInt, Right("error.number")))
         .>+:(constraints: _*)
 
@@ -40,7 +40,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => x.toDouble
-      }, meta = MappingMeta(classTag[Double])
+      }, meta = MappingMeta("double", classTag[Double])
     ).>+:(checking(_.toDouble, Right("error.double")))
         .>+:(constraints: _*)
 
@@ -49,7 +49,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0f
         case x => x.toFloat
-      }, meta = MappingMeta(classTag[Float])
+      }, meta = MappingMeta("float", classTag[Float])
     ).>+:(checking(_.toFloat, Right("error.float")))
         .>+:(constraints: _*)
 
@@ -58,7 +58,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => x.toLong
-      }, meta = MappingMeta(classTag[Long])
+      }, meta = MappingMeta("long", classTag[Long])
     ).>+:(checking(_.toLong, Right("error.long")))
         .>+:(constraints: _*)
 
@@ -67,7 +67,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0d
         case x => BigDecimal(x)
-      }, meta = MappingMeta(classTag[BigDecimal])
+      }, meta = MappingMeta("bigDecimal", classTag[BigDecimal])
     ).>+:(checking(BigDecimal.apply, Right("error.bigdecimal")))
         .>+:(constraints: _*)
 
@@ -76,7 +76,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => 0l
         case x => BigInt(x)
-      }, meta = MappingMeta(classTag[BigInt])
+      }, meta = MappingMeta("bigInt", classTag[BigInt])
     ).>+:(checking(BigInt.apply, Right("error.bigint")))
         .>+:(constraints: _*)
 
@@ -85,7 +85,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => null
         case x => UUID.fromString(x)
-      }, meta = MappingMeta(classTag[UUID])
+      }, meta = MappingMeta("uuid", classTag[UUID])
     ).>+:(checking(UUID.fromString, Right("error.uuid")))
         .>+:(constraints: _*)
 
@@ -97,7 +97,7 @@ trait Mappings {
       doConvert = mkSimpleConverter {
         case null|"" => null
         case x => if (x.matches("^[\\d]+$")) new Date(x.toLong) else dateFormatter.parse(x)
-      }, meta = MappingMeta(classTag[java.util.Date])
+      }, meta = MappingMeta("date", classTag[java.util.Date])
     ).>+:(anyPassed(
           checking(s => new Date(s.toLong), Left("'%s' not a date long")),
           checking(dateFormatter.parse, Right("error.pattern"), pattern)
@@ -111,7 +111,7 @@ trait Mappings {
       inputMode = PolyInput,
       doConvert = (name, data) => instead,
       moreValidate = PassValidating,
-      meta = MappingMeta(classTag[Ignored[T]])
+      meta = MappingMeta(s"ignored to $instead", classTag[Ignored[T]])
     ).options(_.copy(_ignoreConstraints = true))
 
   def default[T](base: Mapping[T], value: T): Mapping[T] =
@@ -134,7 +134,7 @@ trait Mappings {
             .validate(name, data, messages, options)
         }
       },
-      meta = MappingMeta(classTag[Option[T]], List(base))
+      meta = MappingMeta(s"optional ${base._meta.name}", classTag[Option[T]], List(base))
     ).options(_.copy(_ignoreConstraints = true))
 
   def list[T](base: Mapping[T], constraints: Constraint*): Mapping[List[T]] =
@@ -155,7 +155,7 @@ trait Mappings {
           base.validate(name + "[" + i + "]", data, messages, theOptions)
         }
       },
-      meta = MappingMeta(classTag[Seq[T]], List(base))
+      meta = MappingMeta(s"seq of ${base._meta.name}", classTag[Seq[T]], List(base))
     ).>+:(constraints: _*)
 
   def map[V](valueBinding: Mapping[V], constraints: Constraint*): Mapping[Map[String, V]] =
@@ -182,7 +182,7 @@ trait Mappings {
             valueBinding.validate(keyName, data, messages, theOptions)
         }
       },
-      meta = MappingMeta(classTag[Map[K,V]], List(keyBinding, valueBinding))
+      meta = MappingMeta(s"map of ${keyBinding._meta.name} -> ${valueBinding._meta.name}", classTag[Map[K,V]], List(keyBinding, valueBinding))
     ).>+:(constraints: _*)
 
   ////////////////////////////////////////////  pre-defined group mappings  ///////////////////////////////////

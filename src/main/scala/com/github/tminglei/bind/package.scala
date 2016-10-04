@@ -102,7 +102,7 @@ package bind {
     def _meta: M
   }
 
-  case class MappingMeta(targetType: reflect.ClassTag[_], baseMappings: List[Mapping[_]] = Nil)
+  case class MappingMeta(name: String, targetType: reflect.ClassTag[_], baseMappings: List[Mapping[_]] = Nil)
   case class ExtensionMeta(name: String, desc: String, params: List[_] = Nil)
 
   final class Ignored[T]
