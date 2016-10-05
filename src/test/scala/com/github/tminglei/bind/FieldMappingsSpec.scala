@@ -1,5 +1,7 @@
 package com.github.tminglei.bind
 
+import java.time._
+import java.time.format.DateTimeFormatter
 import java.util.{ResourceBundle, UUID}
 import org.scalatest._
 
@@ -479,8 +481,10 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
     }
 
     describe("date") {
-      val formatter = new java.text.SimpleDateFormat("yyyy-MM-dd")
-      val date = Mappings.date("yyyy-MM-dd").verifying(min(formatter.parse("2000-1-1"), "min failed"), max(formatter.parse("2015-1-1"), "max failed"))
+      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+      val date = Mappings.date("yyyy-MM-dd").verifying(
+        min(LocalDate.parse("2000-01-01", formatter), "min failed"),
+        max(LocalDate.parse("2015-01-01", formatter), "max failed"))
 
       it("invalid data") {
         val date1 = Mappings.date("yyyy-MM-dd").label("xx")
@@ -492,7 +496,7 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
       }
 
       it("out-of-scope data") {
-        val outScopeData = Map("date" -> "1998-7-1")
+        val outScopeData = Map("date" -> "1998-07-01")
         date.validate("date", outScopeData, messages, Options.apply()) match {
           case Nil => ("invalid - shouldn't occur!") should be ("")
           case err => err should be (Seq("date" -> "min failed"))
@@ -500,17 +504,18 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
       }
 
       it("valid data") {
-        val validData = Map("date" -> "2007-8-3")
+        val validData = Map("date" -> "2007-08-03")
         date.validate("date", validData, messages, Options.apply()) match {
-          case Nil => date.convert("date", validData) should be (formatter.parse("2007-8-3"))
+          case Nil => date.convert("date", validData) should be (LocalDate.parse("2007-08-03", formatter))
           case err => err should be (Nil)
         }
       }
 
       it("valid data - long") {
         val dateMapping = Mappings.date()
-        val dateObj = new java.util.Date()
-        val validData = Map("date" -> dateObj.getTime.toString)
+        val ts = System.currentTimeMillis()
+        val dateObj = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneId.of("UTC")).toLocalDate
+        val validData = Map("date" -> ts.toString)
         dateMapping.validate("date", validData, messages, Options.apply()) match {
           case Nil => dateMapping.convert("date", validData) should be (dateObj)
           case err => err should be (Nil)
@@ -519,13 +524,10 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
 
       it("valid data - default format") {
         val dateMapping = Mappings.date()
-        val dateObj = new java.sql.Timestamp(System.currentTimeMillis())
+        val dateObj = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")).toLocalDate
         val validData = Map("date" -> dateObj.toString)
         dateMapping.validate("date", validData, messages, Options.apply()) match {
-          case Nil => {
-            val utilDate = dateMapping.convert("date", validData)
-            new java.sql.Timestamp(utilDate.getTime) should be (dateObj)
-          }
+          case Nil => dateMapping.convert("date", validData) should be (dateObj)
           case err => err should be (Nil)
         }
       }
@@ -544,6 +546,148 @@ class FieldMappingsSpec extends FunSpec with Matchers with Constraints with Proc
         val emptyData = Map("date" -> "")
         date1.validate("date", emptyData, messages, Options.apply()) match {
           case Nil => date1.convert("date", emptyData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("datetime") {
+      val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+      val datetime = Mappings.datetime("yyyy-MM-dd'T'HH:mm:ss.SSS").verifying(
+        min(LocalDateTime.parse("2001-01-03T13:21:00.223", formatter), "min failed"),
+        max(LocalDateTime.parse("2012-01-03T13:21:00.102", formatter), "max failed"))
+
+      it("invalid data") {
+        val datetime1 = Mappings.datetime("yyyy-MM-dd'T'HH:mm:ss.SSS").label("xx")
+        val invalidData = Map("datetime" -> "5/3/2003 13:21:00")
+        datetime1.validate("datetime", invalidData, messages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("datetime" -> "'xx' must satisfy any of following: ['5/3/2003 13:21:00' not a date long, '5/3/2003 13:21:00' must be 'yyyy-MM-dd'T'HH:mm:ss.SSS']"))
+        }
+      }
+
+      it("out-of-scope data") {
+        val outScopeData = Map("datetime" -> "1998-07-01T13:21:00.223")
+        datetime.validate("datetime", outScopeData, messages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("datetime" -> "min failed"))
+        }
+      }
+
+      it("valid data") {
+        val validData = Map("datetime" -> "2007-08-03T13:21:00.223")
+        datetime.validate("datetime", validData, messages, Options.apply()) match {
+          case Nil => datetime.convert("datetime", validData) should be (LocalDateTime.parse("2007-08-03T13:21:00.223", formatter))
+          case err => err should be (Nil)
+        }
+      }
+
+      it("valid data - long") {
+        val dateMapping = Mappings.datetime()
+        val ts = System.currentTimeMillis()
+        val dateObj = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneId.of("UTC"))
+        val validData = Map("datetime" -> ts.toString)
+        dateMapping.validate("datetime", validData, messages, Options.apply()) match {
+          case Nil => dateMapping.convert("datetime", validData) should be (dateObj)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("valid data - default format") {
+        val dateMapping = Mappings.datetime()
+        val dateObj = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("UTC"))
+        val validData = Map("datetime" -> dateObj.toString)
+        dateMapping.validate("datetime", validData, messages, Options.apply()) match {
+          case Nil => dateMapping.convert("datetime", validData) should be (dateObj)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val datetime1 = Mappings.datetime("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        val nullData = Map[String, String]()
+        datetime1.validate("datetime", nullData, messages, Options.apply()) match {
+          case Nil => datetime1.convert("datetime", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data") {
+        val datetime1 = Mappings.datetime("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        val emptyData = Map("datetime" -> "")
+        datetime1.validate("datetime", emptyData, messages, Options.apply()) match {
+          case Nil => datetime1.convert("datetime", emptyData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+    }
+
+    describe("time") {
+      val formatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
+      val time = Mappings.time("HH:mm:ss.SSS").verifying(
+        min(LocalTime.parse("02:33:01.101", formatter), "min failed"),
+        max(LocalTime.parse("12:33:01.101", formatter), "max failed"))
+
+      it("invalid data") {
+        val time1 = Mappings.time("HH:mm:ss.SSS").label("xx")
+        val invalidData = Map("time" -> "13:21:00")
+        time1.validate("time", invalidData, messages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("time" -> "'xx' must satisfy any of following: ['13:21:00' not a date long, '13:21:00' must be 'HH:mm:ss.SSS']"))
+        }
+      }
+
+      it("out-of-scope data") {
+        val outScopeData = Map("time" -> "13:21:00.333")
+        time.validate("time", outScopeData, messages, Options.apply()) match {
+          case Nil => ("invalid - shouldn't occur!") should be ("")
+          case err => err should be (Seq("time" -> "max failed"))
+        }
+      }
+
+      it("valid data") {
+        val validData = Map("time" -> "11:21:00.213")
+        time.validate("time", validData, messages, Options.apply()) match {
+          case Nil => time.convert("time", validData) should be (LocalTime.parse("11:21:00.213", formatter))
+          case err => err should be (Nil)
+        }
+      }
+
+      it("valid data - long") {
+        val dateMapping = Mappings.time()
+        val ts = System.currentTimeMillis()
+        val dateObj = LocalDateTime.ofInstant(Instant.ofEpochMilli(ts), ZoneId.of("UTC")).toLocalTime
+        val validData = Map("time" -> ts.toString)
+        dateMapping.validate("time", validData, messages, Options.apply()) match {
+          case Nil => dateMapping.convert("time", validData) should be (dateObj)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("valid data - default format") {
+        val dateMapping = Mappings.time()
+        val dateObj = LocalDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")).toLocalTime
+        val validData = Map("time" -> dateObj.toString)
+        dateMapping.validate("time", validData, messages, Options.apply()) match {
+          case Nil => dateMapping.convert("time", validData) should be (dateObj)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("null data") {
+        val time1 = Mappings.time("HH:mm:ss.SSS")
+        val nullData = Map[String, String]()
+        time1.validate("time", nullData, messages, Options.apply()) match {
+          case Nil => time1.convert("time", nullData) should be (null)
+          case err => err should be (Nil)
+        }
+      }
+
+      it("empty data") {
+        val time1 = Mappings.date("HH:mm:ss.SSS")
+        val emptyData = Map("time" -> "")
+        time1.validate("time", emptyData, messages, Options.apply()) match {
+          case Nil => time1.convert("time", emptyData) should be (null)
           case err => err should be (Nil)
         }
       }

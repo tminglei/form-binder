@@ -1,5 +1,6 @@
 package com.github.tminglei.bind
 
+import java.time.{LocalDate, LocalDateTime}
 import org.slf4j.LoggerFactory
 import scala.util.matching.Regex
 
@@ -108,6 +109,13 @@ trait Constraints {
     }, meta = mkExtensionMeta("indexInKeys"))
 
   ///////////////////////////////////////  pre-defined extra constraints  ////////////////////////////
+
+  implicit object LocalDateOrdering extends Ordering[LocalDate] {
+    override def compare(x: LocalDate, y: LocalDate): Int = x.compareTo(y)
+  }
+  implicit object LocalDateTimeOrdering extends Ordering[LocalDateTime] {
+    override def compare(x: LocalDateTime, y: LocalDateTime): Int = x.compareTo(y)
+  }
 
   def min[T: Ordering](minVal: T, message: String = ""): ExtraConstraint[T] with Metable[ExtensionMeta] =
     mkExtraConstraintWithMeta((label, value, messages) => {

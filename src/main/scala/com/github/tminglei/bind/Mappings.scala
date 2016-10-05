@@ -1,5 +1,7 @@
 package com.github.tminglei.bind
 
+import java.time._
+import java.time.format.DateTimeFormatter
 import java.util.{Date, UUID}
 import org.slf4j.LoggerFactory
 
@@ -89,18 +91,57 @@ trait Mappings {
     ).>+:(checking(UUID.fromString, Right("error.uuid")))
         .>+:(constraints: _*)
 
-  def date(constraints: Constraint*): Mapping[java.util.Date] =
-    date("yyyy-MM-dd HH:mm:ss.SSS", constraints: _*)
-  def date(pattern: String, constraints: Constraint*): Mapping[java.util.Date] = {
-    val dateFormatter = new java.text.SimpleDateFormat(pattern)
-    new FieldMapping[java.util.Date](
+  def date(constraints: Constraint*): Mapping[LocalDate] =
+    date("yyyy-MM-dd", constraints: _*)
+  def date(pattern: String, constraints: Constraint*): Mapping[LocalDate] = {
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    new FieldMapping[LocalDate](
       doConvert = mkSimpleConverter {
         case null|"" => null
-        case x => if (x.matches("^[\\d]+$")) new Date(x.toLong) else dateFormatter.parse(x)
-      }, meta = MappingMeta("date", classTag[java.util.Date])
+        case x => if (x.matches("^[\\d]+$")) {
+          val instant = Instant.ofEpochMilli(x.toLong)
+          LocalDateTime.ofInstant(instant, ZoneId.of("UTC")).toLocalDate()
+        } else LocalDate.parse(x, formatter)
+      }, meta = MappingMeta("date", classTag[LocalDate])
     ).>+:(anyPassed(
           checking(s => new Date(s.toLong), Left("'%s' not a date long")),
-          checking(dateFormatter.parse, Right("error.pattern"), pattern)
+          checking(formatter.parse, Right("error.pattern"), pattern)
+        )).>+:(constraints: _*)
+  }
+
+  def datetime(constraints: Constraint*): Mapping[LocalDateTime] =
+    datetime("yyyy-MM-dd'T'HH:mm:ss.SSS", constraints: _*)
+  def datetime(pattern: String, constraints: Constraint*): Mapping[LocalDateTime] = {
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    new FieldMapping[LocalDateTime](
+      doConvert = mkSimpleConverter {
+        case null|"" => null
+        case x => if (x.matches("^[\\d]+$")) {
+          val instant = Instant.ofEpochMilli(x.toLong)
+          LocalDateTime.ofInstant(instant, ZoneId.of("UTC"))
+        } else LocalDateTime.parse(x, formatter)
+      }, meta = MappingMeta("datetime", classTag[LocalDateTime])
+    ).>+:(anyPassed(
+          checking(s => new Date(s.toLong), Left("'%s' not a date long")),
+          checking(formatter.parse, Right("error.pattern"), pattern)
+        )).>+:(constraints: _*)
+  }
+
+  def time(constraints: Constraint*): Mapping[LocalTime] =
+    time("HH:mm:ss.SSS", constraints: _*)
+  def time(pattern: String, constraints: Constraint*): Mapping[LocalTime] = {
+    val formatter = DateTimeFormatter.ofPattern(pattern)
+    new FieldMapping[LocalTime](
+      doConvert = mkSimpleConverter {
+        case null|"" => null
+        case x => if (x.matches("^[\\d]+$")) {
+          val instant = Instant.ofEpochMilli(x.toLong)
+          LocalDateTime.ofInstant(instant, ZoneId.of("UTC")).toLocalTime
+        } else LocalTime.parse(x, formatter)
+      }, meta = MappingMeta("datetime", classTag[LocalTime])
+    ).>+:(anyPassed(
+          checking(s => new Date(s.toLong), Left("'%s' not a date long")),
+          checking(formatter.parse, Right("error.pattern"), pattern)
         )).>+:(constraints: _*)
   }
 
